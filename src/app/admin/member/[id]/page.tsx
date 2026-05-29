@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import WeeklyLogForm from '@/components/admin/WeeklyLogForm'
 import MemberReportPanel from '@/components/admin/MemberReportPanel'
 import BlueprintPanel from '@/components/admin/BlueprintPanel'
+import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import Link from 'next/link'
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -102,6 +103,11 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           blueprintShareToken={member.blueprint_share_token ?? null}
           blueprintTranscript={member.blueprint_transcript ?? null}
         />
+      </div>
+
+      {/* Homework & Tasks — full width above the 2-col grid */}
+      <div className="mb-6">
+        <HomeworkPanel memberId={id} />
       </div>
 
       <div className="grid grid-cols-2 gap-6">

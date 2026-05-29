@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import HomeworkSection from '@/components/dashboard/HomeworkSection'
+import NotesSection from '@/components/dashboard/NotesSection'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -25,6 +27,21 @@ export default async function DashboardPage() {
       </div>
     )
   }
+
+  // Fetch homework + notes in parallel
+  const [{ data: homeworkData }, { data: notesData }] = await Promise.all([
+    supabase
+      .from('homework')
+      .select('id, title, description, due_date, type, completed, completed_at')
+      .eq('member_id', member.id)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('member_notes')
+      .select('content')
+      .eq('member_id', member.id)
+      .maybeSingle(),
+  ])
 
   const logs = member.weekly_logs ?? []
   const reports = (member.reports ?? []).filter((r: { sent_at: string | null }) => r.sent_at)
@@ -170,6 +187,18 @@ export default async function DashboardPage() {
         </div>
         <span className="text-[#C9A227] text-2xl">◈</span>
       </div>
+
+      {/* Homework & Blueprint Tasks */}
+      <HomeworkSection
+        memberId={member.id}
+        initialItems={homeworkData ?? []}
+      />
+
+      {/* Personal Notes */}
+      <NotesSection
+        memberId={member.id}
+        initialContent={notesData?.content ?? ''}
+      />
     </div>
   )
 }
