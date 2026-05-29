@@ -39,6 +39,8 @@ export default function HomeworkPanel({ memberId }: Props) {
   const [editForm, setEditForm] = useState(EMPTY_FORM)
   const [filter, setFilter] = useState<'all' | 'homework' | 'task'>('all')
   const [error, setError] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [generateMsg, setGenerateMsg] = useState('')
 
   useEffect(() => {
     fetch(`/api/homework?member_id=${memberId}`)
@@ -89,6 +91,26 @@ export default function HomeworkPanel({ memberId }: Props) {
     setSaving(false)
   }
 
+  async function handleGenerateFromBlueprint() {
+    if (items.length > 0) {
+      if (!confirm(`This will add tasks generated from the blueprint alongside the ${items.length} existing item(s). Continue?`)) return
+    }
+    setGenerating(true)
+    setGenerateMsg('')
+    setError('')
+    const res = await fetch('/api/homework/generate-from-blueprint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ member_id: memberId }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error ?? 'Generation failed'); setGenerating(false); return }
+    setItems(prev => [...prev, ...(data.tasks ?? [])])
+    setGenerateMsg(`✓ ${data.count} tasks generated from blueprint`)
+    setGenerating(false)
+    setTimeout(() => setGenerateMsg(''), 4000)
+  }
+
   async function handleDelete(id: string) {
     if (!confirm('Delete this item?')) return
     setItems(prev => prev.filter(i => i.id !== id))
@@ -118,6 +140,16 @@ export default function HomeworkPanel({ memberId }: Props) {
             ))}
           </div>
           <button
+            onClick={handleGenerateFromBlueprint}
+            disabled={generating}
+            title="Auto-generate tasks from this member's blueprint using AI"
+            className="text-xs border border-[#2A2A2A] text-[#555] px-3 py-1.5 rounded hover:text-[#C9A227] hover:border-[#C9A227]/30 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+          >
+            {generating ? (
+              <><span className="inline-block w-3 h-3 border border-[#555] border-t-[#C9A227] rounded-full animate-spin" /> Generating…</>
+            ) : '✦ From Blueprint'}
+          </button>
+          <button
             onClick={() => { setShowForm(true); setEditId(null) }}
             className="text-xs bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded hover:bg-[#C9A227]/15 transition-colors"
           >
@@ -125,6 +157,18 @@ export default function HomeworkPanel({ memberId }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Generate / error messages */}
+      {generateMsg && (
+        <div className="px-5 py-2.5 bg-green-500/5 border-b border-green-500/20">
+          <p className="text-green-400 text-xs">{generateMsg}</p>
+        </div>
+      )}
+      {error && (
+        <div className="px-5 py-2.5 bg-[#CC1F1F]/5 border-b border-[#CC1F1F]/20">
+          <p className="text-[#CC1F1F] text-xs">{error}</p>
+        </div>
+      )}
 
       {/* Add form */}
       {showForm && (
