@@ -133,6 +133,15 @@ export async function POST(request: Request) {
     content: [{ type: 'text/html', value: emailHtml }],
   }
 
+  // Mark as sent BEFORE calling SendGrid so the portal is never blocked by email failures.
+  // For member sends, this also publishes the blueprint to their portal.
+  const now = new Date().toISOString()
+  const updateField = recipient === 'gogo'
+    ? { blueprint_sent_to_gogo_at: now }
+    : { blueprint_sent_to_member_at: now }
+
+  await supabase.from('members').update(updateField).eq('id', member_id)
+
   const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
     headers: {
@@ -145,16 +154,9 @@ export async function POST(request: Request) {
   if (!sgRes.ok) {
     const err = await sgRes.text()
     console.error('[Blueprint Send] SendGrid error:', err)
-    return NextResponse.json({ error: err }, { status: 500 })
+    // Timestamp is already saved — portal access is live. Email failed but that's recoverable.
+    return NextResponse.json({ error: `Email failed to send: ${err}` }, { status: 500 })
   }
-
-  // Track when it was sent; sending to the member also publishes the blueprint to their portal
-  const now = new Date().toISOString()
-  const updateField = recipient === 'gogo'
-    ? { blueprint_sent_to_gogo_at: now }
-    : { blueprint_sent_to_member_at: now, blueprint_published_at: now }
-
-  await supabase.from('members').update(updateField).eq('id', member_id)
 
   return NextResponse.json({ success: true, sent_to: toEmail })
 }

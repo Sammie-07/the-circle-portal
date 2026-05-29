@@ -21,6 +21,7 @@ const memberNav = [
   { href: '/dashboard', label: 'My Dashboard', icon: '◉' },
   { href: '/dashboard/blueprint', label: 'My Blueprint', icon: '◈' },
   { href: '/dashboard/reports', label: 'My Reports', icon: '◆' },
+  { href: '/dashboard/notes', label: 'My Notes', icon: '◇' },
 ]
 
 export default function Sidebar({ role, memberName }: SidebarProps) {

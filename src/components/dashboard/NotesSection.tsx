@@ -5,9 +5,10 @@ import { useState, useCallback, useRef } from 'react'
 interface Props {
   memberId: string
   initialContent: string
+  expanded?: boolean
 }
 
-export default function NotesSection({ memberId, initialContent }: Props) {
+export default function NotesSection({ memberId, initialContent, expanded = false }: Props) {
   const [content, setContent] = useState(initialContent)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -43,7 +44,7 @@ export default function NotesSection({ memberId, initialContent }: Props) {
           value={content}
           onChange={e => handleChange(e.target.value)}
           placeholder="Write anything here — ideas, wins, reminders, venting. This is just for you."
-          rows={6}
+          rows={expanded ? 20 : 6}
           className="w-full bg-transparent text-[#888] placeholder-[#333] text-sm leading-relaxed p-4 resize-none focus:outline-none focus:text-white transition-colors"
         />
         <div className="px-4 py-2 border-t border-[#1E1E1E] flex items-center justify-between">
