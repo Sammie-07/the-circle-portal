@@ -42,6 +42,13 @@ export default function BulkReportPanel({ members }: Props) {
     }))
   )
 
+  // Per-row regenerate state
+  const [refineRowId, setRefineRowId] = useState<string | null>(null)
+  const [refineFeedback, setRefineFeedback] = useState('')
+  const [refineUploadLabel, setRefineUploadLabel] = useState('')
+  const refineFileRef = useRef<HTMLInputElement | null>(null)
+  const singleAbortRef = useRef<AbortController | null>(null)
+
   const [bulkRunning, setBulkRunning] = useState(false)
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 })
   const [memberProgress, setMemberProgress] = useState(0)   // 0-100 within current member
@@ -108,6 +115,79 @@ export default function BulkReportPanel({ members }: Props) {
         ? { ...r, status: 'idle', reportId: null, reportHtml: null, reportLabel: null, previewOpen: false, error: null }
         : r
     ))
+  }
+
+  // ─── Per-row regenerate ───────────────────────────────────────────────────
+
+  function openRefine(memberId: string) {
+    setRefineRowId(memberId)
+    setRefineFeedback('')
+    setRefineUploadLabel('')
+  }
+
+  function closeRefine() {
+    setRefineRowId(null)
+    setRefineFeedback('')
+    setRefineUploadLabel('')
+  }
+
+  async function handleRefineFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    setRefineFeedback(prev => prev + (prev ? '\n\n' : '') + `[Uploaded: ${file.name}]\n${text.slice(0, 4000)}`)
+    setRefineUploadLabel(file.name)
+    if (refineFileRef.current) refineFileRef.current.value = ''
+  }
+
+  async function handleRegenerateOne(memberId: string, reportId: string | null, feedback: string) {
+    closeRefine()
+    updateRow(memberId, { status: 'generating', error: null })
+
+    const controller = new AbortController()
+    singleAbortRef.current = controller
+
+    try {
+      const res = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member_id: memberId,
+          period_type: periodType,
+          ...(feedback ? { feedback } : {}),
+          ...(reportId ? { report_id: reportId } : {}),
+        }),
+        signal: controller.signal,
+      })
+
+      const ct = res.headers.get('content-type') ?? ''
+      if (!ct.includes('application/json')) {
+        const text = await res.text()
+        updateRow(memberId, { status: 'error', error: `Server error ${res.status}: ${text.slice(0, 120)}` })
+        return
+      }
+
+      const data = await res.json()
+      if (!res.ok || !data.report) {
+        updateRow(memberId, { status: 'error', error: data.error ?? 'Generation failed' })
+      } else {
+        updateRow(memberId, {
+          status: 'done',
+          reportId: data.report.id,
+          reportHtml: data.report.content_html ?? null,
+          reportLabel: data.report.period_label,
+          error: null,
+        })
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        updateRow(memberId, { status: 'idle', error: null })
+        return
+      }
+      updateRow(memberId, { status: 'error', error: err instanceof Error ? err.message : 'Unknown error' })
+    } finally {
+      singleAbortRef.current = null
+    }
   }
 
   // ─── Generate for all checked ─────────────────────────────────────────────
@@ -462,6 +542,21 @@ export default function BulkReportPanel({ members }: Props) {
                       </button>
                     )}
 
+                    {/* Regenerate */}
+                    {row.status === 'done' && (
+                      <button
+                        onClick={() => refineRowId === row.member.id ? closeRefine() : openRefine(row.member.id)}
+                        disabled={bulkRunning}
+                        className={`text-xs border px-2.5 py-1 rounded transition-colors disabled:opacity-40 ${
+                          refineRowId === row.member.id
+                            ? 'border-[#C9A227]/40 text-[#C9A227]'
+                            : 'border-[#2A2A2A] text-[#555] hover:text-[#888] hover:border-[#444]'
+                        }`}
+                      >
+                        ↺ Regen
+                      </button>
+                    )}
+
                     {/* Per-row send */}
                     {row.status === 'done' && row.reportId && (
                       <button
@@ -490,6 +585,41 @@ export default function BulkReportPanel({ members }: Props) {
                     <p className="text-[#CC1F1F] text-xs bg-[#1a0a0a] border border-[#CC1F1F]/20 rounded px-3 py-2">
                       {row.error}
                     </p>
+                  </div>
+                )}
+
+                {/* Inline refine form */}
+                {refineRowId === row.member.id && (
+                  <div className="border-t border-[#C9A227]/20 bg-[#1A1200] px-5 py-4 space-y-3">
+                    <p className="text-[#C9A227] text-[10px] tracking-[0.2em] uppercase">Regenerate — {row.member.name}</p>
+                    <div className="relative">
+                      <textarea
+                        value={refineFeedback}
+                        onChange={e => setRefineFeedback(e.target.value)}
+                        placeholder="What needs to change? e.g. Push harder on the attendance gap. Mention her Florida team."
+                        rows={3}
+                        className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#333] text-sm rounded px-3 py-2.5 pr-20 resize-none focus:outline-none focus:border-[#C9A227]/40"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => refineFileRef.current?.click()}
+                        className="absolute bottom-2.5 right-2.5 text-[#444] hover:text-[#888] text-xs border border-[#2A2A2A] px-2 py-0.5 rounded bg-[#0D0D0D] transition-colors"
+                      >
+                        {refineUploadLabel ? '📎' : '+ File'}
+                      </button>
+                    </div>
+                    {refineUploadLabel && (
+                      <p className="text-[#555] text-xs">📎 {refineUploadLabel} appended</p>
+                    )}
+                    <div className="flex items-center justify-end gap-3">
+                      <button onClick={closeRefine} className="text-[#555] text-xs hover:text-[#888] transition-colors">Cancel</button>
+                      <button
+                        onClick={() => handleRegenerateOne(row.member.id, row.reportId, refineFeedback)}
+                        className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors"
+                      >
+                        ✦ Apply &amp; Regenerate
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -545,6 +675,15 @@ export default function BulkReportPanel({ members }: Props) {
       {globalError && (
         <p className="text-[#CC1F1F] text-xs">{globalError}</p>
       )}
+
+      {/* Hidden file input for refine uploads */}
+      <input
+        ref={refineFileRef}
+        type="file"
+        accept=".txt,.md,.pdf,.doc,.docx,.csv"
+        className="hidden"
+        onChange={handleRefineFileUpload}
+      />
     </div>
   )
 }

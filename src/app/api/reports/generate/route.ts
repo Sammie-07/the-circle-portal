@@ -65,14 +65,14 @@ export async function POST(request: Request) {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Admin only' }, { status: 403 })
 
-    let body: { member_id?: string; period_type?: string }
+    let body: { member_id?: string; period_type?: string; feedback?: string; report_id?: string }
     try {
       body = await request.json()
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { member_id, period_type } = body
+    const { member_id, period_type, feedback, report_id } = body
     if (!member_id || !period_type) {
       return NextResponse.json({ error: 'member_id and period_type required' }, { status: 400 })
     }
@@ -153,7 +153,7 @@ REPORT STRUCTURE:
 
 TONE: Gogo Bethke — direct, warm, no-BS. The report feels like Gogo wrote it personally after looking at their data AND their blueprint side by side. It's not a form letter. It knows this specific person's plan.
 
-OUTPUT: Return only the HTML body content (no <html>/<head> tags). Inline styles only. The Circle brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.`
+OUTPUT: Return only the HTML body content (no <html>/<head> tags). Inline styles only. The Circle brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nThis is a regeneration of a previous report. Address every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
 
     console.log('[Report] Generating for', member.name, '—', period_type)
     const message = await anthropic.messages.create({
@@ -168,6 +168,27 @@ OUTPUT: Return only the HTML body content (no <html>/<head> tags). Inline styles
       return NextResponse.json({ error: 'Claude returned an empty response. Please try again.' }, { status: 500 })
     }
 
+    // If regenerating an unsent report, update it in place — keep the same ID and share_token
+    if (report_id) {
+      const { data: existing } = await supabase
+        .from('reports')
+        .select('id, sent_at')
+        .eq('id', report_id)
+        .single()
+
+      if (existing && !existing.sent_at) {
+        const { data: report, error } = await supabase
+          .from('reports')
+          .update({ content_html: contentHtml, generated_at: new Date().toISOString() })
+          .eq('id', report_id)
+          .select()
+          .single()
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ report })
+      }
+    }
+
+    // Otherwise insert a new report
     const { data: report, error } = await supabase
       .from('reports')
       .insert({

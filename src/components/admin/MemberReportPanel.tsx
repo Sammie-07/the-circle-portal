@@ -32,6 +32,12 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
   const [error, setError] = useState('')
   const [previewId, setPreviewId] = useState<string | null>(null)
 
+  // Regenerate / refine state
+  const [refineReportId, setRefineReportId] = useState<string | null>(null)
+  const [refineFeedback, setRefineFeedback] = useState('')
+  const [refineUploadLabel, setRefineUploadLabel] = useState('')
+  const refineFileRef = useRef<HTMLInputElement | null>(null)
+
   // Warn before closing while generating
   useEffect(() => {
     if (!generating) return
@@ -63,9 +69,31 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
     return () => { if (progressTimerRef.current) clearInterval(progressTimerRef.current) }
   }, [generating])
 
-  async function handleGenerate() {
+  async function handleRefineFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    setRefineFeedback(prev => prev + (prev ? '\n\n' : '') + `[Uploaded: ${file.name}]\n${text.slice(0, 4000)}`)
+    setRefineUploadLabel(file.name)
+    if (refineFileRef.current) refineFileRef.current.value = ''
+  }
+
+  function openRefine(reportId: string) {
+    setRefineReportId(reportId)
+    setRefineFeedback('')
+    setRefineUploadLabel('')
+  }
+
+  function closeRefine() {
+    setRefineReportId(null)
+    setRefineFeedback('')
+    setRefineUploadLabel('')
+  }
+
+  async function handleGenerate(feedback?: string, reportIdToUpdate?: string) {
     setGenerating(true)
     setError('')
+    closeRefine()
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -73,7 +101,12 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
       const res = await fetch('/api/reports/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ member_id: memberId, period_type: periodType }),
+        body: JSON.stringify({
+          member_id: memberId,
+          period_type: periodType,
+          ...(feedback ? { feedback } : {}),
+          ...(reportIdToUpdate ? { report_id: reportIdToUpdate } : {}),
+        }),
         signal: controller.signal,
       })
 
@@ -95,7 +128,12 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
         setProgress(100)
         setProgressLabel('Done!')
         setTimeout(() => {
-          setReports(prev => [data.report!, ...prev])
+          setReports(prev => {
+            // If we updated an existing report in place, replace it; otherwise prepend
+            const exists = prev.find(r => r.id === data.report!.id)
+            if (exists) return prev.map(r => r.id === data.report!.id ? data.report! : r)
+            return [data.report!, ...prev]
+          })
           setPreviewId(data.report!.id)
           setGenerating(false)
           setProgress(0)
@@ -213,7 +251,7 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
         {/* Generate button */}
         {!generating && (
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate()}
             className="w-full bg-[#C9A227]/10 border border-[#C9A227]/40 text-[#C9A227] text-sm py-2.5 rounded hover:bg-[#C9A227]/15 transition-colors font-medium"
           >
             ✦ Generate {periodType.charAt(0).toUpperCase() + periodType.slice(1)} Report
@@ -251,6 +289,13 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
                       className="text-xs text-[#555] hover:text-[#888] border border-[#2A2A2A] px-2.5 py-1 rounded transition-colors"
                     >
                       {previewId === report.id ? 'Hide' : 'Preview'}
+                    </button>
+                    <button
+                      onClick={() => openRefine(report.id)}
+                      disabled={generating}
+                      className="text-xs text-[#555] hover:text-[#888] border border-[#2A2A2A] px-2.5 py-1 rounded transition-colors disabled:opacity-40"
+                    >
+                      ↺ Regen
                     </button>
                     {!report.sent_at ? (
                       <button
@@ -299,6 +344,76 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
       {previewId && !previewReport?.content_html && (
         <p className="text-[#555] text-xs text-center">Preview not available for this report.</p>
       )}
+
+      {/* ─── Refine / Regenerate modal ─── */}
+      {refineReportId && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-6 pointer-events-none">
+          <div className="pointer-events-auto w-full max-w-xl bg-[#1A1A1A] border border-[#C9A227]/30 rounded-xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-3.5 bg-[#111] border-b border-[#2A2A2A] flex items-center justify-between">
+              <div>
+                <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-0.5">Regenerate Report</p>
+                <p className="text-white text-sm font-medium">
+                  {reports.find(r => r.id === refineReportId)?.period_label}
+                </p>
+              </div>
+              <button onClick={closeRefine} className="text-[#444] hover:text-[#888] text-lg transition-colors">✕</button>
+            </div>
+
+            {/* Feedback textarea */}
+            <div className="p-4">
+              <p className="text-[#555] text-xs mb-2">What needs to change? Be specific — Gogo will address every point.</p>
+              <div className="relative">
+                <textarea
+                  value={refineFeedback}
+                  onChange={e => setRefineFeedback(e.target.value)}
+                  placeholder="e.g. The tone is too soft — push harder on the attendance gap. Also add a note about her Florida team situation."
+                  rows={4}
+                  className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#333] text-sm rounded-lg px-4 py-3 pr-24 resize-none focus:outline-none focus:border-[#C9A227]/40 leading-relaxed"
+                />
+                {/* Upload button inside textarea */}
+                <button
+                  type="button"
+                  onClick={() => refineFileRef.current?.click()}
+                  title="Upload a file to include its content"
+                  className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[#444] hover:text-[#888] text-xs border border-[#2A2A2A] px-2 py-1 rounded transition-colors bg-[#0D0D0D]"
+                >
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 8V1M3 4l3-3 3 3M1 10h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {refineUploadLabel ? refineUploadLabel.slice(0, 12) + (refineUploadLabel.length > 12 ? '…' : '') : 'File'}
+                </button>
+              </div>
+              {refineUploadLabel && (
+                <p className="text-[#555] text-xs mt-1.5">📎 {refineUploadLabel} appended to feedback</p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="px-4 pb-4 flex items-center gap-3">
+              <button onClick={closeRefine} className="text-[#555] text-sm hover:text-[#888] transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleGenerate(refineFeedback || undefined, refineReportId)}
+                disabled={generating}
+                className="ml-auto bg-[#C9A227] text-[#0D0D0D] text-sm font-bold px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+              >
+                ✦ Apply &amp; Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={refineFileRef}
+        type="file"
+        accept=".txt,.md,.pdf,.doc,.docx,.csv"
+        className="hidden"
+        onChange={handleRefineFileUpload}
+      />
     </div>
   )
 }
