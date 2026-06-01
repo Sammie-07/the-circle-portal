@@ -31,12 +31,20 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     .eq('member_id', id)
     .order('generated_at', { ascending: false })
 
+  const { data: homeworkItems } = await supabase
+    .from('homework')
+    .select('id, completed')
+    .eq('member_id', id)
+
   const allLogs = logs ?? []
   const total = allLogs.length
   const attended = allLogs.filter(l => l.showed_up).length
-  const homeworkDone = allLogs.filter(l => l.homework_done).length
   const attendanceRate = total > 0 ? Math.round((attended / total) * 100) : null
-  const homeworkRate = total > 0 ? Math.round((homeworkDone / total) * 100) : null
+
+  const allTasks = homeworkItems ?? []
+  const taskTotal = allTasks.length
+  const tasksDone = allTasks.filter(t => t.completed).length
+  const taskRate = taskTotal > 0 ? Math.round((tasksDone / taskTotal) * 100) : null
 
   function getHealthLabel(rate: number | null) {
     if (rate === null) return { label: 'No data', color: 'text-[#555]' }
@@ -79,9 +87,9 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           <p className="text-[#555] text-xs mt-1">{attended} of {total} calls</p>
         </div>
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
-          <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Homework</p>
-          <p className="text-white font-serif text-2xl">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
-          <p className="text-[#555] text-xs mt-1">{homeworkDone} of {total} weeks</p>
+          <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Tasks Done</p>
+          <p className="text-white font-serif text-2xl">{taskRate !== null ? `${taskRate}%` : '—'}</p>
+          <p className="text-[#555] text-xs mt-1">{tasksDone} of {taskTotal} tasks</p>
         </div>
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
           <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Reports Sent</p>
