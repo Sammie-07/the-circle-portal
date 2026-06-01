@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import BlueprintOpener from '@/components/dashboard/BlueprintOpener'
 
 export default async function BlueprintPage() {
   const supabase = await createClient()
@@ -16,14 +18,12 @@ export default async function BlueprintPage() {
 
   const joinDate = new Date(member.join_date)
   const isPublished = !!member.blueprint_sent_to_member_at && !!member.blueprint_html
-
   const blueprintUrl = isPublished && member.blueprint_share_token
     ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/b/${member.blueprint_share_token}`
     : null
 
   return (
     <div className="p-8 max-w-3xl">
-      {/* Header */}
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your 12-Month Plan</p>
         <h1 className="text-white font-serif text-3xl">Business Blueprint</h1>
@@ -35,24 +35,8 @@ export default async function BlueprintPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
 
       {blueprintUrl ? (
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-10 text-center">
-          <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
-            <span className="text-[#C9A227] text-2xl">◈</span>
-          </div>
-          <h2 className="text-white font-serif text-xl mb-3">Your Blueprint Is Ready</h2>
-          <p className="text-[#555] text-sm leading-relaxed max-w-sm mx-auto mb-8">
-            Gogo has mapped out your full 12-month business plan. Review it anytime — this is your roadmap.
-          </p>
-          <a
-            href={blueprintUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-[#C9A227] text-[#0D0D0D] font-bold text-sm px-8 py-3 rounded hover:bg-[#d4ac2d] transition-colors"
-          >
-            Open Blueprint ↗
-          </a>
-          <p className="text-[#333] text-xs mt-4">Opens in a new tab</p>
-        </div>
+        /* Auto-opens blueprint in new tab on mount, shows button as fallback */
+        <BlueprintOpener blueprintUrl={blueprintUrl} />
       ) : (
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-10 text-center">
           <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
@@ -66,7 +50,6 @@ export default async function BlueprintPage() {
         </div>
       )}
 
-      {/* Footer quote */}
       <div className="mt-10 text-center">
         <div className="h-px bg-gradient-to-r from-transparent via-[#2A2A2A] to-transparent mb-6" />
         <p className="text-[#C9A227] font-serif italic text-sm">

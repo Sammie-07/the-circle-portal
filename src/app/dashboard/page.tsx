@@ -38,9 +38,12 @@ export default async function DashboardPage() {
   const reports = (member.reports ?? []).filter((r: { sent_at: string | null }) => r.sent_at)
   const total = logs.length
   const attended = logs.filter((l: { showed_up: boolean }) => l.showed_up).length
-  const homeworkDone = logs.filter((l: { homework_done: boolean }) => l.homework_done).length
   const attendanceRate = total > 0 ? Math.round((attended / total) * 100) : null
-  const homeworkRate = total > 0 ? Math.round((homeworkDone / total) * 100) : null
+
+  const allTasks = homeworkData ?? []
+  const taskTotal = allTasks.length
+  const tasksDone = allTasks.filter(t => t.completed).length
+  const homeworkRate = taskTotal > 0 ? Math.round((tasksDone / taskTotal) * 100) : null
 
   const latestReport = reports[0] ?? null
 
@@ -79,7 +82,7 @@ export default async function DashboardPage() {
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-5">
           <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Homework</p>
           <p className="text-white font-serif text-3xl">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
-          <p className="text-[#555] text-xs mt-2">{homeworkDone} of {total} weeks complete</p>
+          <p className="text-[#555] text-xs mt-2">{tasksDone} of {taskTotal} tasks complete</p>
           <div className="mt-3 h-1 bg-[#2A2A2A] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full ${homeworkRate && homeworkRate >= 75 ? 'bg-green-500' : homeworkRate && homeworkRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
