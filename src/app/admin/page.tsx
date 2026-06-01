@@ -5,17 +5,13 @@ import InviteMemberButton from '@/components/admin/InviteMemberButton'
 export default async function AdminMembersPage() {
   const supabase = await createClient()
 
-  // Fetch all members with their last 4 weeks of logs
+  // Fetch all members with logs + homework tasks
   const { data: members } = await supabase
     .from('members')
     .select(`
       *,
-      weekly_logs (
-        week_of,
-        showed_up,
-        homework_done,
-        questions_asked
-      )
+      weekly_logs ( week_of, showed_up, homework_done, questions_asked ),
+      homework ( id, completed )
     `)
     .order('join_date', { ascending: false })
 
@@ -23,14 +19,17 @@ export default async function AdminMembersPage() {
     const logs = m.weekly_logs ?? []
     const total = logs.length
     const attended = logs.filter((l: { showed_up: boolean }) => l.showed_up).length
-    const homework = logs.filter((l: { homework_done: boolean }) => l.homework_done).length
+
+    const tasks = m.homework ?? []
+    const taskTotal = tasks.length
+    const tasksDone = tasks.filter((t: { completed: boolean }) => t.completed).length
 
     return {
       ...m,
       calls_total: total,
       calls_attended: attended,
       attendance_rate: total > 0 ? Math.round((attended / total) * 100) : null,
-      homework_rate: total > 0 ? Math.round((homework / total) * 100) : null,
+      homework_rate: taskTotal > 0 ? Math.round((tasksDone / taskTotal) * 100) : null,
       last_active: logs[0]?.week_of ?? null,
     }
   })
