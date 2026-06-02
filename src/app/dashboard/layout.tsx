@@ -10,9 +10,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  // Use service role to bypass RLS — guaranteed to return the real role
-  const adminDb = createAdminClient()
-  const { data: profile } = await adminDb
+  // Regular client is fine for own profile — auth.uid() = id policy always allows it
+  const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name')
     .eq('id', user.id)
