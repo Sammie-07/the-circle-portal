@@ -4,6 +4,7 @@ import WeeklyLogForm from '@/components/admin/WeeklyLogForm'
 import MemberReportPanel from '@/components/admin/MemberReportPanel'
 import BlueprintPanel from '@/components/admin/BlueprintPanel'
 import HomeworkPanel from '@/components/admin/HomeworkPanel'
+import SendInviteButton from '@/components/admin/SendInviteButton'
 import Link from 'next/link'
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -70,9 +71,12 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             <h1 className="text-white font-serif text-3xl mb-1">{member.name}</h1>
             <p className="text-[#555] text-sm">{member.email}</p>
           </div>
-          <div className="text-right">
+          <div className="text-right space-y-2">
             <p className={`text-sm font-medium ${health.color}`}>{health.label}</p>
-            <p className="text-[#555] text-xs mt-1">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+            <p className="text-[#555] text-xs">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+            {member.email && (
+              <SendInviteButton email={member.email} memberName={member.name} />
+            )}
           </div>
         </div>
       </div>

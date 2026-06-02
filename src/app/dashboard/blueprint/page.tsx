@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import BlueprintOpener from '@/components/dashboard/BlueprintOpener'
 
+
 export default async function BlueprintPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
