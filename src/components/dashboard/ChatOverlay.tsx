@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 interface Session {
   id: string
@@ -334,15 +335,16 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                   <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex-shrink-0 flex items-center justify-center mt-0.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
                   </div>
-                  <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#E0E0E0] leading-relaxed whitespace-pre-wrap">
-                    {streamingText || (
+                  <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#E0E0E0]">
+                    {streamingText ? (
+                      <MarkdownContent content={streamingText} />
+                    ) : (
                       <span className="flex items-center gap-1.5 text-[#555]">
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse" />
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse [animation-delay:150ms]" />
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse [animation-delay:300ms]" />
                       </span>
                     )}
-                    {streamingText && <span className="inline-block w-0.5 h-4 bg-[#C9A227] ml-0.5 animate-pulse align-middle" />}
                   </div>
                 </div>
               )}
@@ -394,6 +396,38 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
   )
 }
 
+function MarkdownContent({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+        strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        ul: ({ children }) => <ul className="mb-3 space-y-1 list-none">{children}</ul>,
+        ol: ({ children }) => <ol className="mb-3 space-y-1 list-none counter-reset-[item]">{children}</ol>,
+        li: ({ children }) => (
+          <li className="flex gap-2 items-start">
+            <span className="text-[#C9A227] mt-0.5 flex-shrink-0">·</span>
+            <span>{children}</span>
+          </li>
+        ),
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-2 border-[#C9A227] pl-3 my-3 text-[#aaa] italic">
+            {children}
+          </blockquote>
+        ),
+        h1: ({ children }) => <h1 className="text-white font-semibold text-base mb-2 mt-3 first:mt-0">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-white font-semibold text-sm mb-2 mt-3 first:mt-0">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-[#C9A227] font-semibold text-sm mb-1 mt-3 first:mt-0">{children}</h3>,
+        code: ({ children }) => <code className="bg-[#0D0D0D] text-[#C9A227] px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+        hr: () => <hr className="border-[#2A2A2A] my-3" />,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  )
+}
+
 function MessageBubble({ message }: { message: Message }) {
   if (message.role === 'user') {
     return (
@@ -410,8 +444,8 @@ function MessageBubble({ message }: { message: Message }) {
       <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex-shrink-0 flex items-center justify-center mt-0.5">
         <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
       </div>
-      <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#E0E0E0] leading-relaxed whitespace-pre-wrap">
-        {message.content}
+      <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#E0E0E0]">
+        <MarkdownContent content={message.content} />
       </div>
     </div>
   )
