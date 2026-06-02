@@ -26,7 +26,7 @@ export async function GET(request: Request) {
           })
         }
 
-        if (['owner', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) {
+        if (['owner', 'tech', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) {
           return NextResponse.redirect(`${origin}/admin`)
         }
         return NextResponse.redirect(`${origin}/dashboard`)
