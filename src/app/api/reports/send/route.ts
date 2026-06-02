@@ -112,7 +112,7 @@ export async function POST(request: Request) {
         },
       ],
       from: {
-        email: process.env.SENDGRID_FROM_EMAIL ?? 'adriana@gogosrealestate.com',
+        email: process.env.SENDGRID_FROM_EMAIL ?? 'admin@gogosrealestate.com',
         name: 'The Circle · Gogo Bethke',
       },
       subject,
