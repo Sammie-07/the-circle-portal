@@ -178,8 +178,10 @@ ${brainContext
         })
 
         claudeStream.on('text', (text: string) => {
-          fullResponse += text
-          controller.enqueue(new TextEncoder().encode(text))
+          // Hard-strip em dashes at the stream level — no exceptions
+          const clean = text.replace(/—/g, ',').replace(/--/g, ',')
+          fullResponse += clean
+          controller.enqueue(new TextEncoder().encode(clean))
         })
 
         await claudeStream.finalMessage()
