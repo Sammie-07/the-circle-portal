@@ -69,6 +69,16 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
     }
   }
 
+  async function deleteSession(e: React.MouseEvent, sessionId: string) {
+    e.stopPropagation()
+    await fetch(`/api/chat/sessions/${sessionId}`, { method: 'DELETE' })
+    setSessions(prev => prev.filter(s => s.id !== sessionId))
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(null)
+      setMessages([])
+    }
+  }
+
   async function openSession(sessionId: string) {
     setActiveSessionId(sessionId)
     setLoadingMessages(true)
@@ -225,22 +235,31 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
             <p className="text-[#444] text-xs px-4 py-3">No chats yet</p>
           ) : (
             sessions.map(session => (
-              <button
+              <div
                 key={session.id}
                 onClick={() => openSession(session.id)}
-                className={`w-full text-left px-4 py-3 transition-all group ${
+                className={`w-full text-left px-4 py-3 transition-all group cursor-pointer flex items-start justify-between gap-2 ${
                   activeSessionId === session.id
                     ? 'bg-[#C9A227]/10 border-l-2 border-[#C9A227]'
                     : 'border-l-2 border-transparent hover:bg-[#1A1A1A] hover:border-[#333]'
                 }`}
               >
-                <p className={`text-xs truncate leading-snug ${
-                  activeSessionId === session.id ? 'text-[#C9A227]' : 'text-[#888] group-hover:text-white'
-                }`}>
-                  {session.title}
-                </p>
-                <p className="text-[#444] text-[10px] mt-0.5">{formatDate(session.updated_at)}</p>
-              </button>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-xs truncate leading-snug ${
+                    activeSessionId === session.id ? 'text-[#C9A227]' : 'text-[#888] group-hover:text-white'
+                  }`}>
+                    {session.title}
+                  </p>
+                  <p className="text-[#444] text-[10px] mt-0.5">{formatDate(session.updated_at)}</p>
+                </div>
+                <button
+                  onClick={(e) => deleteSession(e, session.id)}
+                  className="opacity-0 group-hover:opacity-100 text-[#444] hover:text-[#CC1F1F] transition-all flex-shrink-0 text-xs leading-none p-0.5"
+                  title="Delete chat"
+                >
+                  ✕
+                </button>
+              </div>
             ))
           )}
         </div>
