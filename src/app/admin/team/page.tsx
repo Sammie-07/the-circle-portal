@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import InviteAdminButton from '@/components/admin/InviteAdminButton'
 import RemoveTeamMemberButton from '@/components/admin/RemoveTeamMemberButton'
@@ -28,8 +29,9 @@ export default async function AdminTeamPage() {
   const canManageTeam = ['owner', 'tech', 'admin'].includes(currentProfile?.role ?? '')
   const isSuperUser = ['owner', 'tech'].includes(currentProfile?.role ?? '') // can manage admins too
 
-  // All team members (everyone except regular members)
-  const { data: teamMembers } = await supabase
+  // Use service role to read all team profiles — regular RLS only allows own row
+  const adminDb = createAdminClient()
+  const { data: teamMembers } = await adminDb
     .from('profiles')
     .select('id, email, role, full_name, created_at')
     .in('role', ['owner', 'tech', 'admin', 'manager', 'support'])
