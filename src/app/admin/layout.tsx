@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .single()
 
   if (!profile?.role || !['owner', 'tech', 'admin', 'manager', 'support'].includes(profile.role)) {
-    redirect('/dashboard')
+    redirect('/login')  // Never redirect to /dashboard — that would create a loop
   }
 
   return (
