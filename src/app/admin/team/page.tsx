@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import InviteAdminButton from '@/components/admin/InviteAdminButton'
 
 export default async function AdminTeamPage() {
   const supabase = await createClient()
@@ -39,9 +40,14 @@ export default async function AdminTeamPage() {
   return (
     <div className="p-8 max-w-3xl">
       <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-        <h1 className="text-white font-serif text-3xl">Team & Profiles</h1>
-        <p className="text-[#555] text-sm mt-1">People with admin access to The Circle portal.</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
+            <h1 className="text-white font-serif text-3xl">Team & Profiles</h1>
+            <p className="text-[#555] text-sm mt-1">People with admin access to The Circle portal.</p>
+          </div>
+          <InviteAdminButton />
+        </div>
       </div>
 
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
@@ -97,12 +103,6 @@ export default async function AdminTeamPage() {
             ))}
           </div>
         </div>
-      )}
-
-      {trulyPending.length === 0 && allAdmins.length > 0 && (
-        <p className="text-[#333] text-xs">
-          To add a new admin, use the + Add Member button on the Members page and select Admin Access.
-        </p>
       )}
     </div>
   )

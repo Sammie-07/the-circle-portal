@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 
-export default function InviteMemberButton() {
+export default function InviteAdminButton() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [cohort, setCohort] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -14,7 +13,6 @@ export default function InviteMemberButton() {
   function reset() {
     setName('')
     setEmail('')
-    setCohort('')
     setError('')
     setSuccess(false)
   }
@@ -25,10 +23,10 @@ export default function InviteMemberButton() {
     setError('')
 
     try {
-      const res = await fetch('/api/members', {
+      const res = await fetch('/api/admin-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, cohort: cohort || undefined }),
+        body: JSON.stringify({ name, email }),
       })
 
       const data = await res.json()
@@ -53,7 +51,7 @@ export default function InviteMemberButton() {
         onClick={() => setOpen(true)}
         className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
       >
-        + Add Member
+        + Invite Admin
       </button>
 
       {open && (
@@ -61,16 +59,16 @@ export default function InviteMemberButton() {
           <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-white font-serif text-xl">Add Member</h2>
-                <p className="text-[#555] text-xs mt-1">Creates their profile. No email sent — you control when they get portal access.</p>
+                <h2 className="text-white font-serif text-xl">Invite Admin</h2>
+                <p className="text-[#555] text-xs mt-1">Sends a login link immediately. They'll have full admin access.</p>
               </div>
               <button onClick={() => { setOpen(false); reset() }} className="text-[#555] hover:text-white text-lg">✕</button>
             </div>
 
             {success ? (
               <div className="text-center py-8">
-                <p className="text-[#C9A227] font-serif text-lg">Member added ✓</p>
-                <p className="text-[#888] text-sm mt-1">Go to their page to build out their backend, then send portal access.</p>
+                <p className="text-[#C9A227] font-serif text-lg">Admin invited ✓</p>
+                <p className="text-[#888] text-sm mt-1">Login link sent to {email}. They'll have full admin access.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,8 +77,7 @@ export default function InviteMemberButton() {
                   <input
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    required
-                    placeholder="Christine Polizzi"
+                    placeholder="Adriana Martinez"
                     className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A227]"
                   />
                 </div>
@@ -95,15 +92,6 @@ export default function InviteMemberButton() {
                     className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A227]"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs text-[#888] uppercase tracking-wider mb-1.5">Cohort <span className="text-[#444]">(optional)</span></label>
-                  <input
-                    value={cohort}
-                    onChange={e => setCohort(e.target.value)}
-                    placeholder="May 2026"
-                    className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A227]"
-                  />
-                </div>
 
                 {error && <p className="text-[#CC1F1F] text-xs">{error}</p>}
 
@@ -114,7 +102,7 @@ export default function InviteMemberButton() {
                   </button>
                   <button type="submit" disabled={loading}
                     className="flex-1 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
-                    {loading ? 'Adding…' : 'Add Member'}
+                    {loading ? 'Sending…' : 'Send Login Link'}
                   </button>
                 </div>
               </form>
