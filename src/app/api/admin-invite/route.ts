@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!['owner', 'admin'].includes(profile?.role ?? '')) {
+  if (!['owner', 'tech', 'admin'].includes(profile?.role ?? '')) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 
@@ -50,7 +50,7 @@ export async function DELETE(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!['owner', 'admin'].includes(profile?.role ?? '')) {
+  if (!['owner', 'tech', 'admin'].includes(profile?.role ?? '')) {
     return NextResponse.json({ error: 'Admin only' }, { status: 403 })
   }
 

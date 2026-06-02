@@ -277,7 +277,7 @@ export async function GET(request: Request) {
   const { data: admins } = await supabase
     .from('profiles')
     .select('email')
-    .in('role', ['owner', 'admin', 'manager'])
+    .in('role', ['owner', 'tech', 'admin', 'manager'])
 
   const adminEmails: Promise<unknown>[] = []
 

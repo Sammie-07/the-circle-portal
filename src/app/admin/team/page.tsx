@@ -6,6 +6,7 @@ import ChangeRoleButton from '@/components/admin/ChangeRoleButton'
 
 const ROLE_META: Record<string, { label: string; color: string; description: string }> = {
   owner:   { label: 'Owner',   color: 'text-[#CC1F1F]',   description: 'Full control. Cannot be removed.' },
+  tech:    { label: 'Tech',    color: 'text-purple-400',  description: 'Full access + can manage all team members including admins.' },
   admin:   { label: 'Admin',   color: 'text-[#C9A227]',   description: 'Full access — members, blueprints, reports, team.' },
   manager: { label: 'Manager', color: 'text-blue-400',    description: 'Logs, homework, reports. No team or blueprint access.' },
   support: { label: 'Support', color: 'text-[var(--text-2)]', description: 'View-only access to member profiles and logs.' },
@@ -20,18 +21,18 @@ export default async function AdminTeamPage() {
   const { data: currentProfile } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
 
-  if (!['owner', 'admin', 'manager', 'support'].includes(currentProfile?.role ?? '')) {
+  if (!['owner', 'tech', 'admin', 'manager', 'support'].includes(currentProfile?.role ?? '')) {
     redirect('/dashboard')
   }
 
-  const canManageTeam = ['owner', 'admin'].includes(currentProfile?.role ?? '')
-  const isOwner = currentProfile?.role === 'owner'
+  const canManageTeam = ['owner', 'tech', 'admin'].includes(currentProfile?.role ?? '')
+  const isSuperUser = ['owner', 'tech'].includes(currentProfile?.role ?? '') // can manage admins too
 
   // All team members (everyone except regular members)
   const { data: teamMembers } = await supabase
     .from('profiles')
     .select('id, email, role, full_name, created_at')
-    .in('role', ['owner', 'admin', 'manager', 'support'])
+    .in('role', ['owner', 'tech', 'admin', 'manager', 'support'])
     .order('created_at', { ascending: true })
 
   // Pending invites not yet accepted
@@ -54,6 +55,7 @@ export default async function AdminTeamPage() {
             <p className="text-[var(--text-3)] text-sm mt-1">{team.length} team member{team.length !== 1 ? 's' : ''} with portal access.</p>
           </div>
           {canManageTeam && <InviteAdminButton />}
+
         </div>
       </div>
 
@@ -76,9 +78,9 @@ export default async function AdminTeamPage() {
           {team.map((member) => {
             const meta = ROLE_META[member.role] ?? ROLE_META.support
             const isYou = member.id === user.id
-            // Admins are protected — only owner can remove or change admin roles
-            const canRemove = canManageTeam && !isYou && member.role !== 'owner' && (member.role !== 'admin' || isOwner)
-            const canEditRole = canManageTeam && !isYou && member.role !== 'owner' && (member.role !== 'admin' || isOwner)
+            // Tech + Owner can manage everyone. Admins can only manage manager/support.
+            const canRemove = canManageTeam && !isYou && member.role !== 'owner' && (member.role !== 'tech') && (member.role !== 'admin' || isSuperUser)
+            const canEditRole = canManageTeam && !isYou && member.role !== 'owner' && (member.role !== 'tech') && (member.role !== 'admin' || isSuperUser)
             return (
               <div
                 key={member.id}
@@ -104,7 +106,7 @@ export default async function AdminTeamPage() {
                     <ChangeRoleButton
                       profileId={member.id}
                       currentRole={member.role as 'admin' | 'manager' | 'support'}
-                      canChangeAdmins={isOwner}
+                      canChangeAdmins={isSuperUser}
                     />
                   )}
                   {canRemove && (

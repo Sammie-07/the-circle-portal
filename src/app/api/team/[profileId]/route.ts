@@ -15,7 +15,7 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!['owner', 'admin'].includes(me?.role ?? '')) {
+  if (!['owner', 'tech', 'admin'].includes(me?.role ?? '')) {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
 
@@ -28,9 +28,9 @@ export async function PATCH(
   const { data: target } = await supabase.from('profiles').select('role').eq('id', profileId).single()
   if (!target) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
-  // Only owner can change an admin's role
-  if (target.role === 'admin' && me?.role !== 'owner') {
-    return NextResponse.json({ error: 'Only the owner can change an admin\'s role' }, { status: 403 })
+  // Only owner/tech can change an admin's role
+  if (target.role === 'admin' && !['owner', 'tech'].includes(me?.role ?? '')) {
+    return NextResponse.json({ error: 'Only owner or tech can change an admin role' }, { status: 403 })
   }
 
   // Cannot change owner's role

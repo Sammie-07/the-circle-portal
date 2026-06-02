@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single()
 
   // All team roles go to the admin portal
-  if (['owner', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/admin')
+  if (['owner', 'tech', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/admin')
 
   const { data: member } = await supabase
     .from('members')

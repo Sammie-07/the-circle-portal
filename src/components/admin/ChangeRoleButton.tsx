@@ -13,7 +13,7 @@ const ROLE_LABELS: Record<TeamRole, string> = {
 interface Props {
   profileId: string
   currentRole: TeamRole
-  canChangeAdmins: boolean // only owner can change admin roles
+  canChangeAdmins: boolean // only owner/tech can change admin roles
 }
 
 export default function ChangeRoleButton({ profileId, currentRole, canChangeAdmins }: Props) {
