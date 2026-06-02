@@ -7,7 +7,6 @@ import ChangeRoleButton from '@/components/admin/ChangeRoleButton'
 
 const ROLE_META: Record<string, { label: string; color: string; description: string }> = {
   owner:   { label: 'Owner',   color: 'text-[#CC1F1F]',   description: 'Full control. Cannot be removed.' },
-  tech:    { label: 'Tech',    color: 'text-purple-400',  description: 'Full access + can manage all team members including admins.' },
   admin:   { label: 'Admin',   color: 'text-[#C9A227]',   description: 'Full access — members, blueprints, reports, team.' },
   manager: { label: 'Manager', color: 'text-blue-400',    description: 'Logs, homework, reports. No team or blueprint access.' },
   support: { label: 'Support', color: 'text-[var(--text-2)]', description: 'View-only access to member profiles and logs.' },
