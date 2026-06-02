@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 
@@ -8,16 +9,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/login')
 
-  const { data: roleData } = await supabase.rpc('get_my_role')
-  const role = roleData as string | null
-
-  if (!role || !['owner', 'tech', 'admin', 'manager', 'support'].includes(role)) redirect('/dashboard')
-
-  const { data: profile } = await supabase
+  // Use service role to bypass RLS — guaranteed to return the real role
+  const adminDb = createAdminClient()
+  const { data: profile } = await adminDb
     .from('profiles')
-    .select('full_name')
+    .select('role, full_name')
     .eq('id', user.id)
     .single()
+
+  if (!profile?.role || !['owner', 'tech', 'admin', 'manager', 'support'].includes(profile.role)) {
+    redirect('/dashboard')
+  }
 
   return (
     <div className="flex min-h-screen">
