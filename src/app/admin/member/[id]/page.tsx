@@ -6,6 +6,7 @@ import BlueprintPanel from '@/components/admin/BlueprintPanel'
 import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
+import SigninLinkButton from '@/components/admin/SigninLinkButton'
 import Link from 'next/link'
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -79,6 +80,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
               <SendInviteButton email={member.email} memberName={member.name} />
             )}
             <CheckinLinkButton memberId={id} />
+            {member.email && <SigninLinkButton email={member.email} />}
           </div>
         </div>
       </div>

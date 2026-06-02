@@ -37,7 +37,7 @@ export default function CheckinLinkButton({ memberId }: { memberId: string }) {
         {status === 'loading' ? 'Generating…'
           : status === 'copied' ? '✓ Link Copied'
           : status === 'error' ? 'Error — try again'
-          : '⟳ Copy Check-In Link'}
+          : '⟳ Copy Weekly Check-In Link'}
       </button>
       {url && status === 'idle' && (
         <button
