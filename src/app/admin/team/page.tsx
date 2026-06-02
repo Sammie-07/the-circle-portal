@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import InviteAdminButton from '@/components/admin/InviteAdminButton'
 import RemoveTeamMemberButton from '@/components/admin/RemoveTeamMemberButton'
+import ChangeRoleButton from '@/components/admin/ChangeRoleButton'
 
 const ROLE_META: Record<string, { label: string; color: string; description: string }> = {
   owner:   { label: 'Owner',   color: 'text-[#CC1F1F]',   description: 'Full control. Cannot be removed.' },
@@ -24,6 +25,7 @@ export default async function AdminTeamPage() {
   }
 
   const canManageTeam = ['owner', 'admin'].includes(currentProfile?.role ?? '')
+  const isOwner = currentProfile?.role === 'owner'
 
   // All team members (everyone except regular members)
   const { data: teamMembers } = await supabase
@@ -74,7 +76,9 @@ export default async function AdminTeamPage() {
           {team.map((member) => {
             const meta = ROLE_META[member.role] ?? ROLE_META.support
             const isYou = member.id === user.id
-            const canRemove = canManageTeam && !isYou && member.role !== 'owner'
+            // Admins are protected — only owner can remove or change admin roles
+            const canRemove = canManageTeam && !isYou && member.role !== 'owner' && (member.role !== 'admin' || isOwner)
+            const canEditRole = canManageTeam && !isYou && member.role !== 'owner' && (member.role !== 'admin' || isOwner)
             return (
               <div
                 key={member.id}
@@ -96,6 +100,13 @@ export default async function AdminTeamPage() {
                   <span className={`text-xs font-semibold uppercase tracking-wider ${meta.color}`}>
                     {meta.label}
                   </span>
+                  {canEditRole && (
+                    <ChangeRoleButton
+                      profileId={member.id}
+                      currentRole={member.role as 'admin' | 'manager' | 'support'}
+                      canChangeAdmins={isOwner}
+                    />
+                  )}
                   {canRemove && (
                     <RemoveTeamMemberButton profileId={member.id} email={member.email} name={member.full_name || member.email} />
                   )}
