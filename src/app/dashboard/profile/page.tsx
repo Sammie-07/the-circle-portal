@@ -19,8 +19,8 @@ export default async function ProfilePage() {
     <div className="p-8 max-w-2xl">
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Account</p>
-        <h1 className="text-white font-serif text-3xl">My Profile</h1>
-        <p className="text-[#555] text-sm mt-1">
+        <h1 className="text-[var(--text)] font-serif text-3xl">My Profile</h1>
+        <p className="text-[var(--text-3)] text-sm mt-1">
           {member.cohort ?? 'The Circle'} · Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         </p>
       </div>

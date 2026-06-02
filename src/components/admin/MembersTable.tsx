@@ -17,7 +17,7 @@ interface MemberRow {
 }
 
 function HealthDot({ rate }: { rate: number | null }) {
-  if (rate === null) return <span className="w-2 h-2 rounded-full bg-[#2A2A2A] inline-block" />
+  if (rate === null) return <span className="w-2 h-2 rounded-full bg-[var(--border-color)] inline-block" />
   if (rate >= 75) return <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
   if (rate >= 50) return <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />
   return <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
@@ -39,24 +39,24 @@ function StatusBadge({ status }: { status: string }) {
 export default function MembersTable({ members }: { members: MemberRow[] }) {
   if (members.length === 0) {
     return (
-      <div className="text-center py-20 border border-dashed border-[#2A2A2A] rounded">
-        <p className="text-[#555] text-sm">No members yet.</p>
-        <p className="text-[#444] text-xs mt-1">Use the Invite Member button to add your first Circle member.</p>
+      <div className="text-center py-20 border border-dashed border-[var(--border-color)] rounded">
+        <p className="text-[var(--text-3)] text-sm">No members yet.</p>
+        <p className="text-[var(--text-4)] text-xs mt-1">Use the Invite Member button to add your first Circle member.</p>
       </div>
     )
   }
 
   return (
-    <div className="border border-[#2A2A2A] rounded overflow-hidden">
+    <div className="border border-[var(--border-color)] rounded overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[#2A2A2A] bg-[#111]">
-            <th className="text-left px-5 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Member</th>
-            <th className="text-left px-4 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Status</th>
-            <th className="text-left px-4 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Cohort</th>
-            <th className="text-left px-4 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Attendance</th>
-            <th className="text-left px-4 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Homework</th>
-            <th className="text-left px-4 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Health</th>
+          <tr className="border-b border-[var(--border-color)] bg-[var(--surface-2)]">
+            <th className="text-left px-5 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Member</th>
+            <th className="text-left px-4 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Status</th>
+            <th className="text-left px-4 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Cohort</th>
+            <th className="text-left px-4 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Attendance</th>
+            <th className="text-left px-4 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Homework</th>
+            <th className="text-left px-4 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Health</th>
             <th className="px-4 py-3" />
           </tr>
         </thead>
@@ -64,30 +64,30 @@ export default function MembersTable({ members }: { members: MemberRow[] }) {
           {members.map((member, i) => (
             <tr
               key={member.id}
-              className={`border-b border-[#2A2A2A] hover:bg-[#1A1A1A]/50 transition-colors ${i === members.length - 1 ? 'border-b-0' : ''}`}
+              className={`border-b border-[var(--border-color)] hover:bg-[var(--surface)]/50 transition-colors ${i === members.length - 1 ? 'border-b-0' : ''}`}
             >
               <td className="px-5 py-4">
-                <p className="text-white font-medium">{member.name}</p>
-                <p className="text-[#555] text-xs mt-0.5">{member.email}</p>
+                <p className="text-[var(--text)] font-medium">{member.name}</p>
+                <p className="text-[var(--text-3)] text-xs mt-0.5">{member.email}</p>
               </td>
               <td className="px-4 py-4">
                 <StatusBadge status={member.status} />
               </td>
-              <td className="px-4 py-4 text-[#888] text-xs">
+              <td className="px-4 py-4 text-[var(--text-2)] text-xs">
                 {member.cohort ?? '—'}
               </td>
               <td className="px-4 py-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-white text-sm">
+                  <span className="text-[var(--text)] text-sm">
                     {member.calls_total > 0 ? `${member.calls_attended}/${member.calls_total}` : '—'}
                   </span>
                   {member.attendance_rate !== null && (
-                    <span className="text-[#555] text-xs">({member.attendance_rate}%)</span>
+                    <span className="text-[var(--text-3)] text-xs">({member.attendance_rate}%)</span>
                   )}
                 </div>
               </td>
               <td className="px-4 py-4">
-                <span className="text-white text-sm">
+                <span className="text-[var(--text)] text-sm">
                   {member.homework_rate !== null ? `${member.homework_rate}%` : '—'}
                 </span>
               </td>

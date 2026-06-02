@@ -193,10 +193,10 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
     <div className="space-y-4">
 
       {/* ─── Generate card ─── */}
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-5">
+      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
         <div className="mb-4">
           <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-1">Generate Report</p>
-          <p className="text-[#555] text-xs">Uses The Brain + activity data to write a progress report in Gogo&apos;s voice.</p>
+          <p className="text-[var(--text-3)] text-xs">Uses The Brain + activity data to write a progress report in Gogo&apos;s voice.</p>
         </div>
 
         {/* Period type selector */}
@@ -209,7 +209,7 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
                 className={`flex-1 py-2 text-xs rounded border transition-all ${
                   periodType === type
                     ? 'bg-[#C9A227]/10 border-[#C9A227]/40 text-[#C9A227]'
-                    : 'bg-[#0D0D0D] border-[#2A2A2A] text-[#555] hover:border-[#444] hover:text-[#888]'
+                    : 'bg-[var(--input-bg)] border-[var(--border-color)] text-[var(--text-3)] hover:border-[var(--border-hover)] hover:text-[var(--text-2)]'
                 }`}
               >
                 {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -222,10 +222,10 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
         {generating && (
           <div className="mb-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-white text-sm font-medium">{progressLabel}</span>
+              <span className="text-[var(--text)] text-sm font-medium">{progressLabel}</span>
               <span className="text-[#C9A227] text-sm font-mono font-bold">{progress}%</span>
             </div>
-            <div className="h-2 bg-[#0D0D0D] border border-[#333] rounded-full overflow-hidden">
+            <div className="h-2 bg-[var(--bg)] border border-[var(--border-hover)] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#C9A227] rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${progress}%` }}
@@ -264,20 +264,20 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
       {/* ─── Report history ─── */}
       {reports.length > 0 && (
         <div>
-          <p className="text-[#555] text-[10px] tracking-[0.2em] uppercase mb-2">Report History</p>
+          <p className="text-[var(--text-3)] text-[10px] tracking-[0.2em] uppercase mb-2">Report History</p>
           <div className="space-y-2">
             {reports.map((report) => (
               <div key={report.id}>
-                <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded px-4 py-3 flex items-center justify-between">
+                <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-3 flex items-center justify-between">
                   <div>
-                    <p className="text-white text-sm font-medium">{report.period_label}</p>
+                    <p className="text-[var(--text)] text-sm font-medium">{report.period_label}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[#555] text-xs">
+                      <p className="text-[var(--text-3)] text-xs">
                         Generated {fmtDate(report.generated_at)}
                       </p>
                       {report.sent_at && (
                         <>
-                          <span className="text-[#333]">·</span>
+                          <span className="text-[var(--text-4)]">·</span>
                           <span className="text-green-400 text-xs">Sent {fmtDate(report.sent_at)}</span>
                         </>
                       )}
@@ -286,14 +286,14 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setPreviewId(previewId === report.id ? null : report.id)}
-                      className="text-xs text-[#555] hover:text-[#888] border border-[#2A2A2A] px-2.5 py-1 rounded transition-colors"
+                      className="text-xs text-[var(--text-3)] hover:text-[var(--text-2)] border border-[var(--border-color)] px-2.5 py-1 rounded transition-colors"
                     >
                       {previewId === report.id ? 'Hide' : 'Preview'}
                     </button>
                     <button
                       onClick={() => openRefine(report.id)}
                       disabled={generating}
-                      className="text-xs text-[#555] hover:text-[#888] border border-[#2A2A2A] px-2.5 py-1 rounded transition-colors disabled:opacity-40"
+                      className="text-xs text-[var(--text-3)] hover:text-[var(--text-2)] border border-[var(--border-color)] px-2.5 py-1 rounded transition-colors disabled:opacity-40"
                     >
                       ↺ Regen
                     </button>
@@ -313,18 +313,18 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
 
                 {/* Inline preview */}
                 {previewId === report.id && report.content_html && (
-                  <div className="border border-[#2A2A2A] border-t-0 rounded-b overflow-hidden">
-                    <div className="bg-[#111] px-4 py-2 border-b border-[#2A2A2A] flex items-center justify-between">
-                      <p className="text-[#555] text-xs">Report preview — {report.period_label}</p>
+                  <div className="border border-[var(--border-color)] border-t-0 rounded-b overflow-hidden">
+                    <div className="bg-[var(--surface-2)] px-4 py-2 border-b border-[var(--border-color)] flex items-center justify-between">
+                      <p className="text-[var(--text-3)] text-xs">Report preview — {report.period_label}</p>
                       <button
                         onClick={() => setPreviewId(null)}
-                        className="text-[#444] hover:text-[#888] text-xs transition-colors"
+                        className="text-[var(--text-4)] hover:text-[var(--text-2)] text-xs transition-colors"
                       >
                         ✕
                       </button>
                     </div>
                     <div
-                      className="bg-[#0D0D0D] p-6 max-h-[520px] overflow-y-auto text-sm leading-relaxed"
+                      className="bg-[var(--bg)] p-6 max-h-[520px] overflow-y-auto text-sm leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: report.content_html }}
                     />
                   </div>
@@ -337,46 +337,46 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
 
       {/* Empty state */}
       {reports.length === 0 && !generating && (
-        <p className="text-[#444] text-xs text-center py-4">No reports generated yet.</p>
+        <p className="text-[var(--text-4)] text-xs text-center py-4">No reports generated yet.</p>
       )}
 
       {/* Preview modal for reports without stored HTML (fallback) */}
       {previewId && !previewReport?.content_html && (
-        <p className="text-[#555] text-xs text-center">Preview not available for this report.</p>
+        <p className="text-[var(--text-3)] text-xs text-center">Preview not available for this report.</p>
       )}
 
       {/* ─── Refine / Regenerate modal ─── */}
       {refineReportId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-6 pointer-events-none">
-          <div className="pointer-events-auto w-full max-w-xl bg-[#1A1A1A] border border-[#C9A227]/30 rounded-xl shadow-2xl overflow-hidden">
+          <div className="pointer-events-auto w-full max-w-xl bg-[var(--surface)] border border-[#C9A227]/30 rounded-xl shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className="px-5 py-3.5 bg-[#111] border-b border-[#2A2A2A] flex items-center justify-between">
+            <div className="px-5 py-3.5 bg-[var(--surface-2)] border-b border-[var(--border-color)] flex items-center justify-between">
               <div>
                 <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-0.5">Regenerate Report</p>
-                <p className="text-white text-sm font-medium">
+                <p className="text-[var(--text)] text-sm font-medium">
                   {reports.find(r => r.id === refineReportId)?.period_label}
                 </p>
               </div>
-              <button onClick={closeRefine} className="text-[#444] hover:text-[#888] text-lg transition-colors">✕</button>
+              <button onClick={closeRefine} className="text-[var(--text-4)] hover:text-[var(--text-2)] text-lg transition-colors">✕</button>
             </div>
 
             {/* Feedback textarea */}
             <div className="p-4">
-              <p className="text-[#555] text-xs mb-2">What needs to change? Be specific — Gogo will address every point.</p>
+              <p className="text-[var(--text-3)] text-xs mb-2">What needs to change? Be specific — Gogo will address every point.</p>
               <div className="relative">
                 <textarea
                   value={refineFeedback}
                   onChange={e => setRefineFeedback(e.target.value)}
                   placeholder="e.g. The tone is too soft — push harder on the attendance gap. Also add a note about her Florida team situation."
                   rows={4}
-                  className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#333] text-sm rounded-lg px-4 py-3 pr-24 resize-none focus:outline-none focus:border-[#C9A227]/40 leading-relaxed"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded-lg px-4 py-3 pr-24 resize-none focus:outline-none focus:border-[#C9A227]/40 leading-relaxed"
                 />
                 {/* Upload button inside textarea */}
                 <button
                   type="button"
                   onClick={() => refineFileRef.current?.click()}
                   title="Upload a file to include its content"
-                  className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[#444] hover:text-[#888] text-xs border border-[#2A2A2A] px-2 py-1 rounded transition-colors bg-[#0D0D0D]"
+                  className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[var(--text-4)] hover:text-[var(--text-2)] text-xs border border-[var(--border-color)] px-2 py-1 rounded transition-colors bg-[var(--input-bg)]"
                 >
                   <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                     <path d="M6 8V1M3 4l3-3 3 3M1 10h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -385,13 +385,13 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
                 </button>
               </div>
               {refineUploadLabel && (
-                <p className="text-[#555] text-xs mt-1.5">📎 {refineUploadLabel} appended to feedback</p>
+                <p className="text-[var(--text-3)] text-xs mt-1.5">📎 {refineUploadLabel} appended to feedback</p>
               )}
             </div>
 
             {/* Actions */}
             <div className="px-4 pb-4 flex items-center gap-3">
-              <button onClick={closeRefine} className="text-[#555] text-sm hover:text-[#888] transition-colors">
+              <button onClick={closeRefine} className="text-[var(--text-3)] text-sm hover:text-[var(--text-2)] transition-colors">
                 Cancel
               </button>
               <button

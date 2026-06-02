@@ -58,7 +58,7 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
           ? value
             ? 'bg-green-500/10 border-green-500/40 text-green-400'
             : 'bg-red-500/10 border-red-500/40 text-red-400'
-          : 'bg-[#0D0D0D] border-[#2A2A2A] text-[#555] hover:border-[#444]'
+          : 'bg-[var(--input-bg)] border-[var(--border-color)] text-[var(--text-3)] hover:border-[var(--border-hover)]'
       }`}
     >
       {value ? yes : no}
@@ -66,19 +66,19 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
   )
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 space-y-4">
       <div>
-        <label className="block text-xs text-[#888] uppercase tracking-wider mb-1.5">Week of</label>
+        <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Week of</label>
         <input
           type="date"
           value={weekOf}
           onChange={(e) => setWeekOf(e.target.value)}
-          className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
+          className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
         />
       </div>
 
       <div>
-        <label className="block text-xs text-[#888] uppercase tracking-wider mb-1.5">Showed up to Tuesday call?</label>
+        <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Showed up to Tuesday call?</label>
         <div className="flex gap-2">
           <ToggleButton value={true} active={showedUp} onClick={setShowedUp} yes="✓ Yes" no="" />
           <ToggleButton value={false} active={showedUp} onClick={setShowedUp} yes="" no="✗ No" />
@@ -86,7 +86,7 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
       </div>
 
       <div>
-        <label className="block text-xs text-[#888] uppercase tracking-wider mb-1.5">Homework submitted?</label>
+        <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Homework submitted?</label>
         <div className="flex gap-2">
           <ToggleButton value={true} active={homeworkDone} onClick={setHomeworkDone} yes="✓ Done" no="" />
           <ToggleButton value={false} active={homeworkDone} onClick={setHomeworkDone} yes="" no="✗ Not done" />
@@ -94,24 +94,24 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
       </div>
 
       <div>
-        <label className="block text-xs text-[#888] uppercase tracking-wider mb-1.5">Questions asked</label>
+        <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Questions asked</label>
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => setQuestions(Math.max(0, questions - 1))}
-            className="w-8 h-8 rounded bg-[#0D0D0D] border border-[#2A2A2A] text-white hover:border-[#C9A227] transition-colors">−</button>
-          <span className="text-white font-serif text-xl w-8 text-center">{questions}</span>
+            className="w-8 h-8 rounded bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] hover:border-[#C9A227] transition-colors">−</button>
+          <span className="text-[var(--text)] font-serif text-xl w-8 text-center">{questions}</span>
           <button type="button" onClick={() => setQuestions(questions + 1)}
-            className="w-8 h-8 rounded bg-[#0D0D0D] border border-[#2A2A2A] text-white hover:border-[#C9A227] transition-colors">+</button>
+            className="w-8 h-8 rounded bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] hover:border-[#C9A227] transition-colors">+</button>
         </div>
       </div>
 
       <div>
-        <label className="block text-xs text-[#888] uppercase tracking-wider mb-1.5">Notes <span className="text-[#444]">(optional)</span></label>
+        <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Notes <span className="text-[var(--text-4)]">(optional)</span></label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           placeholder="Any context for this week…"
-          className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227] resize-none"
+          className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227] resize-none"
         />
       </div>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import ThemeProvider from '@/components/shared/ThemeProvider'
 
 export const metadata: Metadata = {
   title: 'The Circle · Member Portal',
@@ -12,9 +13,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="h-full dark">
-      <body className="min-h-full bg-[#0D0D0D] text-[#F5F5F5] antialiased">
-        {children}
+    <html lang="en" className="h-full dark" suppressHydrationWarning>
+      <body className="min-h-full bg-[var(--bg)] text-[var(--text)] antialiased">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

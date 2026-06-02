@@ -43,8 +43,8 @@ export default async function AdminLogPage() {
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-        <h1 className="text-white font-serif text-3xl">Log This Week</h1>
-        <p className="text-[#555] text-sm mt-1">
+        <h1 className="text-[var(--text)] font-serif text-3xl">Log This Week</h1>
+        <p className="text-[var(--text-3)] text-sm mt-1">
           Mark attendance and homework for all active members in one go.
         </p>
       </div>

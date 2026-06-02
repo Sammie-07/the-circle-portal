@@ -26,7 +26,7 @@ function dueBadge(due: string | null) {
   if (days === 0) return { label: 'Due today', cls: 'text-orange-400 border-orange-400/30 bg-orange-400/5' }
   if (days <= 3) return { label: `${days}d left`, cls: 'text-orange-400 border-orange-400/30 bg-orange-400/5' }
   if (days <= 7) return { label: `${days}d left`, cls: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/5' }
-  return { label: new Date(due).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), cls: 'text-[#555] border-[#2A2A2A]' }
+  return { label: new Date(due).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), cls: 'text-[var(--text-3)] border-[var(--border-color)]' }
 }
 
 export default function HomeworkPanel({ memberId }: Props) {
@@ -122,19 +122,19 @@ export default function HomeworkPanel({ memberId }: Props) {
   const done = filtered.filter(i => i.completed)
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-hidden">
+    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[#2A2A2A] flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
         <div>
           <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-0.5">Assignments</p>
-          <p className="text-white text-sm font-medium">Homework & Tasks</p>
+          <p className="text-[var(--text)] text-sm font-medium">Homework & Tasks</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Type filter tabs */}
-          <div className="flex text-xs border border-[#2A2A2A] rounded overflow-hidden">
+          <div className="flex text-xs border border-[var(--border-color)] rounded overflow-hidden">
             {(['all', 'homework', 'task'] as const).map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`px-2.5 py-1 transition-colors ${filter === f ? 'bg-[#C9A227]/10 text-[#C9A227]' : 'text-[#555] hover:text-[#888]'}`}>
+                className={`px-2.5 py-1 transition-colors ${filter === f ? 'bg-[#C9A227]/10 text-[#C9A227]' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}>
                 {f === 'all' ? 'All' : f === 'homework' ? 'Homework' : 'Tasks'}
               </button>
             ))}
@@ -143,7 +143,7 @@ export default function HomeworkPanel({ memberId }: Props) {
             onClick={handleGenerateFromBlueprint}
             disabled={generating}
             title="Auto-generate tasks from this member's blueprint using AI"
-            className="text-xs border border-[#2A2A2A] text-[#555] px-3 py-1.5 rounded hover:text-[#C9A227] hover:border-[#C9A227]/30 transition-colors disabled:opacity-40 flex items-center gap-1.5"
+            className="text-xs border border-[var(--border-color)] text-[var(--text-3)] px-3 py-1.5 rounded hover:text-[#C9A227] hover:border-[#C9A227]/30 transition-colors disabled:opacity-40 flex items-center gap-1.5"
           >
             {generating ? (
               <><span className="inline-block w-3 h-3 border border-[#555] border-t-[#C9A227] rounded-full animate-spin" /> Generating…</>
@@ -172,7 +172,7 @@ export default function HomeworkPanel({ memberId }: Props) {
 
       {/* Add form */}
       {showForm && (
-        <div className="px-5 py-4 bg-[#111] border-b border-[#2A2A2A]">
+        <div className="px-5 py-4 bg-[var(--surface-2)] border-b border-[var(--border-color)]">
           <form onSubmit={handleAdd} className="space-y-3">
             <div className="flex gap-2">
               <input
@@ -180,12 +180,12 @@ export default function HomeworkPanel({ memberId }: Props) {
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="Title…"
                 required
-                className="flex-1 bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
               />
               <select
                 value={form.type}
                 onChange={e => setForm(f => ({ ...f, type: e.target.value as 'homework' | 'task' }))}
-                className="bg-[#0D0D0D] border border-[#2A2A2A] text-[#888] text-xs rounded px-2 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-2 focus:outline-none focus:border-[#C9A227]"
               >
                 <option value="homework">Homework</option>
                 <option value="task">Blueprint Task</option>
@@ -195,19 +195,19 @@ export default function HomeworkPanel({ memberId }: Props) {
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Description (optional)"
-              className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+              className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
             />
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-1">
-                <label className="text-[#555] text-xs whitespace-nowrap">Due date</label>
+                <label className="text-[var(--text-3)] text-xs whitespace-nowrap">Due date</label>
                 <input
                   type="date"
                   value={form.due_date}
                   onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
-                  className="flex-1 bg-[#0D0D0D] border border-[#2A2A2A] text-[#888] text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#C9A227]"
+                  className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#C9A227]"
                 />
               </div>
-              <button type="button" onClick={() => setShowForm(false)} className="text-[#555] text-xs hover:text-[#888]">Cancel</button>
+              <button type="button" onClick={() => setShowForm(false)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)]">Cancel</button>
               <button type="submit" disabled={saving} className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
                 {saving ? 'Saving…' : 'Add'}
               </button>
@@ -219,14 +219,14 @@ export default function HomeworkPanel({ memberId }: Props) {
 
       {/* Items */}
       {loading ? (
-        <div className="px-5 py-8 text-center text-[#444] text-sm">Loading…</div>
+        <div className="px-5 py-8 text-center text-[var(--text-4)] text-sm">Loading…</div>
       ) : filtered.length === 0 ? (
-        <div className="px-5 py-8 text-center text-[#444] text-sm">No {filter === 'all' ? 'items' : filter} yet. Click + Add to create one.</div>
+        <div className="px-5 py-8 text-center text-[var(--text-4)] text-sm">No {filter === 'all' ? 'items' : filter} yet. Click + Add to create one.</div>
       ) : (
         <div>
           {/* Pending */}
           {pending.length > 0 && (
-            <div className="divide-y divide-[#1E1E1E]">
+            <div className="divide-y divide-[var(--border-color)]">
               {pending.map(item => (
                 <ItemRow key={item.id} item={item} editId={editId} editForm={editForm}
                   setEditId={setEditId} setEditForm={setEditForm}
@@ -238,10 +238,10 @@ export default function HomeworkPanel({ memberId }: Props) {
           {/* Done */}
           {done.length > 0 && (
             <div>
-              <div className="px-5 py-2 bg-[#111] border-y border-[#1E1E1E]">
-                <p className="text-[#333] text-[10px] uppercase tracking-wider">Completed ({done.length})</p>
+              <div className="px-5 py-2 bg-[var(--surface-2)] border-y border-[var(--border-color)]">
+                <p className="text-[var(--text-4)] text-[10px] uppercase tracking-wider">Completed ({done.length})</p>
               </div>
-              <div className="divide-y divide-[#1E1E1E] opacity-60">
+              <div className="divide-y divide-[var(--border-color)] opacity-60">
                 {done.map(item => (
                   <ItemRow key={item.id} item={item} editId={editId} editForm={editForm}
                     setEditId={setEditId} setEditForm={setEditForm}
@@ -272,23 +272,23 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
 
   if (isEditing) {
     return (
-      <div className="px-5 py-3 bg-[#0D0D0D] space-y-2">
+      <div className="px-5 py-3 bg-[var(--bg)] space-y-2">
         <div className="flex gap-2">
           <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-            className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] text-white text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
+            className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
           <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value as 'homework' | 'task' })}
-            className="bg-[#1A1A1A] border border-[#2A2A2A] text-[#888] text-xs rounded px-2 py-1.5 focus:outline-none">
+            className="bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none">
             <option value="homework">Homework</option>
             <option value="task">Task</option>
           </select>
         </div>
         <input value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })}
           placeholder="Description"
-          className="w-full bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-[#444] text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
+          className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
         <div className="flex items-center gap-3">
           <input type="date" value={editForm.due_date} onChange={e => setEditForm({ ...editForm, due_date: e.target.value })}
-            className="bg-[#1A1A1A] border border-[#2A2A2A] text-[#888] text-xs rounded px-2 py-1.5 focus:outline-none" />
-          <button onClick={() => setEditId(null)} className="text-[#555] text-xs hover:text-[#888] ml-auto">Cancel</button>
+            className="bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none" />
+          <button onClick={() => setEditId(null)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] ml-auto">Cancel</button>
           <button onClick={() => onEditSave(item.id)} disabled={saving}
             className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">
             {saving ? 'Saving…' : 'Save'}
@@ -299,11 +299,11 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
   }
 
   return (
-    <div className="flex items-start gap-3 px-5 py-3 hover:bg-[#111] transition-colors group">
+    <div className="flex items-start gap-3 px-5 py-3 hover:bg-[var(--surface-2)] transition-colors group">
       {/* Checkbox */}
       <button onClick={() => onToggle(item)}
         className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
-          item.completed ? 'bg-[#C9A227] border-[#C9A227]' : 'border-[#444] hover:border-[#C9A227]/60'
+          item.completed ? 'bg-[#C9A227] border-[#C9A227]' : 'border-[var(--text-4)] hover:border-[#C9A227]/60'
         }`}>
         {item.completed && <span className="text-[#0D0D0D] text-[10px] font-bold leading-none">✓</span>}
       </button>
@@ -311,19 +311,19 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-sm ${item.completed ? 'line-through text-[#444]' : 'text-white'}`}>{item.title}</span>
+          <span className={`text-sm ${item.completed ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>{item.title}</span>
           <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-            item.type === 'task' ? 'text-[#888] border-[#333]' : 'text-[#555] border-[#222]'
+            item.type === 'task' ? 'text-[var(--text-2)] border-[var(--border-hover)]' : 'text-[var(--text-3)] border-[var(--border-color)]'
           }`}>{item.type === 'task' ? 'Blueprint' : 'HW'}</span>
           {badge && !item.completed && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded border ${badge.cls}`}>{badge.label}</span>
           )}
         </div>
         {item.description && (
-          <p className="text-[#555] text-xs mt-0.5 truncate">{item.description}</p>
+          <p className="text-[var(--text-3)] text-xs mt-0.5 truncate">{item.description}</p>
         )}
         {item.completed_at && (
-          <p className="text-[#333] text-[10px] mt-0.5">
+          <p className="text-[var(--text-4)] text-[10px] mt-0.5">
             Done {new Date(item.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </p>
         )}
@@ -332,11 +332,11 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
         <button onClick={() => { setEditId(item.id); setEditForm({ title: item.title, description: item.description ?? '', due_date: item.due_date ?? '', type: item.type }) }}
-          className="text-[#444] hover:text-[#888] text-xs px-1.5 py-1 rounded transition-colors">
+          className="text-[var(--text-4)] hover:text-[var(--text-2)] text-xs px-1.5 py-1 rounded transition-colors">
           Edit
         </button>
         <button onClick={() => onDelete(item.id)}
-          className="text-[#444] hover:text-[#CC1F1F] text-xs px-1.5 py-1 rounded transition-colors">
+          className="text-[var(--text-4)] hover:text-[#CC1F1F] text-xs px-1.5 py-1 rounded transition-colors">
           ✕
         </button>
       </div>

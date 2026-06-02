@@ -60,8 +60,8 @@ export default function ProfileForm({ member, loginEmail }: ProfileFormProps) {
     }
   }
 
-  const inputClass = "w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#444] rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
-  const labelClass = "block text-xs text-[#888] uppercase tracking-wider mb-1.5"
+  const inputClass = "w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
+  const labelClass = "block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5"
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -82,9 +82,9 @@ export default function ProfileForm({ member, loginEmail }: ProfileFormProps) {
         <input
           value={loginEmail}
           readOnly
-          className="w-full bg-[#0D0D0D] border border-[#1A1A1A] text-[#555] rounded px-3 py-2.5 text-sm cursor-not-allowed"
+          className="w-full bg-[var(--input-bg)] border border-[var(--surface)] text-[var(--text-3)] rounded px-3 py-2.5 text-sm cursor-not-allowed"
         />
-        <p className="text-[#444] text-xs mt-1.5">To change your login email, contact your Circle admin.</p>
+        <p className="text-[var(--text-4)] text-xs mt-1.5">To change your login email, contact your Circle admin.</p>
       </div>
 
       {/* Phone */}
@@ -110,13 +110,13 @@ export default function ProfileForm({ member, loginEmail }: ProfileFormProps) {
         />
       </div>
 
-      <div className="h-px bg-[#1A1A1A]" />
+      <div className="h-px bg-[var(--surface)]" />
 
       {/* Instagram */}
       <div>
         <label className={labelClass}>Instagram Handle</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555] text-sm">@</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)] text-sm">@</span>
           <input
             value={instagram}
             onChange={e => setInstagram(e.target.value)}
@@ -138,7 +138,7 @@ export default function ProfileForm({ member, loginEmail }: ProfileFormProps) {
         />
       </div>
 
-      <div className="h-px bg-[#1A1A1A]" />
+      <div className="h-px bg-[var(--surface)]" />
 
       {/* Bio */}
       <div>
@@ -150,7 +150,7 @@ export default function ProfileForm({ member, loginEmail }: ProfileFormProps) {
           placeholder="A few sentences about you, your market, and what you do..."
           className={inputClass + ' resize-none'}
         />
-        <p className="text-[#444] text-xs mt-1.5">{bio.length} characters</p>
+        <p className="text-[var(--text-4)] text-xs mt-1.5">{bio.length} characters</p>
       </div>
 
       {error && (

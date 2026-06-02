@@ -43,8 +43,8 @@ export default async function AdminTeamPage() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-            <h1 className="text-white font-serif text-3xl">Team & Profiles</h1>
-            <p className="text-[#555] text-sm mt-1">People with admin access to The Circle portal.</p>
+            <h1 className="text-[var(--text)] font-serif text-3xl">Team & Profiles</h1>
+            <p className="text-[var(--text-3)] text-sm mt-1">People with admin access to The Circle portal.</p>
           </div>
           <InviteAdminButton />
         </div>
@@ -54,19 +54,19 @@ export default async function AdminTeamPage() {
 
       {/* Active Admins */}
       <div className="mb-8">
-        <h2 className="text-white font-serif text-lg mb-4">Active Admins</h2>
+        <h2 className="text-[var(--text)] font-serif text-lg mb-4">Active Admins</h2>
         <div className="space-y-2">
           {allAdmins.length === 0 && (
-            <p className="text-[#555] text-sm">No admins found.</p>
+            <p className="text-[var(--text-3)] text-sm">No admins found.</p>
           )}
           {allAdmins.map((admin) => (
             <div
               key={admin.id}
-              className="flex items-center justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded px-5 py-3.5"
+              className="flex items-center justify-between bg-[var(--surface)] border border-[var(--border-color)] rounded px-5 py-3.5"
             >
               <div>
-                <p className="text-white text-sm">{admin.email}</p>
-                <p className="text-[#555] text-xs mt-0.5">
+                <p className="text-[var(--text)] text-sm">{admin.email}</p>
+                <p className="text-[var(--text-3)] text-xs mt-0.5">
                   Admin since {new Date(admin.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   {admin.id === user.id && (
                     <span className="ml-2 text-[#C9A227]">· You</span>
@@ -82,23 +82,23 @@ export default async function AdminTeamPage() {
       {/* Pending Invites */}
       {trulyPending.length > 0 && (
         <div>
-          <h2 className="text-white font-serif text-lg mb-4">Pending Invites</h2>
-          <p className="text-[#555] text-xs mb-3">
+          <h2 className="text-[var(--text)] font-serif text-lg mb-4">Pending Invites</h2>
+          <p className="text-[var(--text-3)] text-xs mb-3">
             These emails have been sent a login link but haven't logged in yet.
           </p>
           <div className="space-y-2">
             {trulyPending.map((inv) => (
               <div
                 key={inv.email}
-                className="flex items-center justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded px-5 py-3.5 opacity-70"
+                className="flex items-center justify-between bg-[var(--surface)] border border-[var(--border-color)] rounded px-5 py-3.5 opacity-70"
               >
                 <div>
-                  <p className="text-white text-sm">{inv.email}</p>
-                  <p className="text-[#555] text-xs mt-0.5">
+                  <p className="text-[var(--text)] text-sm">{inv.email}</p>
+                  <p className="text-[var(--text-3)] text-xs mt-0.5">
                     Invited {new Date(inv.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
-                <span className="text-[#555] text-xs tracking-wider uppercase">◇ Pending</span>
+                <span className="text-[var(--text-3)] text-xs tracking-wider uppercase">◇ Pending</span>
               </div>
             ))}
           </div>

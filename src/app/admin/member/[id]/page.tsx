@@ -48,7 +48,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   const taskRate = taskTotal > 0 ? Math.round((tasksDone / taskTotal) * 100) : null
 
   function getHealthLabel(rate: number | null) {
-    if (rate === null) return { label: 'No data', color: 'text-[#555]' }
+    if (rate === null) return { label: 'No data', color: 'text-[var(--text-3)]' }
     if (rate >= 75) return { label: 'On track', color: 'text-green-400' }
     if (rate >= 50) return { label: 'Needs attention', color: 'text-yellow-400' }
     return { label: 'At risk', color: 'text-red-400' }
@@ -59,7 +59,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   return (
     <div className="p-8 max-w-5xl">
       {/* Breadcrumb */}
-      <Link href="/admin" className="text-[#555] text-xs hover:text-[#C9A227] transition-colors">
+      <Link href="/admin" className="text-[var(--text-3)] text-xs hover:text-[#C9A227] transition-colors">
         ← All Members
       </Link>
 
@@ -68,12 +68,12 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-1">{member.cohort ?? 'Circle Member'}</p>
-            <h1 className="text-white font-serif text-3xl mb-1">{member.name}</h1>
-            <p className="text-[#555] text-sm">{member.email}</p>
+            <h1 className="text-[var(--text)] font-serif text-3xl mb-1">{member.name}</h1>
+            <p className="text-[var(--text-3)] text-sm">{member.email}</p>
           </div>
           <div className="text-right space-y-2">
             <p className={`text-sm font-medium ${health.color}`}>{health.label}</p>
-            <p className="text-[#555] text-xs">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+            <p className="text-[var(--text-3)] text-xs">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
             {member.email && (
               <SendInviteButton email={member.email} memberName={member.name} />
             )}
@@ -85,20 +85,20 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
-          <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Attendance</p>
-          <p className="text-white font-serif text-2xl">{attendanceRate !== null ? `${attendanceRate}%` : '—'}</p>
-          <p className="text-[#555] text-xs mt-1">{attended} of {total} calls</p>
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
+          <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Attendance</p>
+          <p className="text-[var(--text)] font-serif text-2xl">{attendanceRate !== null ? `${attendanceRate}%` : '—'}</p>
+          <p className="text-[var(--text-3)] text-xs mt-1">{attended} of {total} calls</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
-          <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Tasks Done</p>
-          <p className="text-white font-serif text-2xl">{taskRate !== null ? `${taskRate}%` : '—'}</p>
-          <p className="text-[#555] text-xs mt-1">{tasksDone} of {taskTotal} tasks</p>
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
+          <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Tasks Done</p>
+          <p className="text-[var(--text)] font-serif text-2xl">{taskRate !== null ? `${taskRate}%` : '—'}</p>
+          <p className="text-[var(--text-3)] text-xs mt-1">{tasksDone} of {taskTotal} tasks</p>
         </div>
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
-          <p className="text-[#555] text-xs uppercase tracking-wider mb-2">Reports Sent</p>
-          <p className="text-white font-serif text-2xl">{(reports ?? []).filter(r => r.sent_at).length}</p>
-          <p className="text-[#555] text-xs mt-1">{(reports ?? []).length} total generated</p>
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
+          <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Reports Sent</p>
+          <p className="text-[var(--text)] font-serif text-2xl">{(reports ?? []).filter(r => r.sent_at).length}</p>
+          <p className="text-[var(--text-3)] text-xs mt-1">{(reports ?? []).length} total generated</p>
         </div>
       </div>
 
@@ -125,22 +125,22 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
       <div className="grid grid-cols-2 gap-6">
         {/* Weekly Log Form */}
         <div>
-          <h2 className="text-white font-serif text-lg mb-4">Log This Week</h2>
+          <h2 className="text-[var(--text)] font-serif text-lg mb-4">Log This Week</h2>
           <WeeklyLogForm memberId={id} />
 
           {/* Past logs */}
           {allLogs.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-[#888] text-xs uppercase tracking-wider mb-3">Recent Weeks</h3>
+              <h3 className="text-[var(--text-2)] text-xs uppercase tracking-wider mb-3">Recent Weeks</h3>
               <div className="space-y-2">
                 {allLogs.slice(0, 8).map((log) => (
-                  <div key={log.id} className="flex items-center justify-between bg-[#1A1A1A] border border-[#2A2A2A] rounded px-4 py-2.5">
-                    <span className="text-[#888] text-xs">{new Date(log.week_of).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <div key={log.id} className="flex items-center justify-between bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-2.5">
+                    <span className="text-[var(--text-2)] text-xs">{new Date(log.week_of).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     <div className="flex items-center gap-3">
                       <span className={`text-xs ${log.showed_up ? 'text-green-400' : 'text-red-400'}`}>
                         {log.showed_up ? '✓ Showed up' : '✗ Missed'}
                       </span>
-                      <span className={`text-xs ${log.homework_done ? 'text-green-400' : 'text-[#555]'}`}>
+                      <span className={`text-xs ${log.homework_done ? 'text-green-400' : 'text-[var(--text-3)]'}`}>
                         {log.homework_done ? '✓ HW done' : '— No HW'}
                       </span>
                     </div>
@@ -153,7 +153,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
         {/* Report Panel */}
         <div>
-          <h2 className="text-white font-serif text-lg mb-4">Reports</h2>
+          <h2 className="text-[var(--text)] font-serif text-lg mb-4">Reports</h2>
           <MemberReportPanel memberId={id} memberName={member.name} memberEmail={member.email ?? null} reports={reports ?? []} />
         </div>
       </div>

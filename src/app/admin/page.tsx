@@ -43,7 +43,7 @@ export default async function AdminMembersPage() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-          <h1 className="text-white font-serif text-3xl">Circle Members</h1>
+          <h1 className="text-[var(--text)] font-serif text-3xl">Circle Members</h1>
         </div>
         <InviteMemberButton />
       </div>
@@ -59,9 +59,9 @@ export default async function AdminMembersPage() {
           },
           { label: 'Reports Sent', value: '—' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
-            <p className="text-[#555] text-xs uppercase tracking-wider mb-2">{stat.label}</p>
-            <p className="text-white font-serif text-2xl">{stat.value}</p>
+          <div key={stat.label} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
+            <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">{stat.label}</p>
+            <p className="text-[var(--text)] font-serif text-2xl">{stat.value}</p>
           </div>
         ))}
       </div>

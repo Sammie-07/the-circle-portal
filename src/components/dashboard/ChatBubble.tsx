@@ -13,7 +13,7 @@ export default function ChatBubble() {
       {!open && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-center gap-2">
           {/* Floating label above the bubble */}
-          <div className="bg-[#1A1A1A] border border-[#2A2A2A] text-white text-xs px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+          <div className="bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] text-xs px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap">
             Got a question? <span className="text-[#C9A227] font-semibold">Ask Gogo</span>
           </div>
 

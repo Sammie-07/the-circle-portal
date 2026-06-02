@@ -26,7 +26,7 @@ function dueBadge(due: string | null) {
   if (days <= 7) return { label: `${days}d left`, cls: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' }
   return {
     label: new Date(due + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    cls: 'text-[#555] border-[#2A2A2A]'
+    cls: 'text-[var(--text-3)] border-[var(--border-color)]'
   }
 }
 
@@ -63,8 +63,8 @@ export default function HomeworkSection({ memberId, initialItems }: Props) {
         <div>
           <div className="flex items-center gap-3 mb-3">
             <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase">This Week&apos;s Homework</p>
-            <div className="flex-1 h-px bg-[#1E1E1E]" />
-            <span className="text-[#555] text-xs">
+            <div className="flex-1 h-px bg-[var(--border-color)]" />
+            <span className="text-[var(--text-3)] text-xs">
               {homework.filter(i => i.completed).length}/{homework.length} done
             </span>
           </div>
@@ -79,8 +79,8 @@ export default function HomeworkSection({ memberId, initialItems }: Props) {
         <div>
           <div className="flex items-center gap-3 mb-3">
             <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase">Blueprint Tasks</p>
-            <div className="flex-1 h-px bg-[#1E1E1E]" />
-            <span className="text-[#555] text-xs">
+            <div className="flex-1 h-px bg-[var(--border-color)]" />
+            <span className="text-[var(--text-3)] text-xs">
               {tasks.filter(i => i.completed).length}/{tasks.length} complete
             </span>
           </div>
@@ -116,14 +116,14 @@ function CheckItem({ item, onToggle, toggling }: {
       disabled={!!toggling}
       className={`w-full flex items-start gap-3 p-4 rounded border text-left transition-all ${
         item.completed
-          ? 'bg-[#111] border-[#1E1E1E] opacity-60'
-          : 'bg-[#1A1A1A] border-[#2A2A2A] hover:border-[#C9A227]/20 hover:bg-[#1E1A10]'
+          ? 'bg-[var(--surface-2)] border-[var(--border-color)] opacity-60'
+          : 'bg-[var(--surface)] border-[var(--border-color)] hover:border-[#C9A227]/20 hover:bg-[#C9A227]/5'
       } disabled:cursor-default`}
     >
       {/* Circle checkbox */}
       <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
         isLoading ? 'border-[#C9A227]/40 bg-[#C9A227]/10' :
-        item.completed ? 'border-[#C9A227] bg-[#C9A227]' : 'border-[#333] group-hover:border-[#555]'
+        item.completed ? 'border-[#C9A227] bg-[#C9A227]' : 'border-[var(--border-hover)] group-hover:border-[var(--text-3)]'
       }`}>
         {item.completed && !isLoading && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -136,7 +136,7 @@ function CheckItem({ item, onToggle, toggling }: {
       {/* Text */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`text-sm font-medium ${item.completed ? 'line-through text-[#444]' : 'text-white'}`}>
+          <span className={`text-sm font-medium ${item.completed ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>
             {item.title}
           </span>
           {badge && !item.completed && (
@@ -144,10 +144,10 @@ function CheckItem({ item, onToggle, toggling }: {
           )}
         </div>
         {item.description && (
-          <p className={`text-xs mt-0.5 ${item.completed ? 'text-[#333]' : 'text-[#555]'}`}>{item.description}</p>
+          <p className={`text-xs mt-0.5 ${item.completed ? 'text-[var(--text-4)]' : 'text-[var(--text-3)]'}`}>{item.description}</p>
         )}
         {item.completed && item.completed_at && (
-          <p className="text-[10px] text-[#333] mt-0.5">
+          <p className="text-[10px] text-[var(--text-4)] mt-0.5">
             Completed {new Date(item.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </p>
         )}

@@ -267,19 +267,19 @@ export default function BlueprintPanel({
       {/* ─── Intake Modal ─── */}
       {showIntake && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111] border border-[#2A2A2A] rounded-lg w-full max-w-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[var(--surface-2)] border border-[var(--border-color)] rounded-lg w-full max-w-xl max-h-[90vh] overflow-y-auto">
 
             {/* Header */}
-            <div className="sticky top-0 bg-[#111] border-b border-[#2A2A2A] px-6 py-4 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-[var(--surface-2)] border-b border-[var(--border-color)] px-6 py-4 flex items-center justify-between z-10">
               <div>
                 <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-0.5">12-Month Blueprint</p>
-                <h3 className="text-white font-serif text-xl">{memberName}</h3>
+                <h3 className="text-[var(--text)] font-serif text-xl">{memberName}</h3>
               </div>
-              <button onClick={() => setShowIntake(false)} className="text-[#555] hover:text-white text-xl leading-none transition-colors">✕</button>
+              <button onClick={() => setShowIntake(false)} className="text-[var(--text-3)] hover:text-[var(--text)] text-xl leading-none transition-colors">✕</button>
             </div>
 
             <div className="px-6 py-5 space-y-5">
-              <p className="text-[#666] text-sm leading-relaxed">
+              <p className="text-[var(--text-2)] text-sm leading-relaxed">
                 Paste the clarity call transcript below — or upload the file. Claude will read it alongside The Brain to write the full blueprint.
               </p>
 
@@ -291,17 +291,17 @@ export default function BlueprintPanel({
                     type="date"
                     value={intake.call_date}
                     onChange={e => setIntake(p => ({ ...p, call_date: e.target.value }))}
-                    className="w-full bg-[#1A1A1A] border border-[#333] text-white text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50"
+                    className="w-full bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--text)] text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#C9A227] text-[10px] tracking-[0.2em] uppercase mb-2">Fathom Link <span className="text-[#444] normal-case">(optional)</span></label>
+                  <label className="block text-[#C9A227] text-[10px] tracking-[0.2em] uppercase mb-2">Fathom Link <span className="text-[var(--text-4)] normal-case">(optional)</span></label>
                   <input
                     type="url"
                     value={intake.fathom_link}
                     onChange={e => setIntake(p => ({ ...p, fathom_link: e.target.value }))}
                     placeholder="https://fathom.video/..."
-                    className="w-full bg-[#1A1A1A] border border-[#333] text-white text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50 placeholder:text-[#444]"
+                    className="w-full bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--text)] text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50 placeholder:text-[var(--text-4)]"
                   />
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default function BlueprintPanel({
                   className={`w-full mb-3 border-2 border-dashed rounded px-4 py-4 text-center transition-colors ${
                     uploadLabel
                       ? 'border-[#C9A227]/50 bg-[#C9A227]/5 text-[#C9A227]'
-                      : 'border-[#333] hover:border-[#C9A227]/40 hover:bg-[#C9A227]/3 text-[#666] hover:text-[#C9A227]'
+                      : 'border-[var(--border-hover)] hover:border-[#C9A227]/40 hover:bg-[#C9A227]/3 text-[var(--text-2)] hover:text-[#C9A227]'
                   }`}
                 >
                   <span className="block text-xl mb-1">{uploadLabel ? '✓' : '↑'}</span>
@@ -340,7 +340,7 @@ export default function BlueprintPanel({
 
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex-1 h-px bg-[#2A2A2A]" />
-                  <span className="text-[#444] text-xs">or paste directly</span>
+                  <span className="text-[var(--text-4)] text-xs">or paste directly</span>
                   <div className="flex-1 h-px bg-[#2A2A2A]" />
                 </div>
 
@@ -349,10 +349,10 @@ export default function BlueprintPanel({
                   onChange={e => setIntake(p => ({ ...p, transcript: e.target.value }))}
                   rows={14}
                   placeholder="Paste the full transcript here — everything from the clarity call. The more complete, the more specific the blueprint will be."
-                  className="w-full bg-[#1A1A1A] border border-[#333] text-white text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50 placeholder:text-[#444] resize-none font-mono leading-relaxed"
+                  className="w-full bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--text)] text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50 placeholder:text-[var(--text-4)] resize-none font-mono leading-relaxed"
                 />
                 {intake.transcript && (
-                  <p className="text-[#444] text-xs mt-1">
+                  <p className="text-[var(--text-4)] text-xs mt-1">
                     {intake.transcript.split(/\s+/).filter(Boolean).length.toLocaleString()} words
                   </p>
                 )}
@@ -362,8 +362,8 @@ export default function BlueprintPanel({
             </div>
 
             {/* Footer */}
-            <div className="sticky bottom-0 bg-[#111] border-t border-[#2A2A2A] px-6 py-4 flex items-center justify-between">
-              <button onClick={() => { setShowIntake(false); setError('') }} className="text-[#555] text-sm hover:text-[#888] transition-colors">
+            <div className="sticky bottom-0 bg-[var(--surface-2)] border-t border-[var(--border-color)] px-6 py-4 flex items-center justify-between">
+              <button onClick={() => { setShowIntake(false); setError('') }} className="text-[var(--text-3)] text-sm hover:text-[var(--text-2)] transition-colors">
                 Cancel
               </button>
               <button
@@ -380,16 +380,16 @@ export default function BlueprintPanel({
       {/* ─── Refine / Chat Bubble Modal ─── */}
       {showRefine && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#111] border border-[#2A2A2A] rounded-xl w-full max-w-lg shadow-2xl overflow-hidden">
+          <div className="bg-[var(--surface-2)] border border-[var(--border-color)] rounded-xl w-full max-w-lg shadow-2xl overflow-hidden">
 
             {/* Header */}
-            <div className="bg-[#0D0D0D] border-b border-[#2A2A2A] px-5 py-4 flex items-start justify-between">
+            <div className="bg-[var(--bg)] border-b border-[var(--border-color)] px-5 py-4 flex items-start justify-between">
               <div>
                 <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-1">Regenerate Blueprint</p>
-                <h3 className="text-white font-serif text-lg">What needs to change?</h3>
-                <p className="text-[#555] text-xs mt-1">Describe what to fix or improve. The rest stays the same.</p>
+                <h3 className="text-[var(--text)] font-serif text-lg">What needs to change?</h3>
+                <p className="text-[var(--text-3)] text-xs mt-1">Describe what to fix or improve. The rest stays the same.</p>
               </div>
-              <button onClick={() => setShowRefine(false)} className="text-[#555] hover:text-white text-xl leading-none transition-colors mt-0.5">✕</button>
+              <button onClick={() => setShowRefine(false)} className="text-[var(--text-3)] hover:text-[var(--text)] text-xl leading-none transition-colors mt-0.5">✕</button>
             </div>
 
             <div className="px-5 py-4 space-y-4">
@@ -401,7 +401,7 @@ export default function BlueprintPanel({
                   autoFocus
                   rows={6}
                   placeholder={`e.g. "Make Q2 more focused on hiring — she mentioned she wants to bring on a full-time assistant by month 5. Also the income section needs to include the rental property she mentioned."`}
-                  className="w-full bg-[#1A1A1A] border border-[#333] text-white text-sm px-3 py-3 pb-10 rounded focus:outline-none focus:border-[#C9A227]/50 placeholder:text-[#444] resize-none leading-relaxed"
+                  className="w-full bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--text)] text-sm px-3 py-3 pb-10 rounded focus:outline-none focus:border-[#C9A227]/50 placeholder:text-[var(--text-4)] resize-none leading-relaxed"
                 />
                 {/* Upload button — sits in bottom-right of textarea */}
                 <button
@@ -411,7 +411,7 @@ export default function BlueprintPanel({
                   className={`absolute bottom-2.5 right-2.5 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border transition-colors ${
                     refineUploadLabel
                       ? 'border-[#C9A227]/40 text-[#C9A227] bg-[#C9A227]/8'
-                      : 'border-[#333] text-[#555] hover:text-[#888] hover:border-[#444]'
+                      : 'border-[var(--border-hover)] text-[var(--text-3)] hover:text-[var(--text-2)] hover:border-[var(--border-color)]'
                   }`}
                 >
                   <span className="text-base leading-none">{refineUploadLabel ? '✓' : '↑'}</span>
@@ -431,20 +431,20 @@ export default function BlueprintPanel({
                 <button
                   type="button"
                   onClick={() => setShowRefineTranscript(v => !v)}
-                  className="text-[#555] text-xs hover:text-[#888] transition-colors"
+                  className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] transition-colors"
                 >
                   {showRefineTranscript ? '▲ Hide transcript' : '▼ View / edit saved transcript'}
                 </button>
                 {showRefineTranscript && (
                   <div className="mt-2">
-                    <p className="text-[#444] text-xs mb-1.5">
+                    <p className="text-[var(--text-4)] text-xs mb-1.5">
                       This is the transcript used for the last generation. Edit if needed — changes will be saved.
                     </p>
                     <textarea
                       value={intake.transcript}
                       onChange={e => setIntake(p => ({ ...p, transcript: e.target.value }))}
                       rows={10}
-                      className="w-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#888] text-xs px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/30 resize-none font-mono leading-relaxed"
+                      className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/30 resize-none font-mono leading-relaxed"
                     />
                   </div>
                 )}
@@ -454,10 +454,10 @@ export default function BlueprintPanel({
             </div>
 
             {/* Footer */}
-            <div className="bg-[#0D0D0D] border-t border-[#2A2A2A] px-5 py-4 flex items-center justify-between gap-3">
+            <div className="bg-[var(--bg)] border-t border-[var(--border-color)] px-5 py-4 flex items-center justify-between gap-3">
               <button
                 onClick={() => setShowRefine(false)}
-                className="text-[#555] text-sm hover:text-[#888] transition-colors"
+                className="text-[var(--text-3)] text-sm hover:text-[var(--text-2)] transition-colors"
               >
                 Cancel
               </button>
@@ -469,7 +469,7 @@ export default function BlueprintPanel({
                     setIntake(p => ({ ...p, transcript: initialTranscript ?? '' }))
                     setShowIntake(true)
                   }}
-                  className="border border-[#333] text-[#555] text-sm px-4 py-2 rounded hover:text-[#888] hover:border-[#444] transition-colors"
+                  className="border border-[var(--border-hover)] text-[var(--text-3)] text-sm px-4 py-2 rounded hover:text-[var(--text-2)] hover:border-[var(--border-color)] transition-colors"
                 >
                   Start fresh
                 </button>
@@ -487,15 +487,15 @@ export default function BlueprintPanel({
       )}
 
       {/* ─── Panel ─── */}
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-6">
+      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
             <p className="text-[#C9A227] text-xs tracking-[0.2em] uppercase mb-1">One-Time Document</p>
-            <h2 className="text-white font-serif text-xl">12-Month Blueprint</h2>
+            <h2 className="text-[var(--text)] font-serif text-xl">12-Month Blueprint</h2>
           </div>
           {html && (
-            <button onClick={() => setPreview(!preview)} className="text-xs text-[#555] hover:text-[#C9A227] transition-colors">
+            <button onClick={() => setPreview(!preview)} className="text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
               {preview ? 'Hide preview' : 'Preview →'}
             </button>
           )}
@@ -504,25 +504,25 @@ export default function BlueprintPanel({
         {/* Status */}
         {html ? (
           <div className="space-y-2 mb-5">
-            <div className="flex items-center gap-2 text-xs text-[#888]">
+            <div className="flex items-center gap-2 text-xs text-[var(--text-2)]">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               Generated {fmtDate(generatedAt)}
             </div>
             {sentGogoAt && (
-              <div className="flex items-center gap-2 text-xs text-[#888]">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-2)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />
                 Sent to Gogo {fmtDate(sentGogoAt)}
               </div>
             )}
             {sentMemberAt && (
-              <div className="flex items-center gap-2 text-xs text-[#888]">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-2)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#C9A227]" />
                 Sent to {memberName} {fmtDate(sentMemberAt)} · <span className="text-green-400">Published to portal</span>
               </div>
             )}
           </div>
         ) : (
-          <p className="text-[#555] text-sm mb-5">
+          <p className="text-[var(--text-3)] text-sm mb-5">
             No blueprint yet. Click below — you&apos;ll paste the clarity call transcript and Claude will write the full 12-month plan using The Brain.
           </p>
         )}
@@ -532,12 +532,12 @@ export default function BlueprintPanel({
           <div className="mb-5 space-y-3">
             {/* Label + % */}
             <div className="flex items-center justify-between">
-              <span className="text-white text-sm font-medium">{progressLabel}</span>
+              <span className="text-[var(--text)] text-sm font-medium">{progressLabel}</span>
               <span className="text-[#C9A227] text-sm font-mono font-bold">{progress}%</span>
             </div>
 
             {/* Bar */}
-            <div className="h-2 bg-[#0D0D0D] border border-[#333] rounded-full overflow-hidden">
+            <div className="h-2 bg-[var(--bg)] border border-[var(--border-hover)] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#C9A227] rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${progress}%` }}
@@ -545,7 +545,7 @@ export default function BlueprintPanel({
             </div>
 
             {/* Subtitle */}
-            <p className="text-[#888] text-xs">
+            <p className="text-[var(--text-2)] text-xs">
               Pulling from The Brain + reading the transcript — writing every section of the blueprint.
             </p>
 
@@ -601,7 +601,7 @@ export default function BlueprintPanel({
                 <button
                   onClick={() => handleSend('member')}
                   disabled={sendingMember}
-                  className="border border-[#2A2A2A] text-[#888] text-sm px-5 py-2.5 rounded hover:text-white hover:border-[#444] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-5 py-2.5 rounded hover:text-[var(--text)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {sendingMember ? 'Sending…' : sentMemberAt ? `✓ Sent to ${memberName}` : `Send to ${memberName}`}
                 </button>
@@ -612,20 +612,20 @@ export default function BlueprintPanel({
 
         {/* Share + Export row */}
         {html && shareToken && (
-          <div className="border border-[#2A2A2A] rounded p-4 space-y-4">
+          <div className="border border-[var(--border-color)] rounded p-4 space-y-4">
 
             {/* Share link */}
             <div>
-              <p className="text-[#555] text-[10px] tracking-[0.2em] uppercase mb-2">Share Link</p>
+              <p className="text-[var(--text-3)] text-[10px] tracking-[0.2em] uppercase mb-2">Share Link</p>
               <div className="flex items-center gap-2">
                 <input
                   readOnly
                   value={typeof window !== 'undefined' ? `${window.location.origin}/b/${shareToken}` : `/b/${shareToken}`}
-                  className="flex-1 bg-[#0D0D0D] border border-[#2A2A2A] text-[#888] text-xs px-3 py-2 rounded font-mono truncate focus:outline-none"
+                  className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs px-3 py-2 rounded font-mono truncate focus:outline-none"
                 />
                 <button
                   onClick={copyLink}
-                  className="flex-shrink-0 border border-[#2A2A2A] text-[#888] text-xs px-3 py-2 rounded hover:text-[#C9A227] hover:border-[#C9A227]/40 transition-colors"
+                  className="flex-shrink-0 border border-[var(--border-color)] text-[var(--text-2)] text-xs px-3 py-2 rounded hover:text-[#C9A227] hover:border-[#C9A227]/40 transition-colors"
                 >
                   {linkCopied ? '✓ Copied' : 'Copy'}
                 </button>
@@ -633,7 +633,7 @@ export default function BlueprintPanel({
                   href={`/b/${shareToken}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-shrink-0 border border-[#2A2A2A] text-[#888] text-xs px-3 py-2 rounded hover:text-white hover:border-[#444] transition-colors"
+                  className="flex-shrink-0 border border-[var(--border-color)] text-[var(--text-2)] text-xs px-3 py-2 rounded hover:text-[var(--text)] hover:border-[var(--border-hover)] transition-colors"
                 >
                   Open ↗
                 </a>
@@ -642,11 +642,11 @@ export default function BlueprintPanel({
 
             {/* Download buttons */}
             <div>
-              <p className="text-[#555] text-[10px] tracking-[0.2em] uppercase mb-2">Download</p>
+              <p className="text-[var(--text-3)] text-[10px] tracking-[0.2em] uppercase mb-2">Download</p>
               <div className="flex gap-2">
                 <button
                   onClick={downloadHtml}
-                  className="flex items-center gap-2 border border-[#2A2A2A] text-[#888] text-xs px-4 py-2.5 rounded hover:text-white hover:border-[#444] transition-colors"
+                  className="flex items-center gap-2 border border-[var(--border-color)] text-[var(--text-2)] text-xs px-4 py-2.5 rounded hover:text-[var(--text)] hover:border-[var(--border-hover)] transition-colors"
                 >
                   <span className="text-sm leading-none">⬇</span>
                   HTML File
@@ -661,8 +661,8 @@ export default function BlueprintPanel({
                   PDF
                 </a>
               </div>
-              <p className="text-[#444] text-[10px] mt-2 leading-relaxed">
-                PDF opens a print-ready view — choose <span className="text-[#666]">Save as PDF</span> as the destination in your browser&apos;s print dialog.
+              <p className="text-[var(--text-4)] text-[10px] mt-2 leading-relaxed">
+                PDF opens a print-ready view — choose <span className="text-[var(--text-3)]">Save as PDF</span> as the destination in your browser&apos;s print dialog.
               </p>
             </div>
 
@@ -673,16 +673,16 @@ export default function BlueprintPanel({
 
         {/* Preview */}
         {preview && html && (
-          <div className="mt-5 border border-[#2A2A2A] rounded overflow-hidden">
-            <div className="bg-[#111] px-4 py-2 border-b border-[#2A2A2A] flex items-center justify-between">
-              <p className="text-[#555] text-xs">Blueprint preview</p>
+          <div className="mt-5 border border-[var(--border-color)] rounded overflow-hidden">
+            <div className="bg-[var(--surface-2)] px-4 py-2 border-b border-[var(--border-color)] flex items-center justify-between">
+              <p className="text-[var(--text-3)] text-xs">Blueprint preview</p>
               {shareToken && (
                 <a href={`/b/${shareToken}`} target="_blank" className="text-[#C9A227] text-xs hover:text-[#d4ac2d]">
                   Full page ↗
                 </a>
               )}
             </div>
-            <div className="max-h-[500px] overflow-y-auto bg-[#0D0D0D]">
+            <div className="max-h-[500px] overflow-y-auto bg-[var(--bg)]">
               <iframe
                 srcDoc={html}
                 className="w-full"

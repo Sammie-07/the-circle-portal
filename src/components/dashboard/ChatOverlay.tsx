@@ -210,16 +210,16 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-[#0D0D0D]">
+    <div className="fixed inset-0 z-50 flex bg-[var(--bg)]">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-0'} flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-[#2A2A2A] flex flex-col bg-[#111111]`}>
+      <div className={`${sidebarOpen ? 'w-64' : 'w-0'} flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-[var(--border-color)] flex flex-col bg-[var(--surface-2)]`}>
         {/* Sidebar header */}
-        <div className="px-4 py-5 border-b border-[#2A2A2A] flex-shrink-0">
+        <div className="px-4 py-5 border-b border-[var(--border-color)] flex-shrink-0">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-5 h-5 rounded-full border border-[#CC1F1F] flex items-center justify-center flex-shrink-0">
               <div className="w-1 h-1 rounded-full bg-[#CC1F1F]" />
             </div>
-            <span className="text-white font-serif text-sm">Ask Gogo</span>
+            <span className="text-[var(--text)] font-serif text-sm">Ask Gogo</span>
           </div>
           <button
             onClick={newChat}
@@ -232,7 +232,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
         {/* Sessions list */}
         <div className="flex-1 overflow-y-auto py-2">
           {sessions.length === 0 ? (
-            <p className="text-[#444] text-xs px-4 py-3">No chats yet</p>
+            <p className="text-[var(--text-4)] text-xs px-4 py-3">No chats yet</p>
           ) : (
             sessions.map(session => (
               <div
@@ -241,20 +241,20 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                 className={`w-full text-left px-4 py-3 transition-all group cursor-pointer flex items-start justify-between gap-2 ${
                   activeSessionId === session.id
                     ? 'bg-[#C9A227]/10 border-l-2 border-[#C9A227]'
-                    : 'border-l-2 border-transparent hover:bg-[#1A1A1A] hover:border-[#333]'
+                    : 'border-l-2 border-transparent hover:bg-[var(--surface)] hover:border-[var(--border-hover)]'
                 }`}
               >
                 <div className="min-w-0 flex-1">
                   <p className={`text-xs truncate leading-snug ${
-                    activeSessionId === session.id ? 'text-[#C9A227]' : 'text-[#888] group-hover:text-white'
+                    activeSessionId === session.id ? 'text-[#C9A227]' : 'text-[var(--text-2)] group-hover:text-[var(--text)]'
                   }`}>
                     {session.title}
                   </p>
-                  <p className="text-[#444] text-[10px] mt-0.5">{formatDate(session.updated_at)}</p>
+                  <p className="text-[var(--text-4)] text-[10px] mt-0.5">{formatDate(session.updated_at)}</p>
                 </div>
                 <button
                   onClick={(e) => deleteSession(e, session.id)}
-                  className="opacity-0 group-hover:opacity-100 text-[#444] hover:text-[#CC1F1F] transition-all flex-shrink-0 text-xs leading-none p-0.5"
+                  className="opacity-0 group-hover:opacity-100 text-[var(--text-4)] hover:text-[#CC1F1F] transition-all flex-shrink-0 text-xs leading-none p-0.5"
                   title="Delete chat"
                 >
                   ✕
@@ -268,12 +268,12 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2A2A2A] flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] flex-shrink-0">
           <div className="flex items-center gap-3">
             {/* Sidebar toggle */}
             <button
               onClick={() => setSidebarOpen(v => !v)}
-              className="text-[#555] hover:text-white transition-colors p-1"
+              className="text-[var(--text-3)] hover:text-[var(--text)] transition-colors p-1"
               title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
             >
               <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
@@ -283,13 +283,13 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
               </svg>
             </button>
             <div>
-              <p className="text-white text-sm font-medium">Ask Gogo</p>
-              <p className="text-[#555] text-[10px]">Answers from Gogo's knowledge base</p>
+              <p className="text-[var(--text)] text-sm font-medium">Ask Gogo</p>
+              <p className="text-[var(--text-3)] text-[10px]">Answers from Gogo's knowledge base</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#555] hover:text-white transition-colors text-xl leading-none w-8 h-8 flex items-center justify-center rounded hover:bg-[#1A1A1A]"
+            className="text-[var(--text-3)] hover:text-[var(--text)] transition-colors text-xl leading-none w-8 h-8 flex items-center justify-center rounded hover:bg-[var(--surface)]"
             title="Close"
           >
             ✕
@@ -304,8 +304,8 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
               <div className="w-12 h-12 rounded-full border border-[#CC1F1F] flex items-center justify-center mb-4">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#CC1F1F]" />
               </div>
-              <h2 className="text-white font-serif text-2xl mb-2">Got a question?</h2>
-              <p className="text-[#555] text-sm mb-6 leading-relaxed">
+              <h2 className="text-[var(--text)] font-serif text-2xl mb-2">Got a question?</h2>
+              <p className="text-[var(--text-3)] text-sm mb-6 leading-relaxed">
                 Ask anything about Gogo's frameworks, strategies, and teachings. Every answer comes directly from her knowledge base.
               </p>
               <button
@@ -317,14 +317,14 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
             </div>
           ) : loadingMessages ? (
             <div className="flex items-center justify-center h-32">
-              <div className="text-[#555] text-sm">Loading…</div>
+              <div className="text-[var(--text-3)] text-sm">Loading…</div>
             </div>
           ) : messages.length === 0 && !isStreaming ? (
             /* Empty session */
             <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto">
               <p className="text-[#C9A227] text-xs tracking-[0.2em] uppercase mb-3">New Chat</p>
-              <h3 className="text-white font-serif text-xl mb-2">What would you like to know?</h3>
-              <p className="text-[#555] text-sm mb-6">Ask about revenue share, team building, content strategy, mindset — anything Gogo teaches.</p>
+              <h3 className="text-[var(--text)] font-serif text-xl mb-2">What would you like to know?</h3>
+              <p className="text-[var(--text-3)] text-sm mb-6">Ask about revenue share, team building, content strategy, mindset — anything Gogo teaches.</p>
               <div className="grid gap-2 w-full">
                 {[
                   'How do I build a revenue share downline?',
@@ -335,7 +335,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                   <button
                     key={q}
                     onClick={() => { setInput(q); inputRef.current?.focus() }}
-                    className="text-left text-xs text-[#888] bg-[#1A1A1A] border border-[#2A2A2A] rounded px-4 py-2.5 hover:border-[#C9A227]/40 hover:text-white transition-all"
+                    className="text-left text-xs text-[var(--text-2)] bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-2.5 hover:border-[#C9A227]/40 hover:text-[var(--text)] transition-all"
                   >
                     {q}
                   </button>
@@ -354,11 +354,11 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                   <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex-shrink-0 flex items-center justify-center mt-0.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
                   </div>
-                  <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#E0E0E0]">
+                  <div className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
                     {streamingText ? (
                       <MarkdownContent content={streamingText} />
                     ) : (
-                      <span className="flex items-center gap-1.5 text-[#555]">
+                      <span className="flex items-center gap-1.5 text-[var(--text-3)]">
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse" />
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse [animation-delay:150ms]" />
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse [animation-delay:300ms]" />
@@ -374,9 +374,9 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
 
         {/* Input area */}
         {activeSessionId && (
-          <div className="px-6 py-4 border-t border-[#2A2A2A] flex-shrink-0">
+          <div className="px-6 py-4 border-t border-[var(--border-color)] flex-shrink-0">
             <div className="max-w-3xl mx-auto">
-              <div className="flex gap-3 items-end bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 focus-within:border-[#C9A227]/60 transition-colors">
+              <div className="flex gap-3 items-end bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 focus-within:border-[#C9A227]/60 transition-colors">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -385,7 +385,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                   rows={1}
                   placeholder="Ask Gogo anything…"
                   disabled={isStreaming}
-                  className="flex-1 bg-transparent text-white placeholder-[#444] text-sm resize-none focus:outline-none leading-relaxed max-h-32 overflow-y-auto disabled:opacity-50"
+                  className="flex-1 bg-transparent text-[var(--text)] placeholder-[var(--text-4)] text-sm resize-none focus:outline-none leading-relaxed max-h-32 overflow-y-auto disabled:opacity-50"
                   style={{ height: 'auto' }}
                   onInput={e => {
                     const el = e.currentTarget
@@ -404,7 +404,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                   </svg>
                 </button>
               </div>
-              <p className="text-[#333] text-[10px] mt-2 text-center">
+              <p className="text-[var(--text-4)] text-[10px] mt-2 text-center">
                 Answers drawn exclusively from Gogo's knowledge base · Enter to send · Shift+Enter for new line
               </p>
             </div>
@@ -420,7 +420,7 @@ function MarkdownContent({ content }: { content: string }) {
     <ReactMarkdown
       components={{
         p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
-        strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+        strong: ({ children }) => <strong className="font-semibold text-[var(--text)]">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
         ul: ({ children }) => <ul className="mb-3 space-y-1 list-none">{children}</ul>,
         ol: ({ children }) => <ol className="mb-3 space-y-1 list-none counter-reset-[item]">{children}</ol>,
@@ -435,11 +435,11 @@ function MarkdownContent({ content }: { content: string }) {
             {children}
           </blockquote>
         ),
-        h1: ({ children }) => <h1 className="text-white font-semibold text-base mb-2 mt-3 first:mt-0">{children}</h1>,
-        h2: ({ children }) => <h2 className="text-white font-semibold text-sm mb-2 mt-3 first:mt-0">{children}</h2>,
+        h1: ({ children }) => <h1 className="text-[var(--text)] font-semibold text-base mb-2 mt-3 first:mt-0">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-[var(--text)] font-semibold text-sm mb-2 mt-3 first:mt-0">{children}</h2>,
         h3: ({ children }) => <h3 className="text-[#C9A227] font-semibold text-sm mb-1 mt-3 first:mt-0">{children}</h3>,
-        code: ({ children }) => <code className="bg-[#0D0D0D] text-[#C9A227] px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
-        hr: () => <hr className="border-[#2A2A2A] my-3" />,
+        code: ({ children }) => <code className="bg-[var(--bg)] text-[#C9A227] px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+        hr: () => <hr className="border-[var(--border-color)] my-3" />,
       }}
     >
       {content}
@@ -451,7 +451,7 @@ function MessageBubble({ message }: { message: Message }) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[70%] bg-[#C9A227]/15 border border-[#C9A227]/25 rounded-lg px-4 py-3 text-sm text-white leading-relaxed whitespace-pre-wrap">
+        <div className="max-w-[70%] bg-[#C9A227]/15 border border-[#C9A227]/25 rounded-lg px-4 py-3 text-sm text-[var(--text)] leading-relaxed whitespace-pre-wrap">
           {message.content}
         </div>
       </div>
@@ -463,7 +463,7 @@ function MessageBubble({ message }: { message: Message }) {
       <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex-shrink-0 flex items-center justify-center mt-0.5">
         <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
       </div>
-      <div className="flex-1 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-4 py-3 text-sm text-[#E0E0E0]">
+      <div className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
         <MarkdownContent content={message.content} />
       </div>
     </div>

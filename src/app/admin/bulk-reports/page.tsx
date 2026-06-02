@@ -15,8 +15,8 @@ export default async function BulkReportsPage() {
       {/* Header */}
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-        <h1 className="text-white font-serif text-3xl">Bulk Reports</h1>
-        <p className="text-[#555] text-sm mt-1">
+        <h1 className="text-[var(--text)] font-serif text-3xl">Bulk Reports</h1>
+        <p className="text-[var(--text-3)] text-sm mt-1">
           Generate and send reports to all members — or just the ones you select.
         </p>
       </div>

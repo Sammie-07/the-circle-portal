@@ -33,8 +33,8 @@ export default async function AdminReportsPage() {
       <div className="flex items-start justify-between mb-8">
         <div>
           <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-          <h1 className="text-white font-serif text-3xl">Reports</h1>
-          <p className="text-[#555] text-sm mt-1">All generated and sent Circle reports</p>
+          <h1 className="text-[var(--text)] font-serif text-3xl">Reports</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">All generated and sent Circle reports</p>
         </div>
         <div className="flex items-center gap-4 mt-2">
           <Link
@@ -45,7 +45,7 @@ export default async function AdminReportsPage() {
           </Link>
           <Link
             href="/admin"
-            className="text-xs text-[#555] hover:text-[#C9A227] transition-colors"
+            className="text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
           >
             ← Members
           </Link>
@@ -59,9 +59,9 @@ export default async function AdminReportsPage() {
           { label: 'Sent to Members', value: totalSent },
           { label: 'Drafts / Unsent', value: totalDraft },
         ].map((stat) => (
-          <div key={stat.label} className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4">
-            <p className="text-[#555] text-xs uppercase tracking-wider mb-2">{stat.label}</p>
-            <p className="text-white font-serif text-2xl">{stat.value}</p>
+          <div key={stat.label} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
+            <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">{stat.label}</p>
+            <p className="text-[var(--text)] font-serif text-2xl">{stat.value}</p>
           </div>
         ))}
       </div>

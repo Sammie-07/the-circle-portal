@@ -34,7 +34,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo mark */}
         <div className="flex flex-col items-center mb-10">
@@ -47,7 +47,7 @@ export default function LoginPage() {
           <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase font-medium mb-2">
             The Circle · Coaching Program
           </p>
-          <h1 className="text-white text-2xl font-serif text-center">Member Portal</h1>
+          <h1 className="text-[var(--text)] text-2xl font-serif text-center">Member Portal</h1>
         </div>
 
         <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227] to-transparent mb-8" />
@@ -59,14 +59,14 @@ export default function LoginPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-white font-serif text-lg mb-2">Check your inbox</h2>
-            <p className="text-[#888] text-sm leading-relaxed">
+            <h2 className="text-[var(--text)] font-serif text-lg mb-2">Check your inbox</h2>
+            <p className="text-[var(--text-2)] text-sm leading-relaxed">
               We sent a login link to<br />
               <span className="text-[#C9A227]">{email}</span>
             </p>
             <button
               onClick={() => { setSent(false); setEmail('') }}
-              className="mt-6 text-xs text-[#888] hover:text-[#C9A227] transition-colors"
+              className="mt-6 text-xs text-[var(--text-2)] hover:text-[#C9A227] transition-colors"
             >
               Use a different email
             </button>
@@ -74,7 +74,7 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs text-[#888] uppercase tracking-wider mb-2">
+              <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2">
                 Email address
               </label>
               <input
@@ -83,7 +83,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-[#444] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
+                className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
               />
             </div>
 
@@ -99,7 +99,7 @@ export default function LoginPage() {
               {loading ? 'Sending…' : 'Send login link'}
             </button>
 
-            <p className="text-center text-[#555] text-xs">
+            <p className="text-center text-[var(--text-3)] text-xs">
               Access is by invitation only.
             </p>
           </form>
