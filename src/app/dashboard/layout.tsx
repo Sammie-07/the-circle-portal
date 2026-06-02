@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
+import ChatBubble from '@/components/dashboard/ChatBubble'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -29,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+      <ChatBubble />
     </div>
   )
 }
