@@ -8,13 +8,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/login')
 
+  const { data: roleData } = await supabase.rpc('get_my_role')
+  const role = roleData as string | null
+
+  if (!role || !['owner', 'tech', 'admin', 'manager', 'support'].includes(role)) redirect('/dashboard')
+
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, full_name')
+    .select('full_name')
     .eq('id', user.id)
     .single()
-
-  if (!['owner', 'tech', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/dashboard')
 
   return (
     <div className="flex min-h-screen">

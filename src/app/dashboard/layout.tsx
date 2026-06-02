@@ -9,14 +9,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name')
-    .eq('id', user.id)
-    .single()
+  const { data: roleData } = await supabase.rpc('get_my_role')
+  const role = roleData as string | null
 
   // All team roles go to the admin portal
-  if (['owner', 'tech', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/admin')
+  if (role && ['owner', 'tech', 'admin', 'manager', 'support'].includes(role)) redirect('/admin')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .single()
 
   const { data: member } = await supabase
     .from('members')
