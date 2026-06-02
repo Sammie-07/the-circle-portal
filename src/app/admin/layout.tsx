@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single()
 
-  if (!['owner', 'tech', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/dashboard')
+  if (!['owner', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/dashboard')
 
   return (
     <div className="flex min-h-screen">
