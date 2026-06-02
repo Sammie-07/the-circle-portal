@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 import ChatBubble from '@/components/dashboard/ChatBubble'
@@ -10,7 +9,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  // Regular client is fine for own profile — auth.uid() = id policy always allows it
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name')
@@ -18,9 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .single()
 
   // All team roles go to the admin portal
-  if (profile?.role && ['owner', 'tech', 'admin', 'manager', 'support'].includes(profile.role)) {
-    redirect('/admin')
-  }
+  if (['owner', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/admin')
 
   const { data: member } = await supabase
     .from('members')

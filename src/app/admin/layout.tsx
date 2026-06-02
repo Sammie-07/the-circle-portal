@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 
@@ -9,16 +8,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/login')
 
-  // Regular client is fine for own profile — auth.uid() = id policy always allows it
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name')
     .eq('id', user.id)
     .single()
 
-  if (!profile?.role || !['owner', 'tech', 'admin', 'manager', 'support'].includes(profile.role)) {
-    redirect('/login')  // Never redirect to /dashboard — that would create a loop
-  }
+  if (!['owner', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/dashboard')
 
   return (
     <div className="flex min-h-screen">
