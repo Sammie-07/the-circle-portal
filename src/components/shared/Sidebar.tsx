@@ -15,6 +15,7 @@ const adminNav = [
   { href: '/admin/reports', label: 'Reports', icon: '◈' },
   { href: '/admin/bulk-reports', label: 'Bulk Reports', icon: '◇' },
   { href: '/admin/log', label: 'Log This Week', icon: '◆' },
+  { href: '/admin/team', label: 'Team', icon: '◑' },
 ]
 
 const memberNav = [
@@ -22,6 +23,7 @@ const memberNav = [
   { href: '/dashboard/blueprint', label: 'My Blueprint', icon: '◈' },
   { href: '/dashboard/reports', label: 'My Reports', icon: '◆' },
   { href: '/dashboard/notes', label: 'My Notes', icon: '◇' },
+  { href: '/dashboard/profile', label: 'My Profile', icon: '◑' },
 ]
 
 export default function Sidebar({ role, memberName }: SidebarProps) {
