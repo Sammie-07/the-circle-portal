@@ -8,6 +8,8 @@ import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
 import SigninLinkButton from '@/components/admin/SigninLinkButton'
 import EditMemberButton from '@/components/admin/EditMemberButton'
+import MemberStatusButton from '@/components/admin/MemberStatusButton'
+import DeleteMemberButton from '@/components/admin/DeleteMemberButton'
 import Link from 'next/link'
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -96,6 +98,10 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 bio: member.bio ?? null,
               }}
             />
+            <MemberStatusButton memberId={id} memberName={member.name} status={member.status ?? null} />
+            <div className="pt-2 border-t border-[var(--border-color)]/50 mt-2 flex justify-end">
+              <DeleteMemberButton memberId={id} memberName={member.name} />
+            </div>
           </div>
         </div>
       </div>

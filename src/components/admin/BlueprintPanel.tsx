@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface BlueprintPanelProps {
   memberId: string
@@ -46,6 +47,13 @@ export default function BlueprintPanel({
   const [sendingGogo, setSendingGogo] = useState(false)
   const [sendingMember, setSendingMember] = useState(false)
   const [error, setError] = useState('')
+
+  // Upload existing blueprint (.html / .pdf)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadFileName, setUploadFileName] = useState('')
+  const uploadFileRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
   const [preview, setPreview] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
 
@@ -197,6 +205,33 @@ export default function BlueprintPanel({
 
     setGenerating(false)
     setProgress(0)
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadFileName(file.name)
+    setUploadError('')
+    setUploading(true)
+
+    try {
+      const fd = new FormData()
+      fd.append('member_id', memberId)
+      fd.append('file', file)
+
+      const res = await fetch('/api/blueprints/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        setUploadError(data.error ?? 'Upload failed')
+      } else {
+        router.refresh()
+      }
+    } catch {
+      setUploadError('Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
   }
 
   function handleCancel() {
@@ -607,6 +642,37 @@ export default function BlueprintPanel({
                 </button>
               </>
             )}
+          </div>
+        )}
+
+        {/* Upload existing blueprint */}
+        {!generating && (
+          <div className="border border-dashed border-[var(--border-color)] rounded p-4 mb-5">
+            <p className="text-[#C9A227] text-[10px] tracking-[0.2em] uppercase mb-1.5">Already have a blueprint?</p>
+            <p className="text-[var(--text-3)] text-xs mb-3">
+              Upload an existing blueprint file (.html or .pdf). It works exactly like a generated one — share link, portal view, send, and homework.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => uploadFileRef.current?.click()}
+                disabled={uploading}
+                className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2.5 rounded hover:text-[var(--text)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {uploading ? 'Uploading…' : '↑ Upload existing blueprint'}
+              </button>
+              {uploadFileName && !uploadError && (
+                <span className="text-[var(--text-4)] text-xs truncate max-w-[200px]">{uploadFileName}</span>
+              )}
+            </div>
+            <input
+              ref={uploadFileRef}
+              type="file"
+              accept=".html,.pdf,application/pdf,text/html"
+              className="hidden"
+              onChange={handleUpload}
+            />
+            {uploadError && <p className="text-[#CC1F1F] text-xs mt-2">{uploadError}</p>}
           </div>
         )}
 

@@ -130,6 +130,15 @@ create policy "Members can view own sent reports"
   );
 
 -- ============================================
+-- Storage: blueprints bucket (for uploaded PDF/HTML blueprints)
+-- ============================================
+-- Public bucket; files are named with unguessable UUIDs (mirrors the public
+-- share-by-token model). Uploads happen server-side via the service-role client.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('blueprints', 'blueprints', true, 26214400, array['application/pdf','text/html'])
+on conflict (id) do nothing;
+
+-- ============================================
 -- Seed: Set your admin accounts
 -- ============================================
 -- After Gogo and Adriana first log in, run:

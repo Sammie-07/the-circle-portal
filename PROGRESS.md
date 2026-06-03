@@ -185,6 +185,20 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Upload existing blueprint.** New `POST /api/blueprints/upload` (admin-gated, nodejs runtime)
+  accepts an `.html` or `.pdf` file. HTML → stored directly as `blueprint_html`. PDF → uploaded to
+  the new public `blueprints` Supabase Storage bucket, embedded via `<iframe>` in `blueprint_html`
+  with hidden extracted text (via `unpdf`) so homework generation still works; extracted text also
+  saved to `blueprint_transcript`. Sets share token + generated_at, resets sent timestamps — so an
+  uploaded blueprint behaves identically to a generated one (share link, member view, send,
+  homework). Upload UI added to `BlueprintPanel`. **DB:** created `blueprints` storage bucket
+  (public, 25 MB, pdf/html) — recorded in `supabase-schema.sql`. New dep: `unpdf`.
+- **Deactivate / Delete members.** Dashboard layout now blocks members whose `status != 'active'`
+  with a "Your access is paused" page (deactivate = reversible pause). New `DeactivateMember`/
+  `Reactivate` button (owner/admin/manager, PATCH status). New `DELETE /api/members/[id]`
+  (owner/admin only) removes the member row (cascades logs + reports), deletes the auth login
+  account, and best-effort cleans the member's storage folder; `DeleteMemberButton` uses
+  type-the-name confirmation and redirects to `/admin`.
 - **Admin can edit member profiles.** New `PATCH /api/members/[id]` (role-gated to
   `owner`/`admin`/`manager`; service-role write after server-side role check; 409 on duplicate
   email). New `EditMemberButton` modal on the admin member detail page (name, email, cohort,
