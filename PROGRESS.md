@@ -184,6 +184,10 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Track `.env.example`.** Fixed `.gitignore` (`!.env.example`) so the env template — including
+  the documented `CRON_SECRET` — is committed. Real env files (`.env`, `.env.local`) stay ignored.
+  ⚠️ Set `CRON_SECRET` in Vercel project env for the cron guard to work in production.
+- **Verified production build** (`npm run build`) passes — all routes compile.
 - **Removed duplicate route groups.** Deleted empty `src/app/(admin)/`, `(auth)/`, `(member)/`
   scaffolding (zero files, abandoned migration). Flat `admin/`/`login/`/`dashboard/` are canonical.
 - **Centralized AI clients.** Added `src/lib/ai.ts` with lazy, guarded, cached `getAnthropic()` /
