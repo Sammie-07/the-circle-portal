@@ -185,6 +185,11 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Ask Gogo chat — less choppy voice.** The chat system prompt (`api/chat/[sessionId]/messages`)
+  was forcing staccato ("Sentences are short. Actually short. One idea per sentence... No dense
+  blocks. One idea per paragraph."), producing too many hard stops. Rewrote the rhythm rules to
+  favour flowing, connected sentences with short punches reserved for emphasis. Brand frameworks,
+  first-person rule, em-dash ban, and banned-phrase list all left intact.
 - **Regenerated Krystal Thomas's PDF blueprint** with the branded shell directly via SQL (her PDF
   was already in storage; the new upload hadn't run — stale browser tab, no server hit). Diagnosis:
   no new storage object + unchanged `blueprint_generated_at` confirmed the re-upload never reached
