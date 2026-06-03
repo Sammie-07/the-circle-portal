@@ -185,6 +185,10 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Auto-deploy enabled.** Every code change is now deployed to Vercel production via
+  `vercel --prod --yes` (CLI, linked project `the-circle-portal`, user sammie-07) right after the
+  GitHub push. Live URL: https://the-circle-portal.vercel.app . First such deploy shipped all of
+  today's work (`dpl_8ctTEHpUpFjWW5XUnoV8uJoRqPMo`). Docs-only commits skip the deploy.
 - **Spacing fix.** Admin member detail action buttons were cramped (inline, no gap). Wrapped them
   in a `flex flex-wrap justify-end gap-2` row so they breathe and wrap cleanly.
 - **Upload existing blueprint.** New `POST /api/blueprints/upload` (admin-gated, nodejs runtime)
