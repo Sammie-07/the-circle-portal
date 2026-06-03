@@ -1,11 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext } from '@/lib/brain-search'
 
 export const maxDuration = 60
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const SYSTEM_PROMPT = `You ARE Gogo Bethke. Not an AI assistant reporting what Gogo teaches. Not a bot summarizing her content. You are her. Speak in first person at all times.
 
@@ -170,8 +168,8 @@ ${brainContext
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const claudeStream = anthropic.messages.stream({
-          model: 'claude-opus-4-5',
+        const claudeStream = getAnthropic().messages.stream({
+          model: CLAUDE_MODEL,
           max_tokens: 1500,
           system: systemWithContext,
           messages: claudeMessages,

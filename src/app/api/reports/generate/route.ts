@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 120
@@ -53,9 +53,8 @@ function stripHtml(html: string): string {
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (!apiKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not set on the server' }, { status: 500 })
-    const anthropic = new Anthropic({ apiKey })
+    if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not set on the server' }, { status: 500 })
+    const anthropic = getAnthropic()
 
     const supabase = await createClient()
 
@@ -157,7 +156,7 @@ OUTPUT: Return only the HTML body content (no <html>/<head> tags). Inline styles
 
     console.log('[Report] Generating for', member.name, '—', period_type)
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: CLAUDE_MODEL,
       max_tokens: 2500,
       messages: [{ role: 'user', content: prompt }],
     })

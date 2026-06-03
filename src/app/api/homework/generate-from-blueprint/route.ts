@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 60
@@ -26,8 +26,7 @@ interface GeneratedTask {
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (!apiKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not set' }, { status: 500 })
+    if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not set' }, { status: 500 })
 
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
     const qEndDate = new Date(joinDate.getTime() + qEndWeek * 7 * 24 * 60 * 60 * 1000)
     const qEndStr = qEndDate.toISOString().split('T')[0]
 
-    const anthropic = new Anthropic({ apiKey })
+    const anthropic = getAnthropic()
 
     const prompt = `You are reading ${member.name}'s 12-month Circle coaching blueprint prepared by Gogo Bethke.
 
@@ -87,7 +86,7 @@ BLUEPRINT TEXT:
 ${blueprintText}`
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: CLAUDE_MODEL,
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
     })

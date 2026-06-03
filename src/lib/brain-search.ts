@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { getOpenAI } from '@/lib/ai'
 
 const brainSupabase = createClient(
   process.env.BRAIN_SUPABASE_URL!,
@@ -18,7 +16,7 @@ export interface BrainChunk {
 }
 
 export async function searchBrain(query: string, matchCount = 8): Promise<BrainChunk[]> {
-  const embedRes = await openai.embeddings.create({
+  const embedRes = await getOpenAI().embeddings.create({
     model: 'text-embedding-3-small',
     input: query,
   })

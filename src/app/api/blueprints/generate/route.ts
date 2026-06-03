@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { NextResponse } from 'next/server'
 
 // Extend timeout to 5 minutes — blueprint generation takes 60–90s
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
   console.log('[Blueprint] Env check — ANTHROPIC_API_KEY:', apiKey ? `set (${apiKey.slice(0, 15)}...)` : 'MISSING')
   console.log('[Blueprint] Env check — BRAIN_SUPABASE_URL:', process.env.BRAIN_SUPABASE_URL ? 'set' : 'MISSING')
   if (!apiKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not set on the server' }, { status: 500 })
-  const anthropic = new Anthropic({ apiKey })
+  const anthropic = getAnthropic()
 
   const supabase = await createClient()
 
@@ -362,7 +362,7 @@ RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, perso
   try {
     console.log('[Blueprint] Starting Call 1 of 3 (nav + cover + sections 1–3)...')
     const msg1 = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: CLAUDE_MODEL,
       max_tokens: 8000,
       messages: [{ role: 'user', content: prompt1 }],
     })
@@ -371,7 +371,7 @@ RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, perso
 
     console.log('[Blueprint] Starting Call 2 of 3 (section 4 — 12-month blueprint)...')
     const msg2 = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: CLAUDE_MODEL,
       max_tokens: 8000,
       messages: [{ role: 'user', content: prompt2 }],
     })
@@ -380,7 +380,7 @@ RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, perso
 
     console.log('[Blueprint] Starting Call 3 of 3 (sections 5–7 + footer)...')
     const msg3 = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
+      model: CLAUDE_MODEL,
       max_tokens: 8000,
       messages: [{ role: 'user', content: prompt3 }],
     })
