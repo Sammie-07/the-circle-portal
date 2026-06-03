@@ -185,6 +185,8 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Spacing fix.** Admin member detail action buttons were cramped (inline, no gap). Wrapped them
+  in a `flex flex-wrap justify-end gap-2` row so they breathe and wrap cleanly.
 - **Upload existing blueprint.** New `POST /api/blueprints/upload` (admin-gated, nodejs runtime)
   accepts an `.html` or `.pdf` file. HTML → stored directly as `blueprint_html`. PDF → uploaded to
   the new public `blueprints` Supabase Storage bucket, embedded via `<iframe>` in `blueprint_html`

@@ -79,27 +79,29 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           <div className="text-right space-y-2">
             <p className={`text-sm font-medium ${health.color}`}>{health.label}</p>
             <p className="text-[var(--text-3)] text-xs">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-            {member.email && (
-              <SendInviteButton email={member.email} memberName={member.name} />
-            )}
-            <CheckinLinkButton memberId={id} />
-            {member.email && <SigninLinkButton email={member.email} />}
-            <EditMemberButton
-              member={{
-                id: member.id,
-                name: member.name,
-                email: member.email,
-                cohort: member.cohort ?? null,
-                status: member.status ?? null,
-                phone: member.phone ?? null,
-                city: member.city ?? null,
-                instagram: member.instagram ?? null,
-                website: member.website ?? null,
-                bio: member.bio ?? null,
-              }}
-            />
-            <MemberStatusButton memberId={id} memberName={member.name} status={member.status ?? null} />
-            <div className="pt-2 border-t border-[var(--border-color)]/50 mt-2 flex justify-end">
+            <div className="flex flex-wrap justify-end items-center gap-2 pt-1">
+              {member.email && (
+                <SendInviteButton email={member.email} memberName={member.name} />
+              )}
+              <CheckinLinkButton memberId={id} />
+              {member.email && <SigninLinkButton email={member.email} />}
+              <EditMemberButton
+                member={{
+                  id: member.id,
+                  name: member.name,
+                  email: member.email,
+                  cohort: member.cohort ?? null,
+                  status: member.status ?? null,
+                  phone: member.phone ?? null,
+                  city: member.city ?? null,
+                  instagram: member.instagram ?? null,
+                  website: member.website ?? null,
+                  bio: member.bio ?? null,
+                }}
+              />
+              <MemberStatusButton memberId={id} memberName={member.name} status={member.status ?? null} />
+            </div>
+            <div className="pt-3 border-t border-[var(--border-color)]/50 mt-3 flex justify-end">
               <DeleteMemberButton memberId={id} memberName={member.name} />
             </div>
           </div>
