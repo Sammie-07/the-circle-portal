@@ -185,6 +185,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Uploaded PDF blueprints now use the branded Circle shell.** Previously a PDF opened in the raw
+  browser PDF viewer (no branding). New `src/lib/blueprint-shell.ts` `wrapPdfBlueprint()` reproduces
+  the generated blueprint's dark theme + "The Circle" sticky `<nav>`, embeds the PDF cleanly
+  (`#toolbar=0&navpanes=0&view=FitH`), and keeps the hidden extracted-text div for homework. The
+  `<nav>` matches the generated structure so `b/[token]`'s download-toolbar injection works
+  unchanged. ⚠️ Already-uploaded PDFs must be **re-uploaded** to get the new shell (no auto-migrate).
 - **Auto-deploy enabled.** Every code change is now deployed to Vercel production via
   `vercel --prod --yes` (CLI, linked project `the-circle-portal`, user sammie-07) right after the
   GitHub push. Live URL: https://the-circle-portal.vercel.app . First such deploy shipped all of

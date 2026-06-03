@@ -1,40 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { wrapPdfBlueprint } from '@/lib/blueprint-shell'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
-// Build a clean styled HTML doc that embeds the PDF full-size AND hides the
-// extracted text so the homework route's tag-strip captures real content.
-function buildPdfHtml(name: string, publicUrl: string, extractedText: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>${escapeHtml(name)} · Blueprint · The Circle</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  html,body{background:#0D0D0D;height:100%;}
-  iframe{display:block;}
-</style>
-</head>
-<body>
-<iframe src="${publicUrl}" style="width:100%;height:100vh;border:0"></iframe>
-<div style="display:none" aria-hidden="true">${escapeHtml(extractedText)}</div>
-</body>
-</html>`
-}
 
 export async function POST(request: Request) {
   try {
@@ -122,7 +92,7 @@ export async function POST(request: Request) {
         console.warn('[BlueprintUpload] PDF text extraction failed:', err instanceof Error ? err.message : String(err))
       }
 
-      updates.blueprint_html = buildPdfHtml(member.name, publicUrl, extractedText)
+      updates.blueprint_html = wrapPdfBlueprint({ memberName: member.name, pdfUrl: publicUrl, extractedText })
       updates.blueprint_transcript = extractedText
     }
 
