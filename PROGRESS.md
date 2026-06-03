@@ -185,6 +185,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Regenerated Krystal Thomas's PDF blueprint** with the branded shell directly via SQL (her PDF
+  was already in storage; the new upload hadn't run — stale browser tab, no server hit). Diagnosis:
+  no new storage object + unchanged `blueprint_generated_at` confirmed the re-upload never reached
+  the server. Upload handler code is correct; a fresh page load fixes future uploads.
+- **KNOWN ISSUE (pre-existing, not yet fixed): `/b/[token]` share links require login.** The route
+  reads `members` via the RLS-bound SSR client with no public-read policy, so anonymous visitors get
+  404 — affects generated AND uploaded blueprints. Logged-in admins/members see them fine. Emailed
+  links to non-users would 404. Fix options: service-role read in the route, or a public RLS policy
+  scoped to share-token lookups.
 - **Uploaded PDF blueprints now use the branded Circle shell.** Previously a PDF opened in the raw
   browser PDF viewer (no branding). New `src/lib/blueprint-shell.ts` `wrapPdfBlueprint()` reproduces
   the generated blueprint's dark theme + "The Circle" sticky `<nav>`, embeds the PDF cleanly
