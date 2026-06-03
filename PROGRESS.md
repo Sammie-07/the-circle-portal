@@ -139,7 +139,8 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
    guarded init (no more module-scope `process.env.X!` clients that crashed on missing keys).
 4. ✅ **RESOLVED — Cron.** `cron/friday-reminders` is scheduled in `vercel.json` (`0 13 * * 5`,
    Fri 13:00 UTC) and now hardened with a strict `Bearer ${CRON_SECRET}` → 401 guard
-   (previously open when the secret was unset). `CRON_SECRET` documented in `.env.example`.
+   (previously open when the secret was unset). `CRON_SECRET` documented in `.env.example`
+   and **set in Vercel Production env (2026-06-03)** — redeploy required for it to take effect.
 
 ---
 
@@ -184,6 +185,7 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **`CRON_SECRET` set in Vercel Production.** Cron auth guard is now live (pending a redeploy).
 - **Track `.env.example`.** Fixed `.gitignore` (`!.env.example`) so the env template — including
   the documented `CRON_SECRET` — is committed. Real env files (`.env`, `.env.local`) stay ignored.
   ⚠️ Set `CRON_SECRET` in Vercel project env for the cron guard to work in production.
