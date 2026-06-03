@@ -8,6 +8,11 @@ export interface Member {
   join_date: string
   cohort: string | null
   status: 'active' | 'inactive' | 'graduated'
+  phone?: string | null
+  city?: string | null
+  instagram?: string | null
+  website?: string | null
+  bio?: string | null
   blueprint_data: BlueprintData | null
   created_at: string
 }

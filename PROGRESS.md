@@ -185,6 +185,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Admin can edit member profiles.** New `PATCH /api/members/[id]` (role-gated to
+  `owner`/`admin`/`manager`; service-role write after server-side role check; 409 on duplicate
+  email). New `EditMemberButton` modal on the admin member detail page (name, email, cohort,
+  status, phone, city, instagram, website, bio — sends only changed fields, then `router.refresh()`).
+  Extended `Member` type with `phone/city/instagram/website/bio`. No DB migration needed — those
+  columns already existed. Build passes. ⚠️ Editing `email` changes the login↔member RLS linkage.
 - **`CRON_SECRET` set in Vercel Production.** Cron auth guard is now live (pending a redeploy).
 - **Track `.env.example`.** Fixed `.gitignore` (`!.env.example`) so the env template — including
   the documented `CRON_SECRET` — is committed. Real env files (`.env`, `.env.local`) stay ignored.

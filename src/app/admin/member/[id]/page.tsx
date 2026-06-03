@@ -7,6 +7,7 @@ import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
 import SigninLinkButton from '@/components/admin/SigninLinkButton'
+import EditMemberButton from '@/components/admin/EditMemberButton'
 import Link from 'next/link'
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -81,6 +82,20 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             )}
             <CheckinLinkButton memberId={id} />
             {member.email && <SigninLinkButton email={member.email} />}
+            <EditMemberButton
+              member={{
+                id: member.id,
+                name: member.name,
+                email: member.email,
+                cohort: member.cohort ?? null,
+                status: member.status ?? null,
+                phone: member.phone ?? null,
+                city: member.city ?? null,
+                instagram: member.instagram ?? null,
+                website: member.website ?? null,
+                bio: member.bio ?? null,
+              }}
+            />
           </div>
         </div>
       </div>
