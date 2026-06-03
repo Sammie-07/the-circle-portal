@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
-import { searchBrain, buildBrainContext } from '@/lib/brain-search'
+import { searchBrain, buildBrainContext, CANONICAL_FACTS } from '@/lib/brain-search'
 
 export const maxDuration = 60
 
@@ -150,6 +150,8 @@ export async function POST(
   }
 
   const systemWithContext = `${SYSTEM_PROMPT}
+
+${CANONICAL_FACTS}
 
 ${brainContext
   ? `GOGO'S BRAIN — RELEVANT KNOWLEDGE:\n\n${brainContext}`

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
+import { sanitizeBrainText } from '@/lib/brain-search'
 import { NextResponse } from 'next/server'
 
 // Extend timeout to 5 minutes — blueprint generation takes 60–90s
@@ -149,7 +150,7 @@ async function fetchBrainContext(query: string, count = 5): Promise<string> {
       return ''
     }
     const chunks = await res.json()
-    return chunks.map((c: { content: string }) => c.content).join('\n\n')
+    return sanitizeBrainText(chunks.map((c: { content: string }) => c.content).join('\n\n'))
   } catch (err) {
     console.warn('[Brain] fetch error:', err instanceof Error ? err.message : String(err))
     return ''

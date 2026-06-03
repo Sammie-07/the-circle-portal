@@ -185,6 +185,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Name correction: Kristy Waker (was "Christie/Christy").** Gogo's Director of Operations / first
+  hire is **Kristy Waker**; auto-transcribed clippings in the brain misspell it as Christie/Christy/
+  Christiey, leaking into outputs. Fix applied at the app layer (brain lives in a separate
+  `BRAIN_SUPABASE_URL` project; raw Clippings are immutable): added `sanitizeBrainText()` +
+  `CANONICAL_FACTS` to `src/lib/brain-search.ts`. All retrieved brain text is now normalized
+  (Christie→Kristy) before reaching any prompt — applied in chat (`buildBrainContext`), blueprints,
+  and reports (their inline `fetchBrainContext`). Chat prompt also gets the explicit `CANONICAL_FACTS`
+  override. Covers all current brain-driven outputs.
 - **Ask Gogo chat — less choppy voice.** The chat system prompt (`api/chat/[sessionId]/messages`)
   was forcing staccato ("Sentences are short. Actually short. One idea per sentence... No dense
   blocks. One idea per paragraph."), producing too many hard stops. Rewrote the rhythm rules to

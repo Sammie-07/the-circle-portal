@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
+import { sanitizeBrainText } from '@/lib/brain-search'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 120
@@ -22,7 +23,7 @@ async function fetchBrainContext(query: string): Promise<string> {
     })
     if (!res.ok) return ''
     const chunks = await res.json()
-    return chunks.map((c: { content: string }) => c.content).join('\n\n')
+    return sanitizeBrainText(chunks.map((c: { content: string }) => c.content).join('\n\n'))
   } catch (err) {
     console.warn('[Report] Brain fetch error:', err instanceof Error ? err.message : String(err))
     return ''

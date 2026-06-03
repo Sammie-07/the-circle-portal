@@ -39,6 +39,20 @@ export async function searchBrain(query: string, matchCount = 8): Promise<BrainC
 export function buildBrainContext(chunks: BrainChunk[]): string {
   if (chunks.length === 0) return ''
   return chunks
-    .map(c => `[${c.title}${c.section ? ' — ' + c.section : ''}]\n${c.content}`)
+    .map(c => `[${c.title}${c.section ? ' — ' + c.section : ''}]\n${sanitizeBrainText(c.content)}`)
     .join('\n\n---\n\n')
+}
+
+// Canonical facts that OVERRIDE the knowledge base when it conflicts.
+// The raw transcripts are auto-transcribed and misspell names.
+export const CANONICAL_FACTS = `CANONICAL FACTS — these override anything in the knowledge base:
+- My Director of Operations and first hire is named Kristy Waker. Auto-transcribed notes sometimes spell her name "Christie", "Christy", "Christiey", or just "Kristy". That is the same person. Her correct name is always Kristy Waker. Whenever you mention her, call her Kristy (or Kristy Waker). Never write "Christie" or "Christy".`
+
+// Normalize the misspellings of Kristy Waker's name that appear in the
+// auto-transcribed source material before it ever reaches a prompt.
+export function sanitizeBrainText(text: string): string {
+  return text
+    .replace(/\bChrist(?:iey|ie|ey|y)\b/g, 'Kristy')
+    .replace(/\bchrist(?:iey|ie|ey|y)\b/g, 'kristy')
+    .replace(/\bKristie\b/g, 'Kristy')
 }
