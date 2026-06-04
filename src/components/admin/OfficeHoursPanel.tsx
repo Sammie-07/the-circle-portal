@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-interface ClarityCall {
+interface OfficeHour {
   id: string
   title: string
   video_url: string
@@ -20,11 +20,11 @@ interface FormState {
 
 const EMPTY_FORM: FormState = { title: '', video_url: '', call_date: '', notes: '' }
 
-export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
-  const [calls, setCalls] = useState<ClarityCall[]>([])
+export default function OfficeHoursPanel() {
+  const [calls, setCalls] = useState<OfficeHour[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<ClarityCall | null>(null)
+  const [editing, setEditing] = useState<OfficeHour | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -32,7 +32,7 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
   const loadCalls = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/clarity-calls?memberId=${memberId}`)
+      const res = await fetch('/api/office-hours')
       const data = await res.json()
       if (res.ok) setCalls(data.calls ?? [])
     } catch {
@@ -40,7 +40,7 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
     } finally {
       setLoading(false)
     }
-  }, [memberId])
+  }, [])
 
   useEffect(() => { loadCalls() }, [loadCalls])
 
@@ -51,7 +51,7 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
     setOpen(true)
   }
 
-  function openEdit(call: ClarityCall) {
+  function openEdit(call: OfficeHour) {
     setEditing(call)
     setForm({
       title: call.title,
@@ -74,11 +74,11 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
     try {
       const isEdit = !!editing
       const res = await fetch(
-        isEdit ? `/api/clarity-calls/${editing!.id}` : '/api/clarity-calls',
+        isEdit ? `/api/office-hours/${editing!.id}` : '/api/office-hours',
         {
           method: isEdit ? 'PATCH' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(isEdit ? form : { member_id: memberId, ...form }),
+          body: JSON.stringify(form),
         }
       )
       const data = await res.json()
@@ -92,10 +92,10 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
     }
   }
 
-  async function handleDelete(call: ClarityCall) {
+  async function handleDelete(call: OfficeHour) {
     if (!confirm(`Delete "${call.title}"? This cannot be undone.`)) return
     try {
-      const res = await fetch(`/api/clarity-calls/${call.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/office-hours/${call.id}`, { method: 'DELETE' })
       if (res.ok) await loadCalls()
     } catch {
       // ignore — list stays as-is
@@ -114,21 +114,21 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
       <div className="flex items-center justify-between mb-5">
         <div>
           <p className="text-[#C9A227] text-xs tracking-[0.2em] uppercase mb-1">Recorded Sessions</p>
-          <h2 className="text-[var(--text)] font-serif text-xl">Clarity Call Replay</h2>
-          <p className="text-[var(--text-3)] text-xs mt-1">The member&apos;s clarity / onboarding call recording.</p>
+          <h2 className="text-[var(--text)] font-serif text-xl">Office Hours Replay</h2>
+          <p className="text-[var(--text-3)] text-xs mt-1">Weekly recordings shown to every member.</p>
         </div>
         <button
           onClick={openAdd}
           className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
         >
-          + Add Call
+          + Add Recording
         </button>
       </div>
 
       {loading ? (
         <p className="text-[var(--text-3)] text-sm">Loading…</p>
       ) : calls.length === 0 ? (
-        <p className="text-[var(--text-3)] text-sm">No clarity calls added yet. Add a recording URL so this member can rewatch it.</p>
+        <p className="text-[var(--text-3)] text-sm">No office hours added yet. Add a recording URL and it will appear on every member&apos;s portal.</p>
       ) : (
         <ul className="space-y-3">
           {calls.map((call) => (
@@ -177,7 +177,7 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto text-left">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[var(--text)] font-serif text-xl">{editing ? 'Edit Call' : 'Add Clarity Call'}</h2>
+              <h2 className="text-[var(--text)] font-serif text-xl">{editing ? 'Edit Recording' : 'Add Office Hours'}</h2>
               <button onClick={() => setOpen(false)} className="text-[var(--text-3)] hover:text-[var(--text)] text-lg">✕</button>
             </div>
 
@@ -188,7 +188,7 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
                   value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   required
-                  placeholder="e.g. Clarity Call — Week 1"
+                  placeholder="e.g. Office Hours — Week of Jun 2"
                   className={inputClass}
                 />
               </div>
@@ -232,7 +232,7 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
                 </button>
                 <button type="submit" disabled={saving}
                   className="flex-1 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
-                  {saving ? 'Saving…' : editing ? 'Save Changes' : 'Add Call'}
+                  {saving ? 'Saving…' : editing ? 'Save Changes' : 'Add Recording'}
                 </button>
               </div>
             </form>

@@ -151,6 +151,24 @@ create policy "members_read_own_clarity_calls"
   using (member_id in (select id from members where email = auth.email()));
 
 -- ============================================
+-- Office Hours (GLOBAL weekly recordings — same for every member)
+-- ============================================
+create table if not exists office_hours (
+  id           uuid primary key default gen_random_uuid(),
+  title        text not null,
+  video_url    text not null,
+  call_date    date,
+  notes        text,
+  created_at   timestamptz not null default now(),
+  created_by   uuid references auth.users(id) on delete set null
+);
+alter table office_hours enable row level security;
+create policy "admins_all_office_hours"
+  on office_hours for all using (is_admin());
+create policy "authed_read_office_hours"
+  on office_hours for select using (auth.uid() is not null);
+
+-- ============================================
 -- Storage: blueprints bucket (for uploaded PDF/HTML blueprints)
 -- ============================================
 -- Public bucket; files are named with unguessable UUIDs (mirrors the public

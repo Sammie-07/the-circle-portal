@@ -185,6 +185,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Split calls into Clarity Call Replay (per-member) + Office Hours Replay (global).** Office hours
+  are weekly and identical for everyone, so they get their own GLOBAL `office_hours` table (no
+  member_id; RLS: admins manage, any authenticated user reads) — added to schema + live DB. New API
+  `api/office-hours` (GET all / POST) + `api/office-hours/[id]` (PATCH/DELETE), writes gated
+  owner/admin/manager. Admin manages them ONCE at `/admin/office-hours` (`OfficeHoursPanel`, linked
+  in the admin sidebar) and they appear on every member's portal. Member `/dashboard/calls` now shows
+  two sections: "Clarity Call Replay" (their own) then "Office Hours Replay" (global), each an
+  independent `ClarityCallsList` player. Per-member admin panel relabeled "Clarity Call Replay".
 - **Clarity Calls feature.** Members can rewatch their coaching calls via embedded players (no video
   hosting — just URLs). New `clarity_calls` table (member-scoped, RLS: admins all / members own;
   added to schema + applied to live DB). New API `api/clarity-calls` (GET list, POST) and

@@ -68,26 +68,50 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
   )
 }
 
-export default function ClarityCallsList({ calls }: { calls: ClarityCall[] }) {
+interface ClarityCallsListProps {
+  calls: ClarityCall[]
+  heading?: string
+  subtitle?: string
+  emptyText?: string
+}
+
+export default function ClarityCallsList({
+  calls,
+  heading,
+  subtitle,
+  emptyText = 'Your recordings will appear here once your coach adds them.',
+}: ClarityCallsListProps) {
   const [activeId, setActiveId] = useState<string | null>(calls[0]?.id ?? null)
   const activeCall = calls.find((c) => c.id === activeId) ?? calls[0]
 
+  const sectionHeader = (heading || subtitle) ? (
+    <div className="mb-4">
+      {heading && <h2 className="text-[var(--text)] font-serif text-2xl">{heading}</h2>}
+      {subtitle && <p className="text-[var(--text-3)] text-sm mt-1">{subtitle}</p>}
+    </div>
+  ) : null
+
   if (calls.length === 0) {
     return (
-      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-10 text-center">
-        <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
-          <span className="text-[#C9A227] text-2xl">▶</span>
+      <div>
+        {sectionHeader}
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-10 text-center">
+          <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
+            <span className="text-[#C9A227] text-2xl">▶</span>
+          </div>
+          <h2 className="text-[var(--text)] font-serif text-xl mb-3">No Recordings Yet</h2>
+          <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">
+            {emptyText}
+          </p>
         </div>
-        <h2 className="text-[var(--text)] font-serif text-xl mb-3">No Recordings Yet</h2>
-        <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">
-          Your clarity call recordings will appear here once your coach adds them.
-        </p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+      {sectionHeader}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Sidebar: call list */}
       <aside className="lg:col-span-1 space-y-2">
         {calls.map((call) => {
@@ -134,6 +158,7 @@ export default function ClarityCallsList({ calls }: { calls: ClarityCall[] }) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   )
