@@ -185,6 +185,16 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-03
+- **Clarity Calls feature.** Members can rewatch their coaching calls via embedded players (no video
+  hosting — just URLs). New `clarity_calls` table (member-scoped, RLS: admins all / members own;
+  added to schema + applied to live DB). New API `api/clarity-calls` (GET list, POST) and
+  `api/clarity-calls/[id]` (PATCH, DELETE), role-gated owner/admin/manager. Admin: `ClarityCallsPanel`
+  on the member detail page (add/edit/delete by pasting a URL). Member: `/dashboard/calls` (sidebar
+  list + 16:9 embed), linked as "My Calls" in `components/shared/Sidebar.tsx`. `getEmbedUrl` supports
+  **YouTube** (watch/youtu.be/shorts/embed), **Google Drive** (`/file/d/ID` + `?id=ID` → `/preview`),
+  **Loom**, **Vimeo**, with a "Watch recording" link fallback. Built from a teammate's draft, fully
+  rewritten to this project's conventions (cookie auth, real Supabase helpers, CSS-var theme) and
+  Google Drive support added (the draft lacked it). Build passes.
 - **Name correction: Kristy Waker (was "Christie/Christy").** Gogo's Director of Operations / first
   hire is **Kristy Waker**; auto-transcribed clippings in the brain misspell it as Christie/Christy/
   Christiey, leaking into outputs. Fix applied at the app layer (brain lives in a separate

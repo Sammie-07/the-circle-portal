@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import WeeklyLogForm from '@/components/admin/WeeklyLogForm'
 import MemberReportPanel from '@/components/admin/MemberReportPanel'
 import BlueprintPanel from '@/components/admin/BlueprintPanel'
+import ClarityCallsPanel from '@/components/admin/ClarityCallsPanel'
 import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
@@ -142,6 +143,11 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           blueprintShareToken={member.blueprint_share_token ?? null}
           blueprintTranscript={member.blueprint_transcript ?? null}
         />
+      </div>
+
+      {/* Clarity Calls — full width above the 2-col grid */}
+      <div className="mb-6">
+        <ClarityCallsPanel memberId={member.id} />
       </div>
 
       {/* Homework & Tasks — full width above the 2-col grid */}

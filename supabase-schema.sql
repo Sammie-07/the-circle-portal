@@ -130,6 +130,27 @@ create policy "Members can view own sent reports"
   );
 
 -- ============================================
+-- Clarity Calls (embedded recordings: YouTube / Google Drive / Loom / Vimeo)
+-- ============================================
+create table if not exists clarity_calls (
+  id           uuid primary key default gen_random_uuid(),
+  member_id    uuid not null references members(id) on delete cascade,
+  title        text not null,
+  video_url    text not null,
+  call_date    date,
+  notes        text,
+  created_at   timestamptz not null default now(),
+  created_by   uuid references auth.users(id) on delete set null
+);
+create index if not exists clarity_calls_member_id_idx on clarity_calls(member_id);
+alter table clarity_calls enable row level security;
+create policy "admins_all_clarity_calls"
+  on clarity_calls for all using (is_admin());
+create policy "members_read_own_clarity_calls"
+  on clarity_calls for select
+  using (member_id in (select id from members where email = auth.email()));
+
+-- ============================================
 -- Storage: blueprints bucket (for uploaded PDF/HTML blueprints)
 -- ============================================
 -- Public bucket; files are named with unguessable UUIDs (mirrors the public
