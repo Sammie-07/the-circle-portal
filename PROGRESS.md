@@ -191,6 +191,8 @@ Every code change is recorded here, newest first.
   Months are a continuous range from the member's join month through the current month (passed
   `joinDate`), so the current month and not-yet-logged months are always selectable (fixed June
   missing because it had no logs yet). No DB/API change.
+  Then upgraded to **From/To month range selection**: two month selectors — full span = all time
+  (default), same month in both = single month, different = a date range. Order-tolerant.
 
 ### 2026-06-05
 - **REVERTED team-panel + middleware changes to last-good `019d4d4`** (commit c2da91c) after the
