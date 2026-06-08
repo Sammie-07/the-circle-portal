@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
+import MemberProfileCard from '@/components/shared/MemberProfileCard'
 import WeeklyLogForm from '@/components/admin/WeeklyLogForm'
 import MemberReportPanel from '@/components/admin/MemberReportPanel'
 import BlueprintPanel from '@/components/admin/BlueprintPanel'
@@ -26,6 +28,18 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     .single()
 
   if (!member) notFound()
+
+  const admin = createAdminClient()
+  const { data: headshot } = await admin
+    .from('member_documents')
+    .select('id')
+    .eq('member_id', id)
+    .eq('doc_type', 'headshot')
+    .order('uploaded_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const headshotUrl = headshot?.id ? `/api/member-documents/${headshot.id}/download` : null
 
   const { data: logs } = await supabase
     .from('weekly_logs')
@@ -73,13 +87,22 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
       {/* Member header */}
       <div className="mt-4 mb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-1">{member.cohort ?? 'Circle Member'}</p>
-            <h1 className="text-[var(--text)] font-serif text-3xl mb-1">{member.name}</h1>
-            <p className="text-[var(--text-3)] text-sm">{member.email}</p>
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-start gap-6">
+          <div className="flex-1 min-w-0">
+            <MemberProfileCard
+              name={member.name}
+              email={member.email}
+              cohort={member.cohort}
+              joinDate={member.join_date}
+              city={member.city}
+              instagram={member.instagram}
+              website={member.website}
+              bio={member.bio}
+              headshotUrl={headshotUrl}
+              membershipStatus={member.status ?? null}
+            />
           </div>
-          <div className="text-right space-y-2">
+          <div className="text-right space-y-2 lg:w-64 shrink-0">
             <p className={`text-sm font-medium ${health.color}`}>{health.label}</p>
             <p className="text-[var(--text-3)] text-xs">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
             <div className="flex flex-wrap justify-end items-center gap-2 pt-1">
