@@ -185,6 +185,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Fixed: owner's admin dashboard showed no data.** `is_admin()` (used by RLS "admins can view all"
+  on members/logs/reports/etc.) only matched `role='admin'`, so an `owner` (and manager/support) saw
+  nothing through the RLS cookie client — Gogo's `/admin` was empty. Broadened `is_admin()` to all
+  staff roles (owner/admin/manager/support/tech). Also normalized 3 policies that hardcoded
+  `role='admin'` (`admin_invites`, `homework`, `member_notes`) to use `is_admin()`. DB-only change,
+  live immediately (no redeploy). Granular writes still gated at the API layer.
 - **Gogo (gogosrealestate@gmail.com) set as `owner`.** Her auth account existed but the signup
   trigger had silently failed to create a profile — created the profile row with role `owner`.
   **Also fixed middleware**: `/admin` was gated to `role==='admin'` only, which would loop an

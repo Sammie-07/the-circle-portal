@@ -82,10 +82,14 @@ create policy "Users can update own profile"
   on profiles for update using (auth.uid() = id);
 
 -- Admins can do everything (helper function)
+-- All staff roles count as "admin" for RLS read access. Granular write
+-- permissions are enforced at the API layer (owner/admin/manager etc.).
 create or replace function is_admin()
 returns boolean as $$
   select exists (
-    select 1 from profiles where id = auth.uid() and role = 'admin'
+    select 1 from profiles
+    where id = auth.uid()
+      and role in ('owner', 'admin', 'manager', 'support', 'tech')
   );
 $$ language sql security definer;
 
