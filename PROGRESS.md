@@ -212,6 +212,10 @@ Every code change is recorded here, newest first.
   close + session `updated_at` bumped. (4) **Chat file upload**: paperclip → `api/chat/extract` (PDF
   via `unpdf`, text files; capped 20k chars) → file content injected into that turn's prompt for the
   model; saved transcript stays clean (only a "📎 Attached: name" marker).
+- **Manual "Make follow-up task" button.** AI auto-creation is conservative, so members can now turn
+  a note into a follow-up task themselves: new `POST /api/homework/[id]/followup` (no AI, access =
+  staff or owning member) creates a task linked via `source_note_homework_id`. Button shows on the
+  saved-note bubble and in the editor; jumps to the new task after creating.
 - **Task notes UX: comment bubbles + follow-up links.** Saved notes now render as a read-only comment
   bubble with an Edit button (no more open textarea sitting there after save). "Add note" only shows
   when empty; explicit Save/Cancel editor. Follow-up tasks spawned from a note appear as clickable
