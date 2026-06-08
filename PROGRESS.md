@@ -188,7 +188,9 @@ Every code change is recorded here, newest first.
 - **Monthly attendance filter (member dashboard).** Extracted the Attendance stat card into a client
   component `components/dashboard/AttendanceCard.tsx` with a month dropdown. Members pick a month and
   the % / "X of Y calls" / progress bar recompute for just that period; defaults to "All time".
-  Months are derived from the member's own `weekly_logs` (by `week_of` year-month). No DB/API change.
+  Months are a continuous range from the member's join month through the current month (passed
+  `joinDate`), so the current month and not-yet-logged months are always selectable (fixed June
+  missing because it had no logs yet). No DB/API change.
 
 ### 2026-06-05
 - **REVERTED team-panel + middleware changes to last-good `019d4d4`** (commit c2da91c) after the
