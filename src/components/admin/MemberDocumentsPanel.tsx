@@ -11,6 +11,8 @@ interface MemberDocument {
   mime_type: string | null
   size_bytes: number | null
   uploaded_at: string
+  uploader_name?: string | null
+  uploader_role?: string | null
 }
 
 const DOC_TYPE_OPTIONS: { value: string; label: string; defaultTitle: string }[] = [
@@ -161,7 +163,17 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
                   {doc.file_name && (
                     <p className="text-[var(--text-3)] text-xs mt-1 truncate">{doc.file_name}</p>
                   )}
-                  <p className="text-[var(--text-3)] text-xs mt-0.5">Uploaded {fmtDate(doc.uploaded_at)}</p>
+                  <p className="text-[var(--text-3)] text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">
+                    <span>
+                      Uploaded {fmtDate(doc.uploaded_at)}
+                      {doc.uploader_name ? ` by ${doc.uploader_name}` : ''}
+                    </span>
+                    {doc.uploader_role === 'member' && (
+                      <span className="text-[10px] uppercase tracking-wider text-[#C9A227] border border-[#C9A227]/40 rounded px-1 py-0.5">
+                        Member upload
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">

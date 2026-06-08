@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import MemberDocumentUpload from '@/components/dashboard/MemberDocumentUpload'
 
 export const metadata = { title: 'My Documents · The Circle' }
 
@@ -54,12 +55,15 @@ export default async function MemberDocumentsPage() {
 
   return (
     <div className="p-8 max-w-5xl">
-      <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your Files</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">My Documents</h1>
-        <p className="text-[var(--text-3)] text-sm mt-1">
-          Your contract, DISC, application and onboarding files.
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your Files</p>
+          <h1 className="text-[var(--text)] font-serif text-3xl">My Documents</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">
+            Your contract, DISC, application and onboarding files. Upload your own or download what your team adds.
+          </p>
+        </div>
+        <MemberDocumentUpload memberId={member.id} />
       </div>
 
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
@@ -71,7 +75,7 @@ export default async function MemberDocumentsPage() {
           </div>
           <h2 className="text-[var(--text)] font-serif text-xl mb-3">No Documents Yet</h2>
           <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">
-            Your documents will appear here once your team adds them.
+            Upload your contract, DISC, application or headshot using the button above — or they&apos;ll appear here once your team adds them.
           </p>
         </div>
       ) : (

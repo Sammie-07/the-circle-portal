@@ -58,7 +58,27 @@ export async function GET(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ documents: data ?? [] })
+  // Attach uploader info (name + role) so the backend can see who uploaded each
+  // file — i.e. distinguish member-uploaded from staff-uploaded documents.
+  const docs = data ?? []
+  const uploaderIds = [...new Set(docs.map((d) => d.uploaded_by).filter(Boolean))]
+  let uploaders: Record<string, { full_name: string | null; role: string | null }> = {}
+  if (uploaderIds.length) {
+    const { data: profs } = await db
+      .from('profiles')
+      .select('id, full_name, role')
+      .in('id', uploaderIds as string[])
+    uploaders = Object.fromEntries(
+      (profs ?? []).map((p) => [p.id, { full_name: p.full_name, role: p.role }])
+    )
+  }
+  const withUploader = docs.map((d) => ({
+    ...d,
+    uploader_name: d.uploaded_by ? uploaders[d.uploaded_by]?.full_name ?? null : null,
+    uploader_role: d.uploaded_by ? uploaders[d.uploaded_by]?.role ?? null : null,
+  }))
+
+  return NextResponse.json({ documents: withUploader })
 }
 
 // POST /api/member-documents — upload a document for a member (multipart/form-data).
@@ -70,9 +90,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!EDITOR_ROLES.has(profile?.role ?? '')) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const isEditor = EDITOR_ROLES.has(profile?.role ?? '')
 
   let form: FormData
   try {
@@ -104,6 +122,19 @@ export async function POST(request: Request) {
 
   const { data: member } = await db.from('members').select('id').eq('id', member_id).single()
   if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+
+  // Editors (owner/admin/manager) may upload for any member. Everyone else may
+  // only upload to their OWN member record (matched by email).
+  if (!isEditor) {
+    const { data: ownMember } = await db
+      .from('members')
+      .select('id')
+      .eq('email', user.email)
+      .maybeSingle()
+    if (!ownMember || ownMember.id !== member_id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
 
   const safeName = sanitizeFileName(file.name)
   const path = `${member_id}/${crypto.randomUUID()}-${safeName}`
