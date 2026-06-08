@@ -99,6 +99,25 @@ export default function HomeworkSection({ initialItems }: Props) {
     return data
   }
 
+  async function handleCreateFollowUp(itemId: string, title: string, note?: string): Promise<HomeworkItem | null> {
+    const res = await fetch(`/api/homework/${itemId}/followup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, note }),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (note !== undefined) {
+      setItems(prev => prev.map(i => i.id === itemId ? { ...i, notes: note } : i))
+    }
+    if (data.task) {
+      const task: HomeworkItem = data.task
+      setItems(prev => prev.some(i => i.id === task.id) ? prev : [...prev, task])
+      return task
+    }
+    return null
+  }
+
   if (homework.length === 0 && tasks.length === 0) return null
 
   return (
@@ -118,6 +137,7 @@ export default function HomeworkSection({ initialItems }: Props) {
             {homework.map(item => (
               <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
                 onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
+                onCreateFollowUp={handleCreateFollowUp}
                 onJump={jumpTo} highlighted={highlightId === item.id} />
             ))}
           </div>
@@ -146,6 +166,7 @@ export default function HomeworkSection({ initialItems }: Props) {
               .map(item => (
                 <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
                   onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
+                  onCreateFollowUp={handleCreateFollowUp}
                   onJump={jumpTo} highlighted={highlightId === item.id} />
               ))}
           </div>
@@ -155,11 +176,12 @@ export default function HomeworkSection({ initialItems }: Props) {
   )
 }
 
-function CheckItem({ item, onToggle, toggling, onSaveNote, followUps, onJump, highlighted }: {
+function CheckItem({ item, onToggle, toggling, onSaveNote, onCreateFollowUp, followUps, onJump, highlighted }: {
   item: HomeworkItem
   onToggle: (item: HomeworkItem) => void
   toggling: string | null
   onSaveNote: (itemId: string, note: string) => Promise<NoteSaveResult>
+  onCreateFollowUp: (itemId: string, title: string, note?: string) => Promise<HomeworkItem | null>
   followUps: FollowUp[]
   onJump: (id: string) => void
   highlighted: boolean
@@ -170,6 +192,7 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, followUps, onJump, hi
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(item.notes ?? '')
   const [saving, setSaving] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   async function save() {
     if (saving) return
@@ -179,6 +202,20 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, followUps, onJump, hi
       setEditing(false)
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Manually turn the note text into a follow-up task (no AI).
+  async function makeTask(title: string, note?: string) {
+    const t = title.trim()
+    if (!t || creating) return
+    setCreating(true)
+    try {
+      const task = await onCreateFollowUp(item.id, t, note)
+      setEditing(false)
+      if (task) onJump(task.id)
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -243,13 +280,23 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, followUps, onJump, hi
                 </svg>
                 Your note
               </span>
-              <button
-                type="button"
-                onClick={() => { setDraft(item.notes ?? ''); setEditing(true) }}
-                className="text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
-              >
-                Edit
-              </button>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => makeTask(item.notes ?? '', undefined)}
+                  disabled={creating}
+                  className="text-[11px] text-[#C9A227] hover:text-[#d4ac2d] transition-colors disabled:opacity-50"
+                >
+                  {creating ? 'Adding…' : '✨ Make follow-up task'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDraft(item.notes ?? ''); setEditing(true) }}
+                  className="text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
             <p className="text-xs text-[var(--text-2)] whitespace-pre-wrap leading-relaxed">{item.notes}</p>
           </div>
@@ -310,13 +357,21 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, followUps, onJump, hi
               </button>
               <button
                 type="button"
+                onClick={() => makeTask(draft, draft.trim())}
+                disabled={creating || saving || !draft.trim()}
+                className="text-xs px-3 py-1.5 rounded border border-[#C9A227]/40 bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 transition-colors disabled:opacity-50"
+              >
+                {creating ? 'Adding…' : '✨ Make follow-up task'}
+              </button>
+              <button
+                type="button"
                 onClick={() => { setDraft(item.notes ?? ''); setEditing(false) }}
                 disabled={saving}
                 className="text-xs px-3 py-1.5 rounded border border-[var(--border-color)] text-[var(--text-3)] hover:text-[var(--text)] transition-colors"
               >
                 Cancel
               </button>
-              <span className="text-[10px] text-[var(--text-4)]">Saving may add a follow-up task</span>
+              <span className="text-[10px] text-[var(--text-4)]">Save, or turn this note into a task</span>
             </div>
           </div>
         )}
