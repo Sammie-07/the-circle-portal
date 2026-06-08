@@ -185,6 +185,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Admin "Payments" tab (all-members overview).** New `/admin/payments` page + sidebar tab listing
+  every member with schedule, amount, due day, membership status, next due date and outstanding
+  balance in one table (sorted overdue-first) + summary cards (total outstanding, overdue count,
+  members with billing). Owner/admin/manager only (support redirected to /admin); uses service-role
+  read (RLS is_admin()-only). Each row links to the member detail page. Completes the spreadsheet
+  replacement (overview + per-member detail).
 - **Per-member payment tracking (admin-only) — replaces the spreadsheet.** New `member_billing`
   (1:1: schedule monthly/annual, amount, currency, due_day, membership_start/end, membership_status
   active/paused/cancelled, notes) + `member_payments` ledger (due_date, period_label, amount_due,
