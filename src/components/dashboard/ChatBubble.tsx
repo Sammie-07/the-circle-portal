@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 
 const ChatOverlay = dynamic(() => import('./ChatOverlay'), { ssr: false })
 
-export default function ChatBubble() {
+export default function ChatBubble({ preview = false }: { preview?: boolean }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -33,7 +33,7 @@ export default function ChatBubble() {
         </div>
       )}
 
-      {open && <ChatOverlay onClose={() => setOpen(false)} />}
+      {open && <ChatOverlay preview={preview} onClose={() => setOpen(false)} />}
     </>
   )
 }

@@ -48,9 +48,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="flex flex-1 min-h-0">
             <Sidebar role="member" memberName={target.name} />
             <main className="flex-1 overflow-auto">{children}</main>
-            {/* Bubble shown for portal fidelity. It runs under the viewer's own
-                session, NOT the member's — so the member's chat history stays private. */}
-            <ChatBubble />
+            {/* Bubble shown for portal fidelity. In preview it runs an ephemeral
+                chat under the viewer's own staff session: answers live from Gogo's
+                Brain but persists nothing and never touches the member's history. */}
+            <ChatBubble preview />
           </div>
         </div>
       )

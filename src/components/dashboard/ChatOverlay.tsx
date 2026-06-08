@@ -20,9 +20,10 @@ interface Message {
 
 interface ChatOverlayProps {
   onClose: () => void
+  preview?: boolean
 }
 
-export default function ChatOverlay({ onClose }: ChatOverlayProps) {
+export default function ChatOverlay({ onClose, preview = false }: ChatOverlayProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -45,10 +46,16 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingText])
 
-  // Load sessions on mount
+  // Load sessions on mount. In preview, persist nothing and load nothing —
+  // just set a sentinel session so the input + empty state render.
   useEffect(() => {
+    if (preview) {
+      setActiveSessionId('preview')
+      setMessages([])
+      return
+    }
     loadSessions()
-  }, [])
+  }, [preview])
 
   // Focus input when session changes
   useEffect(() => {
@@ -98,6 +105,12 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
   }
 
   async function newChat() {
+    if (preview) {
+      setMessages([])
+      setStreamingText('')
+      inputRef.current?.focus()
+      return
+    }
     const res = await fetch('/api/chat/sessions', { method: 'POST' })
     if (!res.ok) return
     const data = await res.json()
@@ -165,18 +178,32 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
     setIsStreaming(true)
     setStreamingText('')
 
-    // Update session title if it's the first message
-    const currentSession = sessions.find(s => s.id === sessionId)
-    if (currentSession?.title === 'New Chat') {
-      const titleSource = trimmed || sentAttachment?.name || 'New Chat'
-      const autoTitle = titleSource.slice(0, 52) + (titleSource.length > 52 ? '…' : '')
-      updateSessionTitle(sessionId, autoTitle)
+    // Update session title if it's the first message (not in preview — no sessions)
+    if (!preview) {
+      const currentSession = sessions.find(s => s.id === sessionId)
+      if (currentSession?.title === 'New Chat') {
+        const titleSource = trimmed || sentAttachment?.name || 'New Chat'
+        const autoTitle = titleSource.slice(0, 52) + (titleSource.length > 52 ? '…' : '')
+        updateSessionTitle(sessionId, autoTitle)
+      }
     }
 
     abortRef.current = new AbortController()
 
     try {
-      const res = await fetch(`/api/chat/${sessionId}/messages`, {
+      const res = preview
+        ? await fetch('/api/chat/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: trimmed,
+              history: messages.map(m => ({ role: m.role, content: m.content })),
+              attachmentName: sentAttachment?.name ?? null,
+              attachmentText: sentAttachment?.text ?? null,
+            }),
+            signal: abortRef.current.signal,
+          })
+        : await fetch(`/api/chat/${sessionId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -213,8 +240,8 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
       setMessages(prev => [...prev, assistantMsg])
       setStreamingText('')
 
-      // Bump session to top
-      setSessions(prev => {
+      // Bump session to top (no-op in preview — no session list)
+      if (!preview) setSessions(prev => {
         const idx = prev.findIndex(s => s.id === sessionId)
         if (idx <= 0) return prev
         const updated = [...prev]
@@ -234,7 +261,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
     } finally {
       setIsStreaming(false)
     }
-  }, [input, isStreaming, activeSessionId, sessions, attachment])
+  }, [input, isStreaming, activeSessionId, sessions, attachment, messages, preview])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -254,7 +281,8 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex bg-[var(--bg)]">
-      {/* Sidebar */}
+      {/* Sidebar — hidden in preview (ephemeral chat, no saved sessions) */}
+      {!preview && (
       <div className={`${sidebarOpen ? 'w-64' : 'w-0'} flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-[var(--border-color)] flex flex-col bg-[var(--surface-2)]`}>
         {/* Sidebar header */}
         <div className="px-4 py-5 border-b border-[var(--border-color)] flex-shrink-0">
@@ -307,27 +335,34 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
           )}
         </div>
       </div>
+      )}
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] flex-shrink-0">
           <div className="flex items-center gap-3">
-            {/* Sidebar toggle */}
-            <button
-              onClick={() => setSidebarOpen(v => !v)}
-              className="text-[var(--text-3)] hover:text-[var(--text)] transition-colors p-1"
-              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-            >
-              <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
-                <rect y="0" width="16" height="2" rx="1" />
-                <rect y="6" width="10" height="2" rx="1" />
-                <rect y="12" width="16" height="2" rx="1" />
-              </svg>
-            </button>
+            {/* Sidebar toggle — hidden in preview (no sidebar) */}
+            {!preview && (
+              <button
+                onClick={() => setSidebarOpen(v => !v)}
+                className="text-[var(--text-3)] hover:text-[var(--text)] transition-colors p-1"
+                title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+              >
+                <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor">
+                  <rect y="0" width="16" height="2" rx="1" />
+                  <rect y="6" width="10" height="2" rx="1" />
+                  <rect y="12" width="16" height="2" rx="1" />
+                </svg>
+              </button>
+            )}
             <div>
               <p className="text-[var(--text)] text-sm font-medium">Ask Gogo</p>
-              <p className="text-[var(--text-3)] text-[10px]">Answers from Gogo's knowledge base</p>
+              <p className="text-[var(--text-3)] text-[10px]">
+                {preview
+                  ? "Preview chat — answers from Gogo's Brain, not saved."
+                  : "Answers from Gogo's knowledge base"}
+              </p>
             </div>
           </div>
           <button
