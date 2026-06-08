@@ -66,7 +66,7 @@ export default async function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <AttendanceCard logs={logs} />
+        <AttendanceCard logs={logs} joinDate={member.join_date} />
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
           <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Homework</p>
           <p className="text-[var(--text)] font-serif text-3xl">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>

@@ -14,14 +14,34 @@ function monthLabel(ym: string): string {
   return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 
-export default function AttendanceCard({ logs }: { logs: Log[] }) {
-  // Distinct months present in the logs, most recent first
+// Every month from `start` to `end` inclusive (both 'YYYY-MM'), ascending
+function monthRange(start: string, end: string): string[] {
+  const out: string[] = []
+  let [y, m] = start.split('-').map(Number)
+  const [ey, em] = end.split('-').map(Number)
+  // guard against bad/future start
+  if (y > ey || (y === ey && m > em)) return [end]
+  while (y < ey || (y === ey && m <= em)) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`)
+    m++
+    if (m > 12) { m = 1; y++ }
+  }
+  return out
+}
+
+export default function AttendanceCard({ logs, joinDate }: { logs: Log[]; joinDate?: string }) {
+  // Build a continuous month list from the earliest relevant month through the
+  // current month, so the current month (and months with no logged calls yet)
+  // are always selectable — not just months that already have logs.
   const months = useMemo(() => {
-    const set = new Set(
-      (logs ?? []).map((l) => monthKey(l.week_of)).filter((k) => k.length === 7)
-    )
-    return Array.from(set).sort().reverse()
-  }, [logs])
+    const now = new Date()
+    const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const logMonths = (logs ?? []).map((l) => monthKey(l.week_of)).filter((k) => k.length === 7)
+    const joinMonth = (joinDate ?? '').slice(0, 7)
+    const candidates = [joinMonth, ...logMonths].filter((k) => k.length === 7).sort()
+    const start = candidates[0] && candidates[0] <= current ? candidates[0] : current
+    return monthRange(start, current).reverse()
+  }, [logs, joinDate])
 
   const [selected, setSelected] = useState<string>('all')
 
