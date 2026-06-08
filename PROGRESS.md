@@ -194,6 +194,10 @@ Every code change is recorded here, newest first.
   member detail page (doc-type badges, image thumbnails, upload/delete); member read-only
   `/dashboard/documents` page + "My Documents" sidebar link. Lets Gogo/Adriana/Kristy pull any
   member's DISC etc. on demand, and members see their own.
+  **Update:** members can now upload their OWN documents too — `POST /api/member-documents` opened to
+  the owning member (own member_id only; staff still upload for anyone). Member `/dashboard/documents`
+  has an Upload Document control. The list API returns uploader name/role and the admin panel shows
+  "uploaded by …" with a "Member upload" badge so the backend can see what members upload.
 - **Monthly attendance filter (member dashboard).** Extracted the Attendance stat card into a client
   component `components/dashboard/AttendanceCard.tsx` with a month dropdown. Members pick a month and
   the % / "X of Y calls" / progress bar recompute for just that period; defaults to "All time".
