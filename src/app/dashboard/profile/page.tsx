@@ -1,23 +1,24 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ProfileForm from '@/components/dashboard/ProfileForm'
 import MemberProfileCard from '@/components/shared/MemberProfileCard'
 import ProfilePhotoUpload from '@/components/dashboard/ProfilePhotoUpload'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 export default async function ProfilePage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  if (!ctx.member) redirect('/dashboard')
+  const user = ctx.user
 
-  const { data: member } = await supabase
+  const { data: member } = await ctx.db
     .from('members')
     .select('id, name, email, phone, city, instagram, website, bio, cohort, join_date')
-    .eq('email', user.email)
+    .eq('id', ctx.member.id as string)
     .maybeSingle()
 
   if (!member) redirect('/dashboard')
 
-  const { data: headshot } = await supabase
+  const { data: headshot } = await ctx.db
     .from('member_documents')
     .select('id')
     .eq('member_id', member.id)

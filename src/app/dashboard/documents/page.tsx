@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import MemberDocumentUpload from '@/components/dashboard/MemberDocumentUpload'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 export const metadata = { title: 'My Documents · The Circle' }
 
@@ -28,20 +28,13 @@ function isImage(doc: MemberDocument): boolean {
 }
 
 export default async function MemberDocumentsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  if (!ctx.member) redirect('/dashboard')
+  const member = ctx.member as { id: string }
 
-  const { data: member } = await supabase
-    .from('members')
-    .select('id')
-    .eq('email', user.email)
-    .single()
-
-  if (!member) redirect('/dashboard')
-
-  // RLS allows members to SELECT their own documents.
-  const { data: docs } = await supabase
+  // The resolved member's documents (RLS on the normal path).
+  const { data: docs } = await ctx.db
     .from('member_documents')
     .select('id, doc_type, title, file_name, mime_type, uploaded_at')
     .eq('member_id', member.id)

@@ -1,6 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -8,21 +8,13 @@ interface PageProps {
 
 export default async function ReportPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  if (!ctx.member) redirect('/dashboard')
+  const member = ctx.member as { id: string; name: string }
 
-  // Get the member record for this user
-  const { data: member } = await supabase
-    .from('members')
-    .select('id, name')
-    .eq('email', user.email)
-    .single()
-
-  if (!member) redirect('/dashboard')
-
-  // Fetch the report — RLS ensures it belongs to this member and is sent
-  const { data: report } = await supabase
+  // Fetch the report — scoped to the resolved member; RLS applies on the normal path.
+  const { data: report } = await ctx.db
     .from('reports')
     .select('*')
     .eq('id', id)

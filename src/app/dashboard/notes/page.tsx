@@ -1,27 +1,21 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import MyNotes from '@/components/dashboard/MyNotes'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 export default async function NotesPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
 
-  const { data: member } = await supabase
-    .from('members')
-    .select('id, name')
-    .eq('email', user.email)
-    .maybeSingle()
-
-  if (!member) {
+  if (!ctx.member) {
     return (
       <div className="p-8 text-center">
         <p className="text-[var(--text-2)]">Your member profile is being set up. Check back soon.</p>
       </div>
     )
   }
+  const member = ctx.member as { id: string; name: string }
 
-  const { data: entries } = await supabase
+  const { data: entries } = await ctx.db
     .from('member_note_entries')
     .select('id, title, content, updated_at')
     .eq('member_id', member.id)

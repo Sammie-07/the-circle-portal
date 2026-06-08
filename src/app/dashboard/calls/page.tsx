@@ -1,25 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ClarityCallsList from '@/components/member/ClarityCallsList'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 export const metadata = { title: 'Call Replays · The Circle' }
 
 export default async function MemberCallsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  if (!ctx.member) redirect('/dashboard')
+  const member = ctx.member as { id: string; name: string }
 
-  const { data: member } = await supabase
-    .from('members')
-    .select('id, name')
-    .eq('email', user.email)
-    .single()
-
-  if (!member) redirect('/dashboard')
-
-  // RLS allows members to SELECT their own clarity calls.
-  const { data: calls } = await supabase
+  // The resolved member's clarity calls (RLS on the normal path).
+  const { data: calls } = await ctx.db
     .from('clarity_calls')
     .select('id, title, video_url, call_date, notes, created_at')
     .eq('member_id', member.id)
@@ -27,7 +20,7 @@ export default async function MemberCallsPage() {
     .order('created_at', { ascending: false })
 
   // Office hours are global — RLS allows any authenticated user to SELECT all rows.
-  const { data: officeHours } = await supabase
+  const { data: officeHours } = await ctx.db
     .from('office_hours')
     .select('id, title, video_url, call_date, notes, created_at')
     .order('call_date', { ascending: false, nullsFirst: false })

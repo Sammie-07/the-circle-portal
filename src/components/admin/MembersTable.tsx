@@ -95,12 +95,20 @@ export default function MembersTable({ members }: { members: MemberRow[] }) {
                 <HealthDot rate={member.attendance_rate} />
               </td>
               <td className="px-4 py-4 text-right">
-                <Link
-                  href={`/admin/member/${member.id}`}
-                  className="text-xs text-[#C9A227] hover:text-[#d4ac2d] transition-colors"
-                >
-                  View →
-                </Link>
+                <div className="flex items-center justify-end gap-3">
+                  <a
+                    href={`/api/admin/impersonate?member=${member.id}`}
+                    className="text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
+                  >
+                    Access Member&apos;s View
+                  </a>
+                  <Link
+                    href={`/admin/member/${member.id}`}
+                    className="text-xs text-[#C9A227] hover:text-[#d4ac2d] transition-colors"
+                  >
+                    View →
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}

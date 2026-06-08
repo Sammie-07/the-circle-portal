@@ -1,34 +1,36 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import HomeworkSection from '@/components/dashboard/HomeworkSection'
 import AttendanceCard from '@/components/dashboard/AttendanceCard'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  const { db } = ctx
 
-  const { data: member } = await supabase
-    .from('members')
-    .select(`
-      *,
-      weekly_logs ( week_of, showed_up, homework_done, questions_asked ),
-      reports ( id, period_type, period_label, generated_at, sent_at )
-    `)
-    .eq('email', user.email)
-    .maybeSingle()
+  const { data: member } = ctx.member
+    ? await db
+        .from('members')
+        .select(`
+          *,
+          weekly_logs ( week_of, showed_up, homework_done, questions_asked ),
+          reports ( id, period_type, period_label, generated_at, sent_at )
+        `)
+        .eq('id', ctx.member.id as string)
+        .maybeSingle()
+    : { data: null }
 
   if (!member) {
     return (
       <div className="p-8 text-center space-y-2">
         <p className="text-[var(--text-2)]">Your member profile is being set up. Check back soon.</p>
-        <p className="text-[var(--text-3)] text-xs">Logged in as: {user.email}</p>
+        <p className="text-[var(--text-3)] text-xs">Logged in as: {ctx.user.email}</p>
       </div>
     )
   }
 
-  const { data: homeworkData } = await supabase
+  const { data: homeworkData } = await db
     .from('homework')
     .select('id, title, description, due_date, type, completed, completed_at, notes, auto_suggested')
     .eq('member_id', member.id)

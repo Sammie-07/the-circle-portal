@@ -1,18 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import BlueprintOpener from '@/components/dashboard/BlueprintOpener'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 
 export default async function BlueprintPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  if (!ctx.member) redirect('/dashboard')
 
-  const { data: member } = await supabase
+  const { data: member } = await ctx.db
     .from('members')
     .select('name, join_date, cohort, blueprint_html, blueprint_sent_to_member_at, blueprint_share_token')
-    .eq('email', user.email)
+    .eq('id', ctx.member.id as string)
     .single()
 
   if (!member) redirect('/dashboard')

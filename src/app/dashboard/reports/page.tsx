@@ -1,21 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { resolvePortalContext } from '@/lib/portalContext'
 
 export default async function MemberReportsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const ctx = await resolvePortalContext()
+  if (!ctx.user) redirect('/login')
+  if (!ctx.member) redirect('/dashboard')
+  const member = ctx.member as { id: string; name: string }
 
-  const { data: member } = await supabase
-    .from('members')
-    .select('id, name')
-    .eq('email', user.email)
-    .single()
-
-  if (!member) redirect('/dashboard')
-
-  const { data: reports } = await supabase
+  const { data: reports } = await ctx.db
     .from('reports')
     .select('id, period_type, period_label, generated_at, sent_at, share_token')
     .eq('member_id', member.id)

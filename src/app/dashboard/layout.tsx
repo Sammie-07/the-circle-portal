@@ -1,7 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getViewAsCookie } from '@/lib/portalContext'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 import ChatBubble from '@/components/dashboard/ChatBubble'
+
+const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -15,8 +19,44 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  // All team roles go to the admin portal
-  if (['owner', 'admin', 'manager', 'support'].includes(profile?.role ?? '')) redirect('/admin')
+  const isStaff = STAFF_ROLES.includes(profile?.role ?? '')
+  const viewAs = await getViewAsCookie()
+
+  // IMPERSONATION — staff only, only when the view_as_member cookie is set.
+  // Renders the target member's portal with an admin banner. No chat bubble,
+  // no paused gate (full portal for demos).
+  if (isStaff && viewAs) {
+    const admin = createAdminClient()
+    const { data: target } = await admin
+      .from('members')
+      .select('name')
+      .eq('id', viewAs)
+      .single()
+
+    if (target) {
+      return (
+        <div className="flex min-h-screen flex-col">
+          <div className="flex items-center justify-between gap-4 px-5 py-2 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium">
+            <span>👁 Viewing {target.name}&apos;s portal — admin preview</span>
+            <a
+              href="/api/admin/impersonate?exit=1"
+              className="underline underline-offset-2 hover:opacity-80 whitespace-nowrap"
+            >
+              Exit preview
+            </a>
+          </div>
+          <div className="flex flex-1 min-h-0">
+            <Sidebar role="member" memberName={target.name} />
+            <main className="flex-1 overflow-auto">{children}</main>
+          </div>
+        </div>
+      )
+    }
+    // Stale cookie pointing at a missing member — fall through to normal logic.
+  }
+
+  // All team roles go to the admin portal (unchanged).
+  if (isStaff) redirect('/admin')
 
   const { data: member } = await supabase
     .from('members')
