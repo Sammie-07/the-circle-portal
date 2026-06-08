@@ -184,6 +184,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-05
+- **Fixed Team panel not showing invited members.** The "Pending Invites" query on
+  `admin/team/page.tsx` selected/ordered by `created_at`, but `admin_invites` has no such column
+  (it's `invited_at`) — so the query errored and the section rendered empty. Two invited members
+  (`support@teamgogo.team`, `kristy@gogosrealestate.com`) were invisible. Fixed column names and
+  routed the query through the service-role client (admin_invites is RLS-protected). Active-members
+  list and auto-promotion-on-accept (via the `handle_new_user` trigger) were already correct; invited
+  members now show as "Pending" immediately and move to "Active" once they accept their login link.
+
 ### 2026-06-03
 - **Split calls into Clarity Call Replay (per-member) + Office Hours Replay (global).** Office hours
   are weekly and identical for everyone, so they get their own GLOBAL `office_hours` table (no
