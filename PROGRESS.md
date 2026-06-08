@@ -209,6 +209,11 @@ Every code change is recorded here, newest first.
   **Update:** Ask Gogo bubble is now shown in preview too (portal fidelity), but chat APIs
   deliberately still run under the viewer's own session — the member's chat history is NOT loaded or
   exposed during preview (privacy).
+  **Update 2:** preview chat now actually WORKS via an ephemeral path — new `POST /api/chat/preview`
+  (staff-only, no DB, no member lookup) streams a Brain-grounded answer; `ChatOverlay` `preview` mode
+  skips all session/message fetches + sidebar and posts there (history kept in component state only).
+  Persists nothing, never touches the member's real chats. Extracted `GOGO_SYSTEM_PROMPT` to
+  `src/lib/gogo-chat.ts` (verbatim) for reuse; normal member chat unchanged.
 - **Four fixes/features:** (1) Task "Add note" is now a clear bordered **button** with an icon (was a
   faint text link). (2) **My Notes = multiple titled notes**: new `member_note_entries` table (RLS:
   member-own + admin; old single-blob notes migrated in), new `api/member-note-entries` (GET/POST) +
