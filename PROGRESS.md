@@ -185,6 +185,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Per-member Documents hub.** Stores each member's contract, DISC assessment, application,
+  headshot & onboarding files. New `member_documents` table + **private** `member-documents` storage
+  bucket (sensitive — never public; schema updated, applied to live DB). API:
+  `api/member-documents` (GET list, POST upload) + `[id]` (PATCH/DELETE) + `[id]/download`
+  (access-checked → 60s signed URL redirect). Access: upload/delete = owner/admin/manager;
+  list/download = any staff OR the owning member (by email). Admin `MemberDocumentsPanel` on the
+  member detail page (doc-type badges, image thumbnails, upload/delete); member read-only
+  `/dashboard/documents` page + "My Documents" sidebar link. Lets Gogo/Adriana/Kristy pull any
+  member's DISC etc. on demand, and members see their own.
 - **Monthly attendance filter (member dashboard).** Extracted the Attendance stat card into a client
   component `components/dashboard/AttendanceCard.tsx` with a month dropdown. Members pick a month and
   the % / "X of Y calls" / progress bar recompute for just that period; defaults to "All time".
