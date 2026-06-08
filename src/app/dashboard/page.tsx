@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import HomeworkSection from '@/components/dashboard/HomeworkSection'
+import AttendanceCard from '@/components/dashboard/AttendanceCard'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -36,9 +37,6 @@ export default async function DashboardPage() {
 
   const logs = member.weekly_logs ?? []
   const reports = (member.reports ?? []).filter((r: { sent_at: string | null }) => r.sent_at)
-  const total = logs.length
-  const attended = logs.filter((l: { showed_up: boolean }) => l.showed_up).length
-  const attendanceRate = total > 0 ? Math.round((attended / total) * 100) : null
 
   const allTasks = homeworkData ?? []
   const taskTotal = allTasks.length
@@ -68,17 +66,7 @@ export default async function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
-          <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Attendance</p>
-          <p className="text-[var(--text)] font-serif text-3xl">{attendanceRate !== null ? `${attendanceRate}%` : '—'}</p>
-          <p className="text-[var(--text-3)] text-xs mt-2">{attended} of {total} Tuesday calls</p>
-          <div className="mt-3 h-1 bg-[var(--border-color)] rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${attendanceRate && attendanceRate >= 75 ? 'bg-green-500' : attendanceRate && attendanceRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-              style={{ width: `${attendanceRate ?? 0}%` }}
-            />
-          </div>
-        </div>
+        <AttendanceCard logs={logs} />
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
           <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Homework</p>
           <p className="text-[var(--text)] font-serif text-3xl">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
