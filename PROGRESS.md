@@ -185,6 +185,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Admin "Access Member's View" (impersonation, for presentations).** Members-list row link →
+  `/api/admin/impersonate?member=ID` sets an httpOnly `view_as_member` cookie (staff-only, 2h) and
+  redirects to `/dashboard`; `?exit=1` clears it. New `lib/portalContext.ts` `resolvePortalContext()`:
+  when a staff user has the cookie set, member pages render that member's portal using the service-role
+  client; otherwise (normal members, or staff without cookie) behavior is byte-for-byte unchanged
+  (cookie client + RLS + own member; staff still redirect to /admin). Dashboard layout shows a gold
+  "Viewing {name}'s portal — admin preview / Exit" banner in the impersonation branch (ChatBubble +
+  paused-gate omitted there). All member pages refactored to query the resolved member via the
+  resolved client. Verified: normal member sees only own data.
 - **Four fixes/features:** (1) Task "Add note" is now a clear bordered **button** with an icon (was a
   faint text link). (2) **My Notes = multiple titled notes**: new `member_note_entries` table (RLS:
   member-own + admin; old single-blob notes migrated in), new `api/member-note-entries` (GET/POST) +
