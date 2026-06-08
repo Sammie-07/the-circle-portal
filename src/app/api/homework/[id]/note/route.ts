@@ -125,8 +125,9 @@ If there is no clear new action, respond {"create": false, "title": "", "descrip
         completed: false,
         created_by: user.id,
         sort_order: nextSort,
+        source_note_homework_id: id,
       })
-      .select('id, title, description, due_date, type, completed, completed_at, notes, auto_suggested')
+      .select('id, title, description, due_date, type, completed, completed_at, notes, auto_suggested, source_note_homework_id')
       .single()
 
     if (insertErr || !task) {

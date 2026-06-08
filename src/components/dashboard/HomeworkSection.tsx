@@ -12,6 +12,7 @@ interface HomeworkItem {
   completed_at: string | null
   notes: string | null
   auto_suggested?: boolean
+  source_note_homework_id?: string | null
 }
 
 interface Props {
@@ -39,12 +40,33 @@ export interface NoteSaveResult {
   task?: HomeworkItem
 }
 
-export default function HomeworkSection({ memberId, initialItems }: Props) {
+interface FollowUp { id: string; title: string }
+
+export default function HomeworkSection({ initialItems }: Props) {
   const [items, setItems] = useState<HomeworkItem[]>(initialItems)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
 
   const homework = items.filter(i => i.type === 'homework')
   const tasks = items.filter(i => i.type === 'task')
+
+  // Map: source task id -> follow-up tasks its note generated
+  const followUpsBySource = new Map<string, FollowUp[]>()
+  for (const it of items) {
+    if (it.source_note_homework_id) {
+      const arr = followUpsBySource.get(it.source_note_homework_id) ?? []
+      arr.push({ id: it.id, title: it.title })
+      followUpsBySource.set(it.source_note_homework_id, arr)
+    }
+  }
+
+  function jumpTo(id: string) {
+    if (typeof document === 'undefined') return
+    const el = document.getElementById(`hw-${id}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setHighlightId(id)
+    setTimeout(() => setHighlightId(null), 1600)
+  }
 
   async function handleToggle(item: HomeworkItem) {
     if (toggling) return
@@ -69,9 +91,7 @@ export default function HomeworkSection({ memberId, initialItems }: Props) {
       body: JSON.stringify({ note }),
     })
     const data: NoteSaveResult = await res.json()
-    // Update this item's notes in local state
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, notes: data.note ?? note } : i))
-    // Append any auto-created follow-up task so it appears immediately
     if (data.created && data.task) {
       const task = data.task
       setItems(prev => prev.some(i => i.id === task.id) ? prev : [...prev, task])
@@ -95,7 +115,11 @@ export default function HomeworkSection({ memberId, initialItems }: Props) {
             </span>
           </div>
           <div className="space-y-2">
-            {homework.map(item => <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling} onSaveNote={handleSaveNote} />)}
+            {homework.map(item => (
+              <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
+                onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
+                onJump={jumpTo} highlighted={highlightId === item.id} />
+            ))}
           </div>
         </div>
       )}
@@ -113,14 +137,17 @@ export default function HomeworkSection({ memberId, initialItems }: Props) {
           <div className="space-y-2">
             {tasks
               .sort((a, b) => {
-                // Sort: incomplete first, then by due date
                 if (a.completed !== b.completed) return a.completed ? 1 : -1
                 if (!a.due_date && !b.due_date) return 0
                 if (!a.due_date) return 1
                 if (!b.due_date) return -1
                 return a.due_date.localeCompare(b.due_date)
               })
-              .map(item => <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling} onSaveNote={handleSaveNote} />)}
+              .map(item => (
+                <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
+                  onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
+                  onJump={jumpTo} highlighted={highlightId === item.id} />
+              ))}
           </div>
         </div>
       )}
@@ -128,29 +155,28 @@ export default function HomeworkSection({ memberId, initialItems }: Props) {
   )
 }
 
-function CheckItem({ item, onToggle, toggling, onSaveNote }: {
+function CheckItem({ item, onToggle, toggling, onSaveNote, followUps, onJump, highlighted }: {
   item: HomeworkItem
   onToggle: (item: HomeworkItem) => void
   toggling: string | null
   onSaveNote: (itemId: string, note: string) => Promise<NoteSaveResult>
+  followUps: FollowUp[]
+  onJump: (id: string) => void
+  highlighted: boolean
 }) {
   const badge = dueBadge(item.due_date)
   const isLoading = toggling === item.id
 
-  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(item.notes ?? '')
   const [saving, setSaving] = useState(false)
-  const [createdMsg, setCreatedMsg] = useState<string | null>(null)
 
   async function save() {
     if (saving) return
     setSaving(true)
-    setCreatedMsg(null)
     try {
-      const result = await onSaveNote(item.id, draft.trim())
-      if (result.created && result.task) {
-        setCreatedMsg(result.task.title)
-      }
+      await onSaveNote(item.id, draft.trim())
+      setEditing(false)
     } finally {
       setSaving(false)
     }
@@ -158,7 +184,9 @@ function CheckItem({ item, onToggle, toggling, onSaveNote }: {
 
   return (
     <div
+      id={`hw-${item.id}`}
       className={`flex items-start gap-3 p-4 rounded border transition-all ${
+        highlighted ? 'border-[#C9A227] ring-2 ring-[#C9A227]/40' :
         item.completed
           ? 'bg-[var(--surface-2)] border-[var(--border-color)] opacity-60'
           : 'bg-[var(--surface)] border-[var(--border-color)]'
@@ -183,7 +211,7 @@ function CheckItem({ item, onToggle, toggling, onSaveNote }: {
         {isLoading && <div className="w-2 h-2 rounded-full bg-[#C9A227] animate-pulse" />}
       </button>
 
-      {/* Text + note expander */}
+      {/* Text + notes */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm font-medium ${item.completed ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>
@@ -205,49 +233,93 @@ function CheckItem({ item, onToggle, toggling, onSaveNote }: {
           </p>
         )}
 
-        {/* Note expander */}
-        <div className="mt-2">
+        {/* Saved note — comment bubble */}
+        {item.notes && !editing && (
+          <div className="mt-2.5 rounded-lg rounded-tl-sm border border-[var(--border-color)] bg-[var(--surface-2)] px-3 py-2">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[var(--text-4)]">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 3h10v7H6l-3 2.5V10H2V3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                </svg>
+                Your note
+              </span>
+              <button
+                type="button"
+                onClick={() => { setDraft(item.notes ?? ''); setEditing(true) }}
+                className="text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
+              >
+                Edit
+              </button>
+            </div>
+            <p className="text-xs text-[var(--text-2)] whitespace-pre-wrap leading-relaxed">{item.notes}</p>
+          </div>
+        )}
+
+        {/* Follow-up tasks this note generated — clickable chips */}
+        {followUps.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {followUps.map(f => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => onJump(f.id)}
+                title="Jump to this follow-up task"
+                className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border border-[#C9A227]/40 bg-[#C9A227]/10 text-[#C9A227] hover:bg-[#C9A227]/20 transition-colors max-w-full"
+              >
+                <span className="flex-shrink-0">✨</span>
+                <span className="truncate">{f.title}</span>
+                <span className="flex-shrink-0">→</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Add-note button (only when no note and not editing) */}
+        {!item.notes && !editing && (
           <button
             type="button"
-            onClick={() => setOpen(o => !o)}
-            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ${
-              open || item.notes
-                ? 'border-[#C9A227]/40 bg-[#C9A227]/10 text-[#C9A227]'
-                : 'border-[var(--border-color)] text-[var(--text-2)] hover:border-[#C9A227]/50 hover:text-[#C9A227]'
-            }`}
+            onClick={() => { setDraft(''); setEditing(true) }}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[var(--border-color)] text-[var(--text-2)] hover:border-[#C9A227]/50 hover:text-[#C9A227] transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
               <path d="M9.5 1.5l3 3L5 12l-3.5.5L2 9 9.5 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
             </svg>
-            {open ? 'Hide note' : (item.notes ? 'View / edit note' : 'Add note')}
+            Add note
           </button>
+        )}
 
-          {open && (
-            <div className="mt-2 space-y-2">
-              <textarea
-                value={draft}
-                onChange={e => setDraft(e.target.value)}
-                rows={3}
-                placeholder="Jot down a thought, update, or next step…"
-                className="w-full text-xs rounded border border-[var(--border-color)] bg-[var(--input-bg)] text-[var(--text)] p-2 resize-y focus:outline-none focus:border-[#C9A227]/50"
-              />
-              <div className="flex items-center gap-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={save}
-                  disabled={saving}
-                  className="text-xs bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded hover:bg-[#C9A227]/15 transition-colors disabled:opacity-50"
-                >
-                  {saving ? 'Saving…' : 'Save note'}
-                </button>
-                <span className="text-[10px] text-[var(--text-4)]">Saving may add a follow-up task</span>
-              </div>
-              {createdMsg && (
-                <p className="text-[11px] text-[#C9A227]">✨ Added a follow-up task: {createdMsg}</p>
-              )}
+        {/* Editor */}
+        {editing && (
+          <div className="mt-2 space-y-2">
+            <textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              rows={3}
+              autoFocus
+              placeholder="Jot down a thought, update, or next step…"
+              className="w-full text-xs rounded border border-[var(--border-color)] bg-[var(--input-bg)] text-[var(--text)] p-2 resize-y focus:outline-none focus:border-[#C9A227]/50"
+            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={save}
+                disabled={saving}
+                className="text-xs bg-[#C9A227] text-[#0D0D0D] font-medium px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : 'Save note'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDraft(item.notes ?? ''); setEditing(false) }}
+                disabled={saving}
+                className="text-xs px-3 py-1.5 rounded border border-[var(--border-color)] text-[var(--text-3)] hover:text-[var(--text)] transition-colors"
+              >
+                Cancel
+              </button>
+              <span className="text-[10px] text-[var(--text-4)]">Saving may add a follow-up task</span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
