@@ -185,6 +185,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Task notes + AI follow-up tasks.** Added `homework.notes` + `auto_suggested` columns. Members can
+  write a note on any task (PATCH allows member notes on own items). New `POST /api/homework/[id]/note`
+  saves the note, then asks Claude whether it implies a NEW actionable follow-up; if so it creates a
+  task for that member (`type=task`, `auto_suggested=true`) via service role (after ownership check) —
+  conservative, and graceful if the AI is unavailable (note still saves). `HomeworkSection` got a
+  per-task note box with inline "✨ Added a follow-up task" confirmation; new tasks appear without
+  reload and carry a "from your note" badge.
+- **Office hours time fixed** to "12 noon ET" (was 11am) on the member dashboard. Still Tuesday.
 - **Member profile redesign (human, not a table).** New presentational `MemberProfileCard`
   (prominent headshot + bio + key-info chips: cohort, member-since, city, status badge, Instagram/
   website links). Shown on the member's `My Profile` tab AND the admin member view (replaced the plain
