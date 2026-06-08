@@ -189,12 +189,20 @@ export default async function DashboardPage() {
               Open Community ↗
             </a>
             <a
-              href="https://calendar.google.com/calendar/embed?src=c_0aee2350885ffb2ab13aa6e23fd6c6394348bda90c1f29615cd5e34de956186c%40group.calendar.google.com&ctz=Africa%2FLagos"
+              href="https://gogetemwebinars.app.clientclub.net/communities/groups/gogetem-community/events"
               target="_blank"
               rel="noopener noreferrer"
               className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors"
             >
               Community Calendar ↗
+            </a>
+            <a
+              href="https://calendar.google.com/calendar/embed?src=c_0aee2350885ffb2ab13aa6e23fd6c6394348bda90c1f29615cd5e34de956186c%40group.calendar.google.com&ctz=Africa%2FLagos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors"
+            >
+              GGTC Social Calendar ↗
             </a>
           </div>
         </div>
