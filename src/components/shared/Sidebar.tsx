@@ -16,6 +16,7 @@ const adminNav = [
   { href: '/admin/reports', label: 'Reports', icon: '◈' },
   { href: '/admin/bulk-reports', label: 'Bulk Reports', icon: '◇' },
   { href: '/admin/log', label: 'Log This Week', icon: '◆' },
+  { href: '/admin/payments', label: 'Payments', icon: '$' },
   { href: '/admin/office-hours', label: 'Office Hours', icon: '▶' },
   { href: '/admin/team', label: 'Team', icon: '◑' },
 ]
