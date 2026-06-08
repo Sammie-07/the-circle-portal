@@ -206,6 +206,11 @@ Every code change is recorded here, newest first.
   close + session `updated_at` bumped. (4) **Chat file upload**: paperclip → `api/chat/extract` (PDF
   via `unpdf`, text files; capped 20k chars) → file content injected into that turn's prompt for the
   model; saved transcript stays clean (only a "📎 Attached: name" marker).
+- **Task notes UX: comment bubbles + follow-up links.** Saved notes now render as a read-only comment
+  bubble with an Edit button (no more open textarea sitting there after save). "Add note" only shows
+  when empty; explicit Save/Cancel editor. Follow-up tasks spawned from a note appear as clickable
+  chips on the source task that scroll to + highlight the created task — persistent via new
+  `homework.source_note_homework_id` column (set by the note endpoint).
 - **Task notes + AI follow-up tasks.** Added `homework.notes` + `auto_suggested` columns. Members can
   write a note on any task (PATCH allows member notes on own items). New `POST /api/homework/[id]/note`
   saves the note, then asks Claude whether it implies a NEW actionable follow-up; if so it creates a
