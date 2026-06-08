@@ -25,6 +25,7 @@ const memberNav = [
   { href: '/dashboard/blueprint', label: 'My Blueprint', icon: '◈' },
   { href: '/dashboard/reports', label: 'My Reports', icon: '◆' },
   { href: '/dashboard/calls', label: 'My Calls', icon: '▶' },
+  { href: '/dashboard/documents', label: 'My Documents', icon: '◈' },
   { href: '/dashboard/notes', label: 'My Notes', icon: '◇' },
   { href: '/dashboard/profile', label: 'My Profile', icon: '◑' },
 ]

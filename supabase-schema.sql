@@ -169,6 +169,39 @@ create policy "authed_read_office_hours"
   on office_hours for select using (auth.uid() is not null);
 
 -- ============================================
+-- Member Documents (per-member files: contract, DISC, application, headshot, etc.)
+-- ============================================
+create table if not exists member_documents (
+  id          uuid primary key default gen_random_uuid(),
+  member_id   uuid not null references members(id) on delete cascade,
+  doc_type    text not null default 'other'
+              check (doc_type in ('contract','disc','application','headshot','other')),
+  title       text not null,
+  file_path   text not null,
+  file_name   text,
+  mime_type   text,
+  size_bytes  bigint,
+  uploaded_at timestamptz not null default now(),
+  uploaded_by uuid references auth.users(id) on delete set null
+);
+create index if not exists member_documents_member_id_idx on member_documents(member_id);
+alter table member_documents enable row level security;
+create policy "admins_all_member_documents"
+  on member_documents for all using (is_admin());
+create policy "members_read_own_member_documents"
+  on member_documents for select
+  using (member_id in (select id from members where email = auth.email()));
+
+-- PRIVATE bucket (sensitive). Downloads served only via service-role signed URLs
+-- from an access-checked API route. Never public.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('member-documents', 'member-documents', false, 26214400,
+  array['application/pdf','image/jpeg','image/png','image/webp','image/gif','image/heic',
+        'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain','text/csv'])
+on conflict (id) do nothing;
+
+-- ============================================
 -- Storage: blueprints bucket (for uploaded PDF/HTML blueprints)
 -- ============================================
 -- Public bucket; files are named with unguessable UUIDs (mirrors the public
