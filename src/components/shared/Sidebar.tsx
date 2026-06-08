@@ -65,6 +65,7 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-all ${
                 active
                   ? 'bg-[#C9A227]/10 text-[#C9A227] border-l-2 border-[#C9A227]'

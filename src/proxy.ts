@@ -45,18 +45,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Admin-only routes
-  if (pathname.startsWith('/admin')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
+  // NOTE: role-based gating for /admin is enforced in src/app/admin/layout.tsx
+  // (which correctly allows owner/admin/manager/support). Previously this ran a
+  // profiles query on EVERY request AND used a stricter 'admin'-only list than
+  // the layout, which could bounce owner/manager/support between /admin and
+  // /dashboard in a redirect loop. Defer to the layout to keep middleware fast.
 
   return supabaseResponse
 }
