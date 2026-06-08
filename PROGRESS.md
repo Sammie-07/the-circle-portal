@@ -193,8 +193,8 @@ Every code change is recorded here, newest first.
   service role. Members get an inline `ProfilePhotoUpload` ("Change/Add photo"); editing preserved
   (ProfileForm on member side, Edit buttons on admin side).
 - **GoGet'Em Community buttons (member dashboard).** Added a Community card with two new-tab links:
-  "Open Community" → members.gogetemcommunity.com and "Community Calendar" → the community Google
-  Calendar embed URL. Static external links, no DB/API.
+  "Open Community" → members.gogetemcommunity.com, "Community Calendar" → the ClientClub events page,
+  and "GGTC Social Calendar" → the Google Calendar embed URL. Static external links, no DB/API.
 
 ### 2026-06-08
 - **Admin "Payments" tab (all-members overview).** New `/admin/payments` page + sidebar tab listing
