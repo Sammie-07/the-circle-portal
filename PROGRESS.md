@@ -185,6 +185,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Gogo (gogosrealestate@gmail.com) set as `owner`.** Her auth account existed but the signup
+  trigger had silently failed to create a profile — created the profile row with role `owner`.
+  **Also fixed middleware**: `/admin` was gated to `role==='admin'` only, which would loop an
+  owner/manager/support between /admin and /dashboard — broadened to the full staff set
+  (owner/admin/manager/support/tech), matching the admin layout. Owner now gets full admin portal
+  + team superuser powers.
 - **Admin "Access Member's View" (impersonation, for presentations).** Members-list row link →
   `/api/admin/impersonate?member=ID` sets an httpOnly `view_as_member` cookie (staff-only, 2h) and
   redirects to `/dashboard`; `?exit=1` clears it. New `lib/portalContext.ts` `resolvePortalContext()`:
