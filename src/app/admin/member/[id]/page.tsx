@@ -5,6 +5,7 @@ import MemberReportPanel from '@/components/admin/MemberReportPanel'
 import BlueprintPanel from '@/components/admin/BlueprintPanel'
 import ClarityCallsPanel from '@/components/admin/ClarityCallsPanel'
 import MemberDocumentsPanel from '@/components/admin/MemberDocumentsPanel'
+import MemberPaymentsPanel from '@/components/admin/MemberPaymentsPanel'
 import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
@@ -154,6 +155,11 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
       {/* Documents — full width above the 2-col grid */}
       <div className="mb-6">
         <MemberDocumentsPanel memberId={member.id} />
+      </div>
+
+      {/* Payments — full width above the 2-col grid (ADMIN ONLY) */}
+      <div className="mb-6">
+        <MemberPaymentsPanel memberId={member.id} />
       </div>
 
       {/* Homework & Tasks — full width above the 2-col grid */}

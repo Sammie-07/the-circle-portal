@@ -202,6 +202,42 @@ values ('member-documents', 'member-documents', false, 26214400,
 on conflict (id) do nothing;
 
 -- ============================================
+-- Payment tracking (ADMIN ONLY — replaces the payments spreadsheet)
+-- ============================================
+create table if not exists member_billing (
+  member_id         uuid primary key references members(id) on delete cascade,
+  schedule          text not null default 'monthly' check (schedule in ('monthly','annual')),
+  amount            numeric(10,2),
+  currency          text not null default 'USD',
+  due_day           int check (due_day between 1 and 31),
+  membership_start  date,
+  membership_end    date,
+  membership_status text not null default 'active' check (membership_status in ('active','paused','cancelled')),
+  notes             text,
+  updated_at        timestamptz not null default now(),
+  updated_by        uuid references auth.users(id) on delete set null
+);
+create table if not exists member_payments (
+  id           uuid primary key default gen_random_uuid(),
+  member_id    uuid not null references members(id) on delete cascade,
+  due_date     date,
+  period_label text,
+  amount_due   numeric(10,2) not null default 0,
+  amount_paid  numeric(10,2) not null default 0,
+  status       text not null default 'unpaid' check (status in ('unpaid','partial','paid')),
+  paid_date    date,
+  notes        text,
+  created_at   timestamptz not null default now(),
+  created_by   uuid references auth.users(id) on delete set null
+);
+create index if not exists member_payments_member_id_idx on member_payments(member_id);
+-- Admin-only: no member policy means members can never read financial data.
+alter table member_billing enable row level security;
+alter table member_payments enable row level security;
+create policy "admins_all_member_billing" on member_billing for all using (is_admin());
+create policy "admins_all_member_payments" on member_payments for all using (is_admin());
+
+-- ============================================
 -- Storage: blueprints bucket (for uploaded PDF/HTML blueprints)
 -- ============================================
 -- Public bucket; files are named with unguessable UUIDs (mirrors the public
