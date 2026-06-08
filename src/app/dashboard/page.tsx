@@ -170,6 +170,36 @@ export default async function DashboardPage() {
         <span className="text-[#C9A227] text-2xl">◈</span>
       </div>
 
+      {/* GoGet'Em Community */}
+      <div className="mt-6 bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-[var(--text)] font-serif text-lg">GoGet&apos;Em Community</h2>
+            <p className="text-[var(--text-3)] text-sm mt-0.5">
+              Your community is part of The Circle. Jump in and see what&apos;s coming up.
+            </p>
+          </div>
+          <div className="flex gap-2 flex-wrap flex-shrink-0">
+            <a
+              href="http://members.gogetemcommunity.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+            >
+              Open Community ↗
+            </a>
+            <a
+              href="https://calendar.google.com/calendar/embed?src=c_0aee2350885ffb2ab13aa6e23fd6c6394348bda90c1f29615cd5e34de956186c%40group.calendar.google.com&ctz=Africa%2FLagos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors"
+            >
+              Community Calendar ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Homework & Blueprint Tasks */}
       <HomeworkSection
         memberId={member.id}
