@@ -45,7 +45,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Admin-only routes
+  // Admin-only routes — allow ALL staff roles (owner/admin/manager/support/tech),
+  // matching the admin layout. Gating to only 'admin' would bounce an owner/
+  // manager/support between /admin and /dashboard in a redirect loop.
   if (pathname.startsWith('/admin')) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -53,7 +55,8 @@ export async function proxy(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
+    const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
+    if (!STAFF_ROLES.includes(profile?.role ?? '')) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
