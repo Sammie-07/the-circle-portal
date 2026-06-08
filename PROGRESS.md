@@ -185,6 +185,17 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-05
+- **Admin portal slowness — investigation + perf fixes.** Verified backend is healthy: Postgres
+  logs show no slow queries (only the pre-fix `admin_invites.created_at` errors); Auth `/user`
+  (getUser) calls are ~2ms median and only ~0.1/s — not rate-limited. Slowness is app-side. Fixes:
+  (1) removed the redundant `profiles` query the middleware ran on EVERY request — role gating for
+  `/admin` is already done in `admin/layout.tsx`, and the middleware's stricter `admin`-only check
+  could bounce owner/manager/support in a redirect loop; (2) `Sidebar` links set `prefetch={false}`
+  so loading one admin page no longer triggers background server renders of all 6 sibling dynamic
+  routes. Added `admin/team/error.tsx` boundary + null-safe auth guard so the team page surfaces
+  real errors instead of a blank screen. Root cause of the original blank team page still to be
+  confirmed from the error-boundary message. NOTE: double-deploy (git push Git-integration + CLI
+  `vercel --prod`) still firing — should disable one.
 - **Fixed Team panel not showing invited members.** The "Pending Invites" query on
   `admin/team/page.tsx` selected/ordered by `created_at`, but `admin_invites` has no such column
   (it's `invited_at`) — so the query errored and the section rendered empty. Two invited members
