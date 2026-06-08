@@ -185,6 +185,13 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Member profile redesign (human, not a table).** New presentational `MemberProfileCard`
+  (prominent headshot + bio + key-info chips: cohort, member-since, city, status badge, Instagram/
+  website links). Shown on the member's `My Profile` tab AND the admin member view (replaced the plain
+  name/email header block; action buttons + stats preserved). Headshot sourced from the Documents hub
+  (`doc_type=headshot`) via the signed-URL download route — member page reads via RLS, admin page via
+  service role. Members get an inline `ProfilePhotoUpload` ("Change/Add photo"); editing preserved
+  (ProfileForm on member side, Edit buttons on admin side).
 - **GoGet'Em Community buttons (member dashboard).** Added a Community card with two new-tab links:
   "Open Community" → members.gogetemcommunity.com and "Community Calendar" → the community Google
   Calendar embed URL. Static external links, no DB/API.
