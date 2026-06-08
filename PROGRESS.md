@@ -185,6 +185,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Four fixes/features:** (1) Task "Add note" is now a clear bordered **button** with an icon (was a
+  faint text link). (2) **My Notes = multiple titled notes**: new `member_note_entries` table (RLS:
+  member-own + admin; old single-blob notes migrated in), new `api/member-note-entries` (GET/POST) +
+  `[id]` (PATCH/DELETE), new `MyNotes` component (list + editor, create/edit/delete). (3) **Chat
+  messages no longer disappear**: assistant reply was inserted AFTER `controller.close()`, which
+  serverless froze before completing (DB had 6 user msgs but only 2 assistant) — now persisted BEFORE
+  close + session `updated_at` bumped. (4) **Chat file upload**: paperclip → `api/chat/extract` (PDF
+  via `unpdf`, text files; capped 20k chars) → file content injected into that turn's prompt for the
+  model; saved transcript stays clean (only a "📎 Attached: name" marker).
 - **Task notes + AI follow-up tasks.** Added `homework.notes` + `auto_suggested` columns. Members can
   write a note on any task (PATCH allows member notes on own items). New `POST /api/homework/[id]/note`
   saves the note, then asks Claude whether it implies a NEW actionable follow-up; if so it creates a
