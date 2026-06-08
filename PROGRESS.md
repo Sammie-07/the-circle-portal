@@ -185,7 +185,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-05
-- **Admin portal slowness — investigation + perf fixes.** Verified backend is healthy: Postgres
+- **REVERTED team-panel + middleware changes to last-good `019d4d4`** (commit c2da91c) after the
+  admin portal became slow/unresponsive and the team page blanked. Restored `src/proxy.ts`,
+  `Sidebar.tsx`, `admin/team/page.tsx`; removed `admin/team/error.tsx`. Office Hours / Clarity Calls
+  untouched. Team panel is back to showing Active Members only (pending-invites display + the
+  `invited_at` fix were rolled back). Root cause of the slowness was never confirmed (DB + Auth were
+  verified healthy); to re-approach the team-panel request cleanly once the portal is confirmed
+  stable. The earlier perf notes below describe changes that are now reverted.
+- **Admin portal slowness — investigation + perf fixes (REVERTED, see above).** Verified backend is healthy: Postgres
   logs show no slow queries (only the pre-fix `admin_invites.created_at` errors); Auth `/user`
   (getUser) calls are ~2ms median and only ~0.1/s — not rate-limited. Slowness is app-side. Fixes:
   (1) removed the redundant `profiles` query the middleware ran on EVERY request — role gating for
