@@ -15,8 +15,7 @@ const ROLE_META: Record<string, { label: string; color: string; description: str
 export default async function AdminTeamPage() {
   const supabase = await createClient()
 
-  const { data: userData } = await supabase.auth.getUser()
-  const user = userData?.user
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: currentProfile } = await supabase
@@ -37,11 +36,11 @@ export default async function AdminTeamPage() {
     .in('role', ['owner', 'tech', 'admin', 'manager', 'support'])
     .order('created_at', { ascending: true })
 
-  // Pending invites not yet accepted (service role — admin_invites is RLS-protected)
-  const { data: pendingInvites } = await adminDb
+  // Pending invites not yet accepted
+  const { data: pendingInvites } = await supabase
     .from('admin_invites')
-    .select('email, intended_role, invited_at')
-    .order('invited_at', { ascending: false })
+    .select('email, intended_role, created_at')
+    .order('created_at', { ascending: false })
 
   const team = teamMembers ?? []
   const teamEmails = new Set(team.map(m => m.email))
@@ -137,7 +136,7 @@ export default async function AdminTeamPage() {
                   <div>
                     <p className="text-[var(--text)] text-sm">{inv.email}</p>
                     <p className="text-[var(--text-3)] text-xs mt-0.5">
-                      Invited {new Date(inv.invited_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                      Invited {new Date(inv.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                   <span className={`text-xs font-semibold uppercase tracking-wider ${meta.color}`}>
