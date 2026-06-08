@@ -194,6 +194,9 @@ Every code change is recorded here, newest first.
   "Viewing {name}'s portal — admin preview / Exit" banner in the impersonation branch (ChatBubble +
   paused-gate omitted there). All member pages refactored to query the resolved member via the
   resolved client. Verified: normal member sees only own data.
+  **Update:** Ask Gogo bubble is now shown in preview too (portal fidelity), but chat APIs
+  deliberately still run under the viewer's own session — the member's chat history is NOT loaded or
+  exposed during preview (privacy).
 - **Four fixes/features:** (1) Task "Add note" is now a clear bordered **button** with an icon (was a
   faint text link). (2) **My Notes = multiple titled notes**: new `member_note_entries` table (RLS:
   member-own + admin; old single-blob notes migrated in), new `api/member-note-entries` (GET/POST) +
