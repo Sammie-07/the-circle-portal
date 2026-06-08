@@ -184,6 +184,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-08
+- **Monthly attendance filter (member dashboard).** Extracted the Attendance stat card into a client
+  component `components/dashboard/AttendanceCard.tsx` with a month dropdown. Members pick a month and
+  the % / "X of Y calls" / progress bar recompute for just that period; defaults to "All time".
+  Months are derived from the member's own `weekly_logs` (by `week_of` year-month). No DB/API change.
+
 ### 2026-06-05
 - **REVERTED team-panel + middleware changes to last-good `019d4d4`** (commit c2da91c) after the
   admin portal became slow/unresponsive and the team page blanked. Restored `src/proxy.ts`,
