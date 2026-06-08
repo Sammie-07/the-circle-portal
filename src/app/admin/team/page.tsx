@@ -15,7 +15,8 @@ const ROLE_META: Record<string, { label: string; color: string; description: str
 export default async function AdminTeamPage() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: userData } = await supabase.auth.getUser()
+  const user = userData?.user
   if (!user) redirect('/login')
 
   const { data: currentProfile } = await supabase
