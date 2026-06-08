@@ -202,6 +202,13 @@ values ('member-documents', 'member-documents', false, 26214400,
 on conflict (id) do nothing;
 
 -- ============================================
+-- Homework: per-task member notes + AI-suggested follow-up flag
+-- (homework base table created via earlier migration, not in this file)
+-- ============================================
+alter table homework add column if not exists notes text;
+alter table homework add column if not exists auto_suggested boolean not null default false;
+
+-- ============================================
 -- Payment tracking (ADMIN ONLY — replaces the payments spreadsheet)
 -- ============================================
 create table if not exists member_billing (

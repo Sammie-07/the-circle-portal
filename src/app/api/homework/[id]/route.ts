@@ -29,13 +29,18 @@ export async function PATCH(request: Request, { params }: Params) {
     if ('due_date' in body) patch.due_date = body.due_date || null
     if ('type' in body) patch.type = body.type
     if ('sort_order' in body) patch.sort_order = body.sort_order
+    if ('notes' in body) patch.notes = typeof body.notes === 'string' ? body.notes : null
   } else {
-    // Members can only toggle completed
-    if (!('completed' in body)) return NextResponse.json({ error: 'Only completed toggle allowed' }, { status: 403 })
-    patch = {
-      completed: body.completed,
-      completed_at: body.completed ? new Date().toISOString() : null,
+    // Members can toggle completed and set notes on their own item (RLS restricts to own rows)
+    if (!('completed' in body) && !('notes' in body)) {
+      return NextResponse.json({ error: 'Only completed toggle or notes allowed' }, { status: 403 })
     }
+    patch = {}
+    if ('completed' in body) {
+      patch.completed = body.completed
+      patch.completed_at = body.completed ? new Date().toISOString() : null
+    }
+    if ('notes' in body) patch.notes = typeof body.notes === 'string' ? body.notes : null
   }
 
   const { data, error } = await supabase

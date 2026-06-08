@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   const { data: homeworkData } = await supabase
     .from('homework')
-    .select('id, title, description, due_date, type, completed, completed_at')
+    .select('id, title, description, due_date, type, completed, completed_at, notes, auto_suggested')
     .eq('member_id', member.id)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
@@ -164,7 +164,7 @@ export default async function DashboardPage() {
       {/* Next Tuesday reminder */}
       <div className="mt-6 border border-[#C9A227]/20 bg-[#C9A227]/5 rounded p-4 flex items-center justify-between">
         <div>
-          <p className="text-[#C9A227] text-sm font-medium">Tuesday Office Hours — 11am ET</p>
+          <p className="text-[#C9A227] text-sm font-medium">Tuesday Office Hours — 12 noon ET</p>
           <p className="text-[var(--text-2)] text-xs mt-0.5">Show up. Ask questions. Do the work.</p>
         </div>
         <span className="text-[#C9A227] text-2xl">◈</span>
