@@ -117,11 +117,25 @@ export async function POST(
   if (!session) return new Response('Session not found', { status: 404 })
 
   const body = await request.json()
-  const content: string = body.content?.trim()
-  if (!content) return new Response('Content required', { status: 400 })
+  const rawContent: string = (body.content ?? '').trim()
+  const attachmentName: string | null = body.attachmentName ?? null
+  const attachmentTextRaw: string | null = body.attachmentText ?? null
+  const attachmentText: string | null = attachmentTextRaw
+    ? attachmentTextRaw.slice(0, 20000)
+    : null
 
-  // Save user message
-  await supabase.from('chat_messages').insert({ session_id: sessionId, role: 'user', content })
+  if (!rawContent && !attachmentText) {
+    return new Response('Content required', { status: 400 })
+  }
+
+  // Synthesize default content when only an attachment was sent
+  const content = rawContent || '(see attached file)'
+
+  // Save user message — append a marker for the attachment, never the file body
+  const savedContent = attachmentName
+    ? `${content}\n\n📎 Attached: ${attachmentName}`
+    : content
+  await supabase.from('chat_messages').insert({ session_id: sessionId, role: 'user', content: savedContent })
 
   // Auto-title session from first message
   if (session.title === 'New Chat') {
@@ -164,6 +178,23 @@ ${brainContext
       content: m.content,
     }))
 
+  // Make the model SEE the attached file by appending its text to the last
+  // user message — for the model only. The saved/displayed transcript stays
+  // clean (it only carries the "📎 Attached: ..." marker).
+  if (attachmentText) {
+    for (let i = claudeMessages.length - 1; i >= 0; i--) {
+      if (claudeMessages[i].role === 'user') {
+        claudeMessages[i] = {
+          ...claudeMessages[i],
+          content:
+            claudeMessages[i].content +
+            `\n\n[Attached file: ${attachmentName ?? 'file'}]\n${attachmentText}`,
+        }
+        break
+      }
+    }
+  }
+
   let fullResponse = ''
 
   const stream = new ReadableStream({
@@ -184,14 +215,19 @@ ${brainContext
         })
 
         await claudeStream.finalMessage()
-        controller.close()
 
-        // Persist the assistant's response
+        // Persist the assistant's response BEFORE closing the stream. On
+        // serverless the function can be frozen the moment the response stream
+        // closes, so a post-close insert was being dropped — that's why
+        // assistant replies vanished on reload. Insert first, then close.
         await supabase.from('chat_messages').insert({
           session_id: sessionId,
           role: 'assistant',
           content: fullResponse,
         })
+        await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
+
+        controller.close()
       } catch (err) {
         console.error('Stream error:', err)
         controller.enqueue(

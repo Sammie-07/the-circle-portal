@@ -210,9 +210,16 @@ function CheckItem({ item, onToggle, toggling, onSaveNote }: {
           <button
             type="button"
             onClick={() => setOpen(o => !o)}
-            className="text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border transition-colors ${
+              open || item.notes
+                ? 'border-[#C9A227]/40 bg-[#C9A227]/10 text-[#C9A227]'
+                : 'border-[var(--border-color)] text-[var(--text-2)] hover:border-[#C9A227]/50 hover:text-[#C9A227]'
+            }`}
           >
-            {open ? 'Hide note' : (item.notes ? '✎ Note' : '＋ Add note')}
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
+              <path d="M9.5 1.5l3 3L5 12l-3.5.5L2 9 9.5 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+            </svg>
+            {open ? 'Hide note' : (item.notes ? 'View / edit note' : 'Add note')}
           </button>
 
           {open && (

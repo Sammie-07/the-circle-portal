@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import NotesSection from '@/components/dashboard/NotesSection'
+import MyNotes from '@/components/dashboard/MyNotes'
 
 export default async function NotesPage() {
   const supabase = await createClient()
@@ -21,14 +21,14 @@ export default async function NotesPage() {
     )
   }
 
-  const { data: notesData } = await supabase
-    .from('member_notes')
-    .select('content')
+  const { data: entries } = await supabase
+    .from('member_note_entries')
+    .select('id, title, content, updated_at')
     .eq('member_id', member.id)
-    .maybeSingle()
+    .order('updated_at', { ascending: false })
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-8 max-w-5xl">
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Private workspace</p>
         <h1 className="text-[var(--text)] font-serif text-3xl">My Notes</h1>
@@ -37,11 +37,7 @@ export default async function NotesPage() {
 
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
 
-      <NotesSection
-        memberId={member.id}
-        initialContent={notesData?.content ?? ''}
-        expanded
-      />
+      <MyNotes initialEntries={entries ?? []} />
     </div>
   )
 }

@@ -15,6 +15,7 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   created_at: string
+  attachmentName?: string | null
 }
 
 interface ChatOverlayProps {
@@ -30,9 +31,13 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
   const [streamingText, setStreamingText] = useState('')
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [attachment, setAttachment] = useState<{ name: string; text: string } | null>(null)
+  const [attaching, setAttaching] = useState(false)
+  const [attachError, setAttachError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   // Scroll to bottom whenever messages or streaming text change
@@ -108,29 +113,63 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
     setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title } : s))
   }
 
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-selecting the same file
+    if (!file) return
+
+    setAttachError(null)
+    setAttaching(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/chat/extract', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setAttachError(data?.error || 'Could not attach that file.')
+        return
+      }
+      setAttachment({ name: data.name, text: data.text })
+    } catch {
+      setAttachError('Could not attach that file.')
+    } finally {
+      setAttaching(false)
+    }
+  }
+
+  function removeAttachment() {
+    setAttachment(null)
+    setAttachError(null)
+  }
+
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim()
-    if (!trimmed || isStreaming || !activeSessionId) return
+    if ((!trimmed && !attachment) || isStreaming || !activeSessionId) return
 
     // If no session, create one first
     let sessionId = activeSessionId
+    const sentAttachment = attachment
 
     // Optimistically add user message
     const tempUserMsg: Message = {
       id: `temp-${Date.now()}`,
       role: 'user',
-      content: trimmed,
+      content: trimmed || '(see attached file)',
       created_at: new Date().toISOString(),
+      attachmentName: sentAttachment?.name ?? null,
     }
     setMessages(prev => [...prev, tempUserMsg])
     setInput('')
+    setAttachment(null)
+    setAttachError(null)
     setIsStreaming(true)
     setStreamingText('')
 
     // Update session title if it's the first message
     const currentSession = sessions.find(s => s.id === sessionId)
     if (currentSession?.title === 'New Chat') {
-      const autoTitle = trimmed.slice(0, 52) + (trimmed.length > 52 ? '…' : '')
+      const titleSource = trimmed || sentAttachment?.name || 'New Chat'
+      const autoTitle = titleSource.slice(0, 52) + (titleSource.length > 52 ? '…' : '')
       updateSessionTitle(sessionId, autoTitle)
     }
 
@@ -140,7 +179,11 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
       const res = await fetch(`/api/chat/${sessionId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: trimmed }),
+        body: JSON.stringify({
+          content: trimmed,
+          attachmentName: sentAttachment?.name ?? null,
+          attachmentText: sentAttachment?.text ?? null,
+        }),
         signal: abortRef.current.signal,
       })
 
@@ -191,7 +234,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
     } finally {
       setIsStreaming(false)
     }
-  }, [input, isStreaming, activeSessionId, sessions])
+  }, [input, isStreaming, activeSessionId, sessions, attachment])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -376,7 +419,46 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
         {activeSessionId && (
           <div className="px-6 py-4 border-t border-[var(--border-color)] flex-shrink-0">
             <div className="max-w-3xl mx-auto">
+              {/* Attachment chip / state */}
+              {(attachment || attaching || attachError) && (
+                <div className="mb-2 flex items-center gap-2">
+                  {attaching ? (
+                    <span className="text-[var(--text-3)] text-xs">Attaching…</span>
+                  ) : attachment ? (
+                    <span className="inline-flex items-center gap-2 bg-[#C9A227]/10 border border-[#C9A227]/30 text-[var(--text-2)] text-xs rounded px-2.5 py-1">
+                      <span className="truncate max-w-[260px]">📎 {attachment.name}</span>
+                      <button
+                        onClick={removeAttachment}
+                        className="text-[var(--text-4)] hover:text-[#CC1F1F] transition-colors leading-none"
+                        title="Remove attachment"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ) : null}
+                  {attachError && (
+                    <span className="text-[#CC1F1F] text-xs">{attachError}</span>
+                  )}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.txt,.md,.csv,application/pdf,text/plain"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
               <div className="flex gap-3 items-end bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 focus-within:border-[#C9A227]/60 transition-colors">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isStreaming || attaching}
+                  className="flex-shrink-0 w-8 h-8 text-[var(--text-3)] hover:text-[#C9A227] rounded flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Attach a file (PDF or text)"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                  </svg>
+                </button>
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -395,7 +477,7 @@ export default function ChatOverlay({ onClose }: ChatOverlayProps) {
                 />
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim() || isStreaming}
+                  disabled={(!input.trim() && !attachment) || isStreaming}
                   className="flex-shrink-0 w-8 h-8 bg-[#C9A227] text-[#0D0D0D] rounded flex items-center justify-center hover:bg-[#d4ac2d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Send (Enter)"
                 >
@@ -453,6 +535,9 @@ function MessageBubble({ message }: { message: Message }) {
       <div className="flex justify-end">
         <div className="max-w-[70%] bg-[#C9A227]/15 border border-[#C9A227]/25 rounded-lg px-4 py-3 text-sm text-[var(--text)] leading-relaxed whitespace-pre-wrap">
           {message.content}
+          {message.attachmentName && (
+            <div className="mt-2 text-xs text-[var(--text-3)]">📎 {message.attachmentName}</div>
+          )}
         </div>
       </div>
     )

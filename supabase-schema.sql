@@ -202,6 +202,24 @@ values ('member-documents', 'member-documents', false, 26214400,
 on conflict (id) do nothing;
 
 -- ============================================
+-- My Notes: multiple titled notes per member (member's private workspace)
+-- ============================================
+create table if not exists member_note_entries (
+  id         uuid primary key default gen_random_uuid(),
+  member_id  uuid not null references members(id) on delete cascade,
+  title      text not null default 'Untitled note',
+  content    text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists member_note_entries_member_id_idx on member_note_entries(member_id);
+alter table member_note_entries enable row level security;
+create policy "members_own_note_entries" on member_note_entries for all
+  using ((select email from members where id = member_note_entries.member_id) = (auth.jwt() ->> 'email'))
+  with check ((select email from members where id = member_note_entries.member_id) = (auth.jwt() ->> 'email'));
+create policy "admins_all_note_entries" on member_note_entries for all using (is_admin());
+
+-- ============================================
 -- Homework: per-task member notes + AI-suggested follow-up flag
 -- (homework base table created via earlier migration, not in this file)
 -- ============================================
