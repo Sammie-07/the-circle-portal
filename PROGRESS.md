@@ -185,6 +185,16 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Per-member payment tracking (admin-only) — replaces the spreadsheet.** New `member_billing`
+  (1:1: schedule monthly/annual, amount, currency, due_day, membership_start/end, membership_status
+  active/paused/cancelled, notes) + `member_payments` ledger (due_date, period_label, amount_due,
+  amount_paid, status unpaid/partial/paid, paid_date, notes). Partial/split payments = amount_paid <
+  amount_due. RLS admin-only (no member policy). API: `member-billing` (GET/PUT upsert),
+  `member-payments` (GET/POST) + `[id]` (PATCH/DELETE) — all gated owner/admin/manager.
+  `MemberPaymentsPanel` on the member detail page: editable billing settings + outstanding-balance
+  summary (total due/paid/balance, next due) + payments ledger with add/edit/delete and
+  auto-derived status. Admin-only, no member-facing surface. (Built from the written requirements —
+  could not open the source Google Sheet; columns adjustable on request.)
 - **Per-member Documents hub.** Stores each member's contract, DISC assessment, application,
   headshot & onboarding files. New `member_documents` table + **private** `member-documents` storage
   bucket (sensitive — never public; schema updated, applied to live DB). API:
