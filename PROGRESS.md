@@ -185,6 +185,16 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-08
+- **Auto-inject financial tasks from GHL application answers (on blueprint generation).** New
+  `applications` table (landing zone keyed by email) + `homework.rule_key` (idempotency).
+  `POST /api/ghl/application` — secret-gated webhook (`GHL_WEBHOOK_SECRET` via `x-webhook-secret`
+  header or `?key=`), normalizes credit_score / owes_back_taxes / has_investments (tolerant of GHL
+  field-name + type variance), upserts `applications`. `src/lib/financial-rules.ts` = config rules
+  (credit<750, owes back taxes, no investments → task bundles) + `evaluateRules`.
+  `src/lib/apply-financial-rules.ts` injects matching tasks into homework (type `task`, dedup by
+  `rule_key`), best-effort. Hooked into `blueprints/generate` after save. Admin member page shows a
+  read-only "Application (from GHL)" card. Rules editable in code (admin editor = later). **ACTION:
+  set `GHL_WEBHOOK_SECRET` in Vercel; point a GHL workflow at `/api/ghl/application?key=<secret>`.**
 - **Fixed: owner's admin dashboard showed no data.** `is_admin()` (used by RLS "admins can view all"
   on members/logs/reports/etc.) only matched `role='admin'`, so an `owner` (and manager/support) saw
   nothing through the RLS cookie client — Gogo's `/admin` was empty. Broadened `is_admin()` to all
