@@ -204,6 +204,11 @@ Every code change is recorded here, newest first.
   redirect: `/api/ghl`, `/api/cron`, `/api/checkin`, and public token pages `/r/`, `/checkin/` (also
   un-broke cron + public report/check-in links). Verified webhook end-to-end: stores + parses
   credit_score/owes_back_taxes/has_investments correctly.
+  **Fix 2:** real GHL submissions nest mapped fields under `customData` (not top-level) and also send
+  full question-label keys — parser now merges `customData` up + has label fallbacks (e.g. "What is
+  your credit score?"), and treats `has_investments`/`other_investments` as the two free-text
+  portfolio fields. Verified live (740 / no back taxes / has investments). Re-parsed Krystal's stored
+  row. Tasks inject on blueprint GENERATION (her 740<750 → credit-health tasks next gen).
 - **Fixed: owner's admin dashboard showed no data.** `is_admin()` (used by RLS "admins can view all"
   on members/logs/reports/etc.) only matched `role='admin'`, so an `owner` (and manager/support) saw
   nothing through the RLS cookie client — Gogo's `/admin` was empty. Broadened `is_admin()` to all
