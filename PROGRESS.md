@@ -195,6 +195,10 @@ Every code change is recorded here, newest first.
   `rule_key`), best-effort. Hooked into `blueprints/generate` after save. Admin member page shows a
   read-only "Application (from GHL)" card. Rules editable in code (admin editor = later). **ACTION:
   set `GHL_WEBHOOK_SECRET` in Vercel; point a GHL workflow at `/api/ghl/application?key=<secret>`.**
+  `GHL_WEBHOOK_SECRET` is now set in Vercel prod. Investments are TWO free-text portfolio fields —
+  webhook derives `has_investments` from whether the text is meaningful (blank/none → false) and
+  stores `investments_text`. Map the two GHL fields to keys `investments_1` / `investments_2`.
+  Every submission is stored in `applications` (keyed by email) whether or not they become a member.
 - **Fixed: owner's admin dashboard showed no data.** `is_admin()` (used by RLS "admins can view all"
   on members/logs/reports/etc.) only matched `role='admin'`, so an `owner` (and manager/support) saw
   nothing through the RLS cookie client — Gogo's `/admin` was empty. Broadened `is_admin()` to all
