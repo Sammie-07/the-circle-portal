@@ -38,6 +38,39 @@ function coerceBoolean(v: unknown): boolean | null {
   return null
 }
 
+// A free-text answer "counts" as a real investment unless it's blank or a
+// none-ish token (none / n/a / no / 0 / -).
+function isMeaningfulText(v: unknown): boolean {
+  const t = (v ?? '').toString().trim().toLowerCase()
+  if (!t) return false
+  return !['none', 'n/a', 'na', 'no', 'nope', 'nothing', '0', '-', '.', 'null', 'n.a.'].includes(t)
+}
+
+// has_investments is derived from the free-text portfolio fields. Returns the
+// derived boolean (null if no investment fields were sent at all) plus the
+// combined text for storage.
+function deriveInvestments(body: Body): { has: boolean | null; text: string | null } {
+  // explicit boolean wins (backward compat)
+  const explicit = coerceBoolean(pick(body, ['has_investments', 'Has Investments']))
+  const keys = [
+    'investments_1', 'investments_2', 'investments', 'investment_portfolio',
+    'Investments', 'Investment Portfolio', 'Investments 1', 'Investments 2',
+  ]
+  const texts: string[] = []
+  let anyKeyPresent = false
+  for (const k of keys) {
+    if (body[k] !== undefined && body[k] !== null) {
+      anyKeyPresent = true
+      const s = body[k]?.toString().trim()
+      if (s) texts.push(s)
+    }
+  }
+  const text = texts.join(' | ') || null
+  if (explicit !== null) return { has: explicit, text }
+  if (!anyKeyPresent) return { has: null, text }
+  return { has: texts.some(isMeaningfulText), text }
+}
+
 function extractEmail(body: Body): string | null {
   const contact = body.contact as Body | undefined
   const raw =
@@ -76,6 +109,7 @@ export async function POST(request: Request) {
     }
 
     // ── Normalize known answers, tolerant of GHL field/type variance ──
+    const investments = deriveInvestments(body)
     const data: ApplicationAnswers = {
       credit_score: coerceNumber(
         pick(body, ['credit_score', 'Credit Score', 'creditScore'])
@@ -83,9 +117,8 @@ export async function POST(request: Request) {
       owes_back_taxes: coerceBoolean(
         pick(body, ['owes_back_taxes', 'Owes Back Taxes', 'back_taxes'])
       ),
-      has_investments: coerceBoolean(
-        pick(body, ['has_investments', 'Has Investments', 'investments'])
-      ),
+      has_investments: investments.has,
+      investments_text: investments.text,
     }
 
     const admin = createAdminClient()
