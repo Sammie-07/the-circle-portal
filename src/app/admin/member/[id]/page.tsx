@@ -41,6 +41,24 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
   const headshotUrl = headshot?.id ? `/api/member-documents/${headshot.id}/download` : null
 
+  // Application answers received from GoHighLevel (read-only, admin visibility)
+  const memberEmail = member.email ? String(member.email).trim().toLowerCase() : null
+  const { data: application } = memberEmail
+    ? await admin
+        .from('applications')
+        .select('data, received_at')
+        .eq('email', memberEmail)
+        .maybeSingle()
+    : { data: null }
+
+  const appData = (application?.data ?? null) as {
+    credit_score?: number | null
+    owes_back_taxes?: boolean | null
+    has_investments?: boolean | null
+  } | null
+  const fmtBool = (v: boolean | null | undefined) =>
+    v === true ? 'Yes' : v === false ? 'No' : '—'
+
   const { data: logs } = await supabase
     .from('weekly_logs')
     .select('*')
@@ -183,6 +201,36 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
       {/* Payments — full width above the 2-col grid (ADMIN ONLY) */}
       <div className="mb-6">
         <MemberPaymentsPanel memberId={member.id} />
+      </div>
+
+      {/* Application (from GHL) — read-only */}
+      <div className="mb-6">
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
+          <h2 className="text-[var(--text)] font-serif text-lg mb-1">Application (from GHL)</h2>
+          {appData ? (
+            <>
+              <p className="text-[var(--text-3)] text-xs mb-4">
+                Received {application?.received_at ? new Date(application.received_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Credit Score</p>
+                  <p className="text-[var(--text)] text-sm">{appData.credit_score ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Owes Back Taxes</p>
+                  <p className="text-[var(--text)] text-sm">{fmtBool(appData.owes_back_taxes)}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Has Investments</p>
+                  <p className="text-[var(--text)] text-sm">{fmtBool(appData.has_investments)}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-[var(--text-3)] text-sm mt-1">No application answers received yet.</p>
+          )}
+        </div>
       </div>
 
       {/* Homework & Tasks — full width above the 2-col grid */}

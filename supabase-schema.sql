@@ -224,6 +224,20 @@ create policy "members_own_note_entries" on member_note_entries for all
 create policy "admins_all_note_entries" on member_note_entries for all using (is_admin());
 
 -- ============================================
+-- Applications (GHL application-form answers — landing zone, keyed by email)
+-- ============================================
+create table if not exists applications (
+  email       text primary key,
+  data        jsonb not null default '{}'::jsonb,
+  raw         jsonb,
+  received_at timestamptz not null default now()
+);
+alter table applications enable row level security;
+create policy "admins_all_applications" on applications for all using (is_admin());
+-- Blueprint generation reads this by member email and auto-injects financial
+-- tasks (homework.rule_key dedupes them on regeneration).
+
+-- ============================================
 -- Homework: per-task member notes + AI-suggested follow-up flag
 -- (homework base table created via earlier migration, not in this file)
 -- ============================================

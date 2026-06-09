@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { sanitizeBrainText } from '@/lib/brain-search'
+import { applyFinancialRules } from '@/lib/apply-financial-rules'
 import { NextResponse } from 'next/server'
 
 // Extend timeout to 5 minutes — blueprint generation takes 60–90s
@@ -418,6 +419,17 @@ RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, perso
     .eq('id', member_id)
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
+
+  // Best-effort: auto-inject financial-health tasks from the member's GHL
+  // application answers. Must never break blueprint generation.
+  if (member.email) {
+    try {
+      const { added } = await applyFinancialRules(member.id, member.email)
+      if (added > 0) console.log(`[Blueprint] Injected ${added} financial task(s) for ${member.email}`)
+    } catch (e) {
+      console.error('[Blueprint] applyFinancialRules failed (non-fatal):', e instanceof Error ? e.message : String(e))
+    }
+  }
 
   return NextResponse.json({ success: true, blueprint_html: blueprintHtml, share_token: shareToken })
 
