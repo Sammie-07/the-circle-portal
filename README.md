@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Circle Portal
 
-## Getting Started
+A member portal for **The Circle**, Gogo Bethke's real-estate coaching program. Staff
+(Gogo, Adriana, Kristy) run cohorts of members; members get AI-generated blueprints and
+reports, weekly check-ins, homework, coaching-call replays, documents, and an "Ask Gogo"
+AI chat grounded in her knowledge base.
 
-First, run the development server:
+Live: https://the-circle-portal.vercel.app
+
+> **Canonical status doc:** [`PROGRESS.md`](./PROGRESS.md) tracks what's built, what's in
+> flight, and a per-change changelog. Read it before starting work.
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router), React 19 |
+| Styling | Tailwind CSS v4, shadcn, `@base-ui/react`, lucide-react |
+| Backend | Supabase (Postgres + Auth + Storage) with Row Level Security |
+| AI | Anthropic SDK (text generation, `claude-opus-4-5`) + OpenAI (embeddings only) |
+| Email | SendGrid |
+| Hosting | Vercel (push-to-deploy from `main`) |
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # fill in the values below
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`dev` runs `env -u ANTHROPIC_API_KEY next dev` — it **deliberately unsets
+`ANTHROPIC_API_KEY` in local dev** so generation code fails fast/loud locally instead of
+silently spending tokens. Set it in Vercel for production.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables (`.env.example`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Var | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | App Supabase project (RLS-bound client) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only service-role client (bypasses RLS) |
+| `ANTHROPIC_API_KEY` | Claude text generation (blueprints, reports, homework, chat) |
+| `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL` | Outbound email |
+| `BRAIN_SUPABASE_URL` / `BRAIN_SUPABASE_ANON_KEY` | Separate "Brain" project (Gogo's embedded wiki) used to ground chat/blueprints |
+| `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/cron/friday-reminders` |
+| `GHL_WEBHOOK_SECRET` | Shared secret gating the GHL application webhook |
 
-## Learn More
+## Architecture
 
-To learn more about Next.js, take a look at the following resources:
+- **Roles.** Staff (`owner`/`admin`/`manager`/`support`/`tech`) and `member`. The
+  `is_admin()` SECURITY DEFINER helper drives the "admins can do all" RLS policies; granular
+  writes are additionally gated in API routes. Promote staff once via SQL (see
+  `supabase-schema.sql`).
+- **Two Supabase clients.** `src/lib/supabase/server.ts` is the RLS-bound cookie client
+  (use for anything acting *as the logged-in user*). `src/lib/supabase/admin.ts`
+  (`createAdminClient`) is the service-role client that bypasses RLS — **server-only**, used
+  for token-gated public routes and access-checked admin writes.
+- **Public token routes.** `/b/[token]` (blueprint), `/r/[token]` (report),
+  `/checkin/[token]` (check-in) render with no login. The unguessable token *is* the access
+  credential, so they look it up with the service-role client. `middleware`
+  (`src/proxy.ts`) exempts these plus self-authenticating API routes (`/api/ghl`,
+  `/api/cron`, `/api/checkin`) from the login redirect.
+- **AI.** Clients are centralized in `src/lib/ai.ts` (lazy, guarded `getAnthropic()` /
+  `getOpenAI()`). Anthropic = generation; OpenAI = embeddings. Chat/blueprints/reports are
+  grounded against the Brain via `src/lib/brain-search.ts`, which also normalizes canonical
+  names (e.g. "Christie/Christy" → **Kristy Waker**).
+- **Schema.** `supabase-schema.sql` is the source of truth (tables, RLS, triggers, storage
+  buckets). It's applied to the live DB; keep it in sync with any migration.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Routes (high level)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Member** (`/dashboard`): blueprint, calls, documents, notes, profile, reports.
+- **Admin** (`/admin`): members + detail, team, reports, bulk reports, payments, office
+  hours, log. Staff can "Access Member's View" (impersonation) for presentations.
+- **API** (`src/app/api`, ~40 routes): invites/auth, AI generation + send, CRUD, chat,
+  check-ins, GHL webhook, cron.
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Deploys are driven by **Vercel's Git integration**: push to `main` → Vercel builds and
+promotes to production. Do **not** also run `vercel --prod` by hand — that double-deploys.
+See `CLAUDE.md` for the canonical workflow.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Conventions
+
+`npm run lint` and `npx tsc --noEmit` must pass before pushing. Log every code change in
+`PROGRESS.md` §11. This is a fork of Next.js with breaking changes from what you may know —
+see `AGENTS.md`.
+</content>

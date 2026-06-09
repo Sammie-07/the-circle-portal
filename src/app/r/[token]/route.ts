@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 const PRINT_BAR = `
@@ -174,7 +174,11 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
-  const supabase = await createClient()
+  // The share token IS the access credential — look it up with the service-role
+  // client so anonymous (non-logged-in) visitors can open the link. RLS on
+  // `reports` only exposes a member's own *sent* reports, so the cookie client
+  // would 404 for anyone not logged in as that member.
+  const supabase = createAdminClient()
 
   const { data: report } = await supabase
     .from('reports')

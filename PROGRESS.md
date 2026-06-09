@@ -132,8 +132,9 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 1. ✅ **RESOLVED — Duplicate route structures.** The `(admin)`/`(auth)`/`(member)` route groups
    were empty (zero files) and have been deleted. Flat dirs are canonical. `tsc` clean.
-2. **Docs were placeholders.** README is create-next-app boilerplate; `CLAUDE.md` ~11 bytes;
-   `AGENTS.md` not yet read. This PROGRESS.md is the first real status doc.
+2. ✅ **RESOLVED — Docs.** `README.md` rewritten from create-next-app boilerplate into a real
+   project doc; `CLAUDE.md` expanded into a working guide (keeps `@AGENTS.md` import);
+   `AGENTS.md` already held the modified-Next.js rules. (2026-06-09)
 3. ✅ **RESOLVED — AI provider ambiguity.** Anthropic = text generation (all 4 AI routes),
    OpenAI = embeddings only (Brain search). Clients centralized in `src/lib/ai.ts` with lazy,
    guarded init (no more module-scope `process.env.X!` clients that crashed on missing keys).
@@ -176,13 +177,42 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 - Which AI provider does each generation/chat route use, and are prod keys configured?
 - Is the Friday-reminders cron scheduled and firing, and is it auth-guarded?
 - What's in `proxy.ts`, `src/lib/`, `src/components/`, `src/types/index.ts`?
-- Actual completion state of each admin/member page.
+- ✅ Actual completion state of each admin/member page — **verified 2026-06-09**: all 19 pages
+  + 40 API routes export properly with real content; `tsc` clean, `next build` compiles all
+  routes. (Pre-existing component lint errors remain — see §11.)
 
 ---
 
 ## 11. Changelog
 
 Every code change is recorded here, newest first.
+
+### 2026-06-09
+- **Fixed: public blueprint share links (`/b/[token]`) required login.** Root cause was RLS,
+  not middleware: `members` has no anon-read policy, so the route's RLS-bound cookie client
+  returned nothing for logged-out visitors → 404 (affected generated AND uploaded
+  blueprints). Switched `src/app/b/[token]/route.ts` to the **service-role**
+  `createAdminClient()` for the token lookup — the unguessable share token is itself the
+  access credential, mirroring how `/checkin/[token]` already works. **Also fixed the same
+  latent bug in `/r/[token]`** (reports): its RLS policy only exposes a member's own *sent*
+  reports, so anonymous report links would also 404 despite the earlier middleware exemption
+  — now uses `createAdminClient()` too. Build + `tsc` clean; both routes lint clean.
+- **Docs: replaced create-next-app boilerplate.** Wrote a real `README.md` (stack, env-var
+  table, architecture: two-client Supabase pattern, public token routes, AI providers,
+  routes, deploy) and expanded `CLAUDE.md` (golden rules, single-deploy policy, pre-push
+  checklist) while keeping its `@AGENTS.md` import. `AGENTS.md` already carried the
+  modified-Next.js rules and was left as-is.
+- **Deploy policy: single path (kills the double-deploy).** Documented in `CLAUDE.md` +
+  `README.md` that production deploys come from **`git push` to `main`** via Vercel's Git
+  integration ONLY — `vercel --prod` must no longer be run by hand. (No repo config forced
+  the second deploy; it was the manual CLI step, now retired by policy. Supersedes the
+  2026-06-03 "Auto-deploy enabled" CLI-deploy note.)
+- **Verified per-page completion state (was inferred-only).** All 19 `page.tsx` routes have
+  real default exports with substantive content (19–278 lines, no stubs); all 40 API
+  `route.ts` files export HTTP handlers; `npx tsc --noEmit` exits 0 and `next build`
+  compiles all routes successfully. NOTE: `npm run lint` reports 20 pre-existing errors in
+  components (e.g. `ThemeProvider.tsx` set-state-in-effect) — unrelated to this work, build
+  does not fail on them; logged here as a known cleanup, not addressed in this pass.
 
 ### 2026-06-08
 - **Auto-inject financial tasks from GHL application answers (on blueprint generation).** New
@@ -377,11 +407,9 @@ Every code change is recorded here, newest first.
   was already in storage; the new upload hadn't run — stale browser tab, no server hit). Diagnosis:
   no new storage object + unchanged `blueprint_generated_at` confirmed the re-upload never reached
   the server. Upload handler code is correct; a fresh page load fixes future uploads.
-- **KNOWN ISSUE (pre-existing, not yet fixed): `/b/[token]` share links require login.** The route
-  reads `members` via the RLS-bound SSR client with no public-read policy, so anonymous visitors get
-  404 — affects generated AND uploaded blueprints. Logged-in admins/members see them fine. Emailed
-  links to non-users would 404. Fix options: service-role read in the route, or a public RLS policy
-  scoped to share-token lookups.
+- ~~**KNOWN ISSUE (pre-existing, not yet fixed): `/b/[token]` share links require login.**~~
+  ✅ **FIXED 2026-06-09** — route now uses the service-role `createAdminClient()` for the token
+  lookup (see §11). `/r/[token]` had the same latent bug and was fixed too.
 - **Uploaded PDF blueprints now use the branded Circle shell.** Previously a PDF opened in the raw
   browser PDF viewer (no branding). New `src/lib/blueprint-shell.ts` `wrapPdfBlueprint()` reproduces
   the generated blueprint's dark theme + "The Circle" sticky `<nav>`, embeds the PDF cleanly

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 
 // Injected when ?print=1 — a sticky bar with a Print button, hidden from printed output
@@ -95,7 +95,10 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
-  const supabase = await createClient()
+  // The share token IS the access credential — look it up with the service-role
+  // client so anonymous (non-logged-in) visitors can open the link. RLS on
+  // `members` has no public-read policy, so the cookie client would 404 here.
+  const supabase = createAdminClient()
 
   const { data: member } = await supabase
     .from('members')
