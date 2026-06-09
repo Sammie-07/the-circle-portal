@@ -199,6 +199,11 @@ Every code change is recorded here, newest first.
   webhook derives `has_investments` from whether the text is meaningful (blank/none → false) and
   stores `investments_text`. Map the two GHL fields to keys `investments_1` / `investments_2`.
   Every submission is stored in `applications` (keyed by email) whether or not they become a member.
+  **Fix:** middleware was redirecting unauthenticated requests (incl. the GHL webhook) to /login (307),
+  so the webhook never reached the handler. Exempted self-authenticating routes from the login
+  redirect: `/api/ghl`, `/api/cron`, `/api/checkin`, and public token pages `/r/`, `/checkin/` (also
+  un-broke cron + public report/check-in links). Verified webhook end-to-end: stores + parses
+  credit_score/owes_back_taxes/has_investments correctly.
 - **Fixed: owner's admin dashboard showed no data.** `is_admin()` (used by RLS "admins can view all"
   on members/logs/reports/etc.) only matched `role='admin'`, so an `owner` (and manager/support) saw
   nothing through the RLS cookie client — Gogo's `/admin` was empty. Broadened `is_admin()` to all
