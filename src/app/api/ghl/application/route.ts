@@ -54,7 +54,10 @@ function deriveInvestments(body: Body): { has: boolean | null; text: string | nu
   const explicit = coerceBoolean(pick(body, ['has_investments', 'Has Investments']))
   const keys = [
     'investments_1', 'investments_2', 'investments', 'investment_portfolio',
+    'has_investments', 'other_investments',
     'Investments', 'Investment Portfolio', 'Investments 1', 'Investments 2',
+    'What is your investment property portfolio type and value?',
+    'What are your other investment types and their total value?',
   ]
   const texts: string[] = []
   let anyKeyPresent = false
@@ -103,19 +106,24 @@ export async function POST(request: Request) {
       body = {}
     }
 
-    const email = extractEmail(body)
+    // GHL nests mapped Custom Data under `customData`; merge it up so picks find
+    // it (customData wins over top-level). Keep full body as `raw`.
+    const cd = body.customData && typeof body.customData === 'object' ? (body.customData as Body) : {}
+    const src: Body = { ...body, ...cd }
+
+    const email = extractEmail(src)
     if (!email) {
       return NextResponse.json({ error: 'email required' }, { status: 400 })
     }
 
-    // ── Normalize known answers, tolerant of GHL field/type variance ──
-    const investments = deriveInvestments(body)
+    // ── Normalize known answers, tolerant of GHL field/type/label variance ──
+    const investments = deriveInvestments(src)
     const data: ApplicationAnswers = {
       credit_score: coerceNumber(
-        pick(body, ['credit_score', 'Credit Score', 'creditScore'])
+        pick(src, ['credit_score', 'Credit Score', 'creditScore', 'What is your credit score?'])
       ),
       owes_back_taxes: coerceBoolean(
-        pick(body, ['owes_back_taxes', 'Owes Back Taxes', 'back_taxes'])
+        pick(src, ['owes_back_taxes', 'Owes Back Taxes', 'back_taxes', 'Are you behind with your taxes?'])
       ),
       has_investments: investments.has,
       investments_text: investments.text,
