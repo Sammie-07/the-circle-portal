@@ -27,8 +27,20 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Public routes — blueprint share links need no auth
-  if (pathname.startsWith('/b/')) {
+  // Public + machine-to-machine routes that authenticate themselves (share
+  // token or shared secret) — skip the login redirect entirely.
+  //  - /b/, /r/, /checkin/        : public token-rendered pages
+  //  - /api/ghl/                  : GHL webhook (shared-secret gated)
+  //  - /api/cron/                 : Vercel cron (Bearer-secret gated)
+  //  - /api/checkin/              : token-gated check-in submit
+  if (
+    pathname.startsWith('/b/') ||
+    pathname.startsWith('/r/') ||
+    pathname.startsWith('/checkin/') ||
+    pathname.startsWith('/api/ghl/') ||
+    pathname.startsWith('/api/cron/') ||
+    pathname.startsWith('/api/checkin/')
+  ) {
     return supabaseResponse
   }
 
