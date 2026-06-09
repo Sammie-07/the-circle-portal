@@ -7,6 +7,8 @@ export default function BlueprintOpener({ blueprintUrl }: { blueprintUrl: string
 
   useEffect(() => {
     window.open(blueprintUrl, '_blank', 'noopener,noreferrer')
+    // Reflect that the open was triggered (mount side-effect, intentional).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpened(true)
   }, [blueprintUrl])
 

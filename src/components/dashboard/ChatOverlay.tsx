@@ -50,11 +50,18 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
   // just set a sentinel session so the input + empty state render.
   useEffect(() => {
     if (preview) {
+      // Mount-time init of the preview sentinel session (intentional).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSessionId('preview')
       setMessages([])
       return
     }
+    // loadSessions is a hoisted function declaration below — safe to call here.
+    // eslint-disable-next-line react-hooks/immutability
     loadSessions()
+    // Run once on mount (or when preview flips). loadSessions is intentionally
+    // excluded so it doesn't refire as activeSessionId changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview])
 
   // Focus input when session changes
@@ -160,7 +167,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
     if ((!trimmed && !attachment) || isStreaming || !activeSessionId) return
 
     // If no session, create one first
-    let sessionId = activeSessionId
+    const sessionId = activeSessionId
     const sentAttachment = attachment
 
     // Optimistically add user message
@@ -384,7 +391,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
               </div>
               <h2 className="text-[var(--text)] font-serif text-2xl mb-2">Got a question?</h2>
               <p className="text-[var(--text-3)] text-sm mb-6 leading-relaxed">
-                Ask anything about Gogo's frameworks, strategies, and teachings. Every answer comes directly from her knowledge base.
+                Ask anything about Gogo&apos;s frameworks, strategies, and teachings. Every answer comes directly from her knowledge base.
               </p>
               <button
                 onClick={newChat}
@@ -522,7 +529,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
                 </button>
               </div>
               <p className="text-[var(--text-4)] text-[10px] mt-2 text-center">
-                Answers drawn exclusively from Gogo's knowledge base · Enter to send · Shift+Enter for new line
+                Answers drawn exclusively from Gogo&apos;s knowledge base · Enter to send · Shift+Enter for new line
               </p>
             </div>
           </div>

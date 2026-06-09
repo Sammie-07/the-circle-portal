@@ -46,9 +46,11 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
     return () => window.removeEventListener('beforeunload', handler)
   }, [generating])
 
-  // Animate progress bar
+  // Animate progress bar. Resetting progress when generation starts is the
+  // intended effect of the `generating` flag flipping true.
   useEffect(() => {
     if (generating) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0)
       setProgressLabel('Pulling from The Brain…')
       let elapsed = 0

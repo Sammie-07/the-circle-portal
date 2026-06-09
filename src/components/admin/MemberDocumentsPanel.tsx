@@ -57,6 +57,8 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
     }
   }, [memberId])
 
+  // Fetch the list on mount (loader toggles its own loading state).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [load])
 
   function openAdd() {

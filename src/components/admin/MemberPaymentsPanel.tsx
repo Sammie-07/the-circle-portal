@@ -137,6 +137,8 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
     setLoading(false)
   }, [loadBilling, loadPayments])
 
+  // Fetch billing + payments on mount (loaders toggle their own loading state).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadAll() }, [loadAll])
 
   const currency = billing?.currency || billingForm.currency || 'USD'

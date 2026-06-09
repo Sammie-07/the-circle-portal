@@ -112,7 +112,7 @@ const BLUEPRINT_CSS = `<style>
   @media print{nav{display:none;}#cover{min-height:auto;padding:72px 56px;}.page-section{padding:40px 56px;}}
 </style>`
 
-function wrapWithShell(body: string, name: string, today: string): string {
+function wrapWithShell(body: string, name: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -402,7 +402,7 @@ RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, perso
   const blueprintBody = part1.trim() + '\n' + part2.trim() + '\n' + part3.trim()
 
   // Inject CSS shell — keeps CSS out of the prompt entirely
-  const blueprintHtml = wrapWithShell(blueprintBody, member.name, today)
+  const blueprintHtml = wrapWithShell(blueprintBody, member.name)
 
   // Get or generate share token
   const shareToken = member.blueprint_share_token ?? crypto.randomUUID()

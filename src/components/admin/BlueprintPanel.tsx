@@ -74,9 +74,11 @@ export default function BlueprintPanel({
     return () => window.removeEventListener('beforeunload', handler)
   }, [generating])
 
-  // Animate progress bar during generation
+  // Animate progress bar during generation. Resetting progress when generation
+  // starts is the intended effect of the `generating` flag flipping true.
   useEffect(() => {
     if (generating) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0)
       setProgressLabel('Reading transcript…')
       let elapsed = 0

@@ -84,7 +84,7 @@ export default function InviteAdminButton() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-[var(--text)] font-serif text-xl">Invite Team Member</h2>
-                <p className="text-[var(--text-3)] text-xs mt-1">They'll receive a login link immediately.</p>
+                <p className="text-[var(--text-3)] text-xs mt-1">They&apos;ll receive a login link immediately.</p>
               </div>
               <button onClick={() => { setOpen(false); reset() }} className="text-[var(--text-3)] hover:text-[var(--text)] text-lg">✕</button>
             </div>

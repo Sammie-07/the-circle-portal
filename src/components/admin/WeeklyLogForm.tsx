@@ -4,6 +4,26 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+function ToggleButton({ value, active, onClick, yes, no }: {
+  value: boolean, active: boolean | null, onClick: (v: boolean) => void, yes: string, no: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(value)}
+      className={`flex-1 py-2 text-sm rounded border transition-all ${
+        active === value
+          ? value
+            ? 'bg-green-500/10 border-green-500/40 text-green-400'
+            : 'bg-red-500/10 border-red-500/40 text-red-400'
+          : 'bg-[var(--input-bg)] border-[var(--border-color)] text-[var(--text-3)] hover:border-[var(--border-hover)]'
+      }`}
+    >
+      {value ? yes : no}
+    </button>
+  )
+}
+
 export default function WeeklyLogForm({ memberId }: { memberId: string }) {
   const today = new Date()
   // Get Monday of current week
@@ -46,24 +66,6 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
     }
     setLoading(false)
   }
-
-  const ToggleButton = ({ value, active, onClick, yes, no }: {
-    value: boolean, active: boolean | null, onClick: (v: boolean) => void, yes: string, no: string
-  }) => (
-    <button
-      type="button"
-      onClick={() => onClick(value)}
-      className={`flex-1 py-2 text-sm rounded border transition-all ${
-        active === value
-          ? value
-            ? 'bg-green-500/10 border-green-500/40 text-green-400'
-            : 'bg-red-500/10 border-red-500/40 text-red-400'
-          : 'bg-[var(--input-bg)] border-[var(--border-color)] text-[var(--text-3)] hover:border-[var(--border-hover)]'
-      }`}
-    >
-      {value ? yes : no}
-    </button>
-  )
 
   return (
     <form onSubmit={handleSubmit} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 space-y-4">

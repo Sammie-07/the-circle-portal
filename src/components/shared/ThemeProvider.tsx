@@ -24,6 +24,8 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     const stored = localStorage.getItem('circle-theme') as Theme | null
     const initial: Theme = stored ?? 'dark'
+    // Hydrate theme from localStorage on mount (client-only; can't run during SSR).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(initial)
     if (initial === 'dark') {
       document.documentElement.classList.add('dark')

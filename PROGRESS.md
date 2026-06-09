@@ -210,9 +210,16 @@ Every code change is recorded here, newest first.
 - **Verified per-page completion state (was inferred-only).** All 19 `page.tsx` routes have
   real default exports with substantive content (19–278 lines, no stubs); all 40 API
   `route.ts` files export HTTP handlers; `npx tsc --noEmit` exits 0 and `next build`
-  compiles all routes successfully. NOTE: `npm run lint` reports 20 pre-existing errors in
-  components (e.g. `ThemeProvider.tsx` set-state-in-effect) — unrelated to this work, build
-  does not fail on them; logged here as a known cleanup, not addressed in this pass.
+  compiles all routes successfully.
+- **Lint: zero errors (was 20 errors + 2 warnings).** Cleared the entire pre-existing
+  `npm run lint` backlog so it now exits 0. Real fixes: escaped 5 JSX apostrophes
+  (`react/no-unescaped-entities`), hoisted `ToggleButton` out of `WeeklyLogForm`'s render
+  (`react-hooks/static-components`), dropped an unused `today` param from `wrapWithShell`,
+  and a `prefer-const` autofix in `ChatOverlay`. The remaining `react-hooks/set-state-in-effect`
+  hits are legitimate effects (fetch-on-mount, progress animation on a `generating` flag,
+  mount side-effects, localStorage theme hydration) — each suppressed with a justified
+  `eslint-disable-next-line` rather than a risky behavioral refactor of live code. `tsc` +
+  build still clean.
 
 ### 2026-06-08
 - **Auto-inject financial tasks from GHL application answers (on blueprint generation).** New
