@@ -217,11 +217,16 @@ export async function GET(request: Request) {
   const weekOf = getMondayOfCurrentWeek()
   const weekLabel = getWeekLabel(weekOf)
 
-  // 1. Get all active members with email
+  // 1. Get members who should receive a check-in: active AND already invited to
+  //    the portal. Members are created before they're given access (no login link
+  //    sent yet) — those must NOT get a check-in until they've been invited
+  //    (`invited_at` is stamped by the invite endpoints).
   const { data: members } = await supabase
     .from('members')
     .select('id, name, email')
     .not('email', 'is', null)
+    .eq('status', 'active')
+    .not('invited_at', 'is', null)
 
   const activeMembers = members ?? []
 

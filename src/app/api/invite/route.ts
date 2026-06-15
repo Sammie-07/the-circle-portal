@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const { email } = await request.json()
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
-  const { data: member } = await supabase.from('members').select('id, name').eq('email', email).single()
+  const { data: member } = await supabase.from('members').select('id, name, invited_at').eq('email', email).single()
   if (!member) return NextResponse.json({ error: 'No member found with this email' }, { status: 404 })
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
@@ -28,6 +28,15 @@ export async function POST(request: Request) {
 
   if (otpError) {
     return NextResponse.json({ error: otpError.message }, { status: 500 })
+  }
+
+  // Mark the member as invited (first time only) so the Friday check-in cron
+  // starts including them. Best-effort — the invite already went out.
+  if (!member.invited_at) {
+    await supabase
+      .from('members')
+      .update({ invited_at: new Date().toISOString() })
+      .eq('id', member.id)
   }
 
   return NextResponse.json({ success: true, sent_to: email })

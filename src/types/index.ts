@@ -14,6 +14,9 @@ export interface Member {
   website?: string | null
   bio?: string | null
   blueprint_data: BlueprintData | null
+  // Set when the member is invited to the portal (sent a login link).
+  // NULL = created but no access yet — excluded from the Friday check-in.
+  invited_at?: string | null
   created_at: string
 }
 

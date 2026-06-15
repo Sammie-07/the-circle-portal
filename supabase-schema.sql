@@ -36,8 +36,13 @@ create table if not exists members (
   cohort text,
   status text not null default 'active' check (status in ('active', 'inactive', 'graduated')),
   blueprint_data jsonb,
+  -- When the member was actually invited to the portal (sent a login link).
+  -- NULL = created but not yet given access; the Friday check-in cron skips these.
+  invited_at timestamptz,
   created_at timestamptz default now()
 );
+-- For existing databases (table created before invited_at existed):
+alter table members add column if not exists invited_at timestamptz;
 
 -- Weekly activity logs
 create table if not exists weekly_logs (

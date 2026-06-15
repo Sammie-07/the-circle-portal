@@ -187,6 +187,23 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-15
+- **Friday check-in no longer goes to un-invited members.** Members are created in the portal
+  before they're granted access (no login link sent yet), but the `cron/friday-reminders` job
+  selected *every* member with an email — so people who'd never been invited (e.g. Krystal
+  Thomas) received weekly check-in emails. Added a `members.invited_at timestamptz` column
+  (migration `add_members_invited_at`, applied to live DB) and gated the cron query on
+  `status='active' AND invited_at IS NOT NULL`. **Backfill:** stamped `invited_at = created_at`
+  for every member who already has an `auth.users` account (they've logged in, so were
+  definitely invited) — 5 members (Tech Team, Samuel Akinwande, Test member, Kristy Waker,
+  Ferny Rodriguez); the other 5 with no account (Allison Mireau, Gina Tran, Krystal Thomas,
+  Tina Gamble, Yvonne Zielinski) stay NULL and are now excluded. Both invite endpoints stamp
+  `invited_at` on first invite going forward: `/api/invite` (Send Invite button) and
+  `/api/invite/signin-link` (copy sign-in link). Note `members.user_id` is unused (always
+  NULL — member↔login is matched by email via RLS), so it can't serve as the invited signal.
+  Updated `supabase-schema.sql` + `Member` type. `/api/checkin/generate` (manual per-member)
+  is unaffected by design.
+
 ### 2026-06-09
 - **Fixed: public blueprint share links (`/b/[token]`) required login.** Root cause was RLS,
   not middleware: `members` has no anon-read policy, so the route's RLS-bound cookie client

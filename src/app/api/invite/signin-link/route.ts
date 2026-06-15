@@ -28,5 +28,13 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Generating a sign-in link grants the member access, so mark them invited
+  // (only if not already) — this is what gates the Friday check-in cron.
+  await adminDb
+    .from('members')
+    .update({ invited_at: new Date().toISOString() })
+    .eq('email', email)
+    .is('invited_at', null)
+
   return NextResponse.json({ link: data.properties.action_link })
 }
