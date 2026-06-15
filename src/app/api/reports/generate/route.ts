@@ -52,6 +52,32 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 3000)
 }
 
+// Clean the model's raw output before it's saved/rendered:
+//  1. Strip any markdown code fence the model wraps the HTML in (```html … ```),
+//     which otherwise renders as a literal "```html" banner at the top.
+//  2. Remove em/en dashes entirely — reports must never contain them. Replace
+//     them with a comma so clauses read as one natural, flowing sentence
+//     instead of a hard break.
+function cleanReportHtml(raw: string): string {
+  let html = raw.trim()
+
+  // Strip a leading ```html / ``` fence and a trailing ``` fence (any casing).
+  html = html
+    .replace(/^\s*```[a-zA-Z]*\s*\n?/, '')
+    .replace(/\n?\s*```\s*$/, '')
+    .trim()
+
+  // No em or en dashes, ever. Collapse surrounding spaces into a single comma.
+  html = html
+    .replace(/\s*[—–]\s*/g, ', ')
+    // Tidy up any artefacts the substitution can create.
+    .replace(/,\s*,/g, ',')
+    .replace(/\s+,/g, ',')
+    .replace(/,(?=\S)/g, ', ')
+
+  return html
+}
+
 export async function POST(request: Request) {
   try {
     if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not set on the server' }, { status: 500 })
@@ -139,21 +165,26 @@ ${weeklyNotes ? `\nWEEKLY NOTES FROM ADRIANA:\n${weeklyNotes}` : ''}
 
 ---
 
-${blueprintText ? `THEIR BLUEPRINT (what Gogo mapped out for them — this is the baseline):\n${blueprintText}\n\n---\n` : 'NOTE: No blueprint generated yet for this member — generate the report based on general Circle coaching principles.\n\n---\n'}
+${blueprintText ? `THEIR BLUEPRINT (what Gogo mapped out for them, this is the baseline):\n${blueprintText}\n\n---\n` : 'NOTE: No blueprint generated yet for this member, so generate the report based on general Circle coaching principles.\n\n---\n'}
 
 ${brainContext ? `GOGO'S COACHING PRINCIPLES (from The Brain):\n${brainContext}\n\n---\n` : ''}
 
 REPORT STRUCTURE:
-1. Open with WHERE THEY ARE in their blueprint right now — Q${currentQuarter}, what the plan called for, frame it as "the map said X"
-2. THE NUMBERS — attendance % and homework % shown plainly, compared to the blueprint standard (75%+ attendance, 100% homework is the expectation)
-3. WHAT'S WORKING — specific wins, even small ones. Lead with what's good.
-4. THE GAP (if any) — if attendance < 75% or homework < 50%, be direct: "The blueprint called for X. The data shows Y. That gap has a cost." Tie lack of input to lack of output. Never shame, but never soften the truth.
-5. THE ONE MOVE — one specific action for next month, tied directly to their Q${currentQuarter} blueprint focus
-6. CLOSING LINE — Gogo's voice: direct, warm, demanding. Something like "You have the map. Now move."
+1. Open with WHERE THEY ARE in their blueprint right now: Q${currentQuarter}, what the plan called for, framed as "the map said X."
+2. THE NUMBERS: attendance % and homework % shown plainly, compared to the blueprint standard (75%+ attendance, 100% homework is the expectation).
+3. WHAT'S WORKING: specific wins, even small ones. Lead with what's good.
+4. THE GAP (if any): if attendance is under 75% or homework under 50%, be direct. Name what the blueprint called for, what the data actually shows, and the cost of that gap, written as flowing sentences rather than clipped fragments. Tie lack of input to lack of output. Never shame, but never soften the truth.
+5. THE ONE MOVE: one specific action for next month, tied directly to their Q${currentQuarter} blueprint focus.
+6. CLOSING LINE: Gogo's voice, direct, warm, and demanding, landing on a confident note that tells them they have the map and it's time to move.
 
-TONE: Gogo Bethke — direct, warm, no-BS. The report feels like Gogo wrote it personally after looking at their data AND their blueprint side by side. It's not a form letter. It knows this specific person's plan.
+TONE: Gogo Bethke, direct, warm, no-BS. The report feels like Gogo wrote it personally after looking at their data and their blueprint side by side. It is not a form letter. It knows this specific person's plan.
 
-OUTPUT: Return only the HTML body content (no <html>/<head> tags). Inline styles only. The Circle brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nThis is a regeneration of a previous report. Address every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
+PUNCTUATION AND VOICE (strict):
+- NEVER use em dashes (—) or en dashes (–). Not once. Use commas, periods, or rewrite the sentence instead.
+- Write in natural, flowing prose. Connect related ideas into complete sentences. Do NOT chop thoughts into a string of two or three word fragments. Short sentences are fine for emphasis, but they should be the exception, not the rhythm of the whole report.
+- Read it back in your head: it should sound like a person talking warmly and plainly, not a list of punches.
+
+OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags). Do NOT wrap the output in markdown code fences. Never start the response with \`\`\`html or \`\`\` and never end it with \`\`\`. Output must begin directly with an HTML tag. Inline styles only. The Circle brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nThis is a regeneration of a previous report. Address every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
 
     console.log('[Report] Generating for', member.name, '—', period_type)
     const message = await anthropic.messages.create({
@@ -163,7 +194,8 @@ OUTPUT: Return only the HTML body content (no <html>/<head> tags). Inline styles
     })
     console.log('[Report] Done, tokens:', message.usage?.output_tokens)
 
-    const contentHtml = message.content[0].type === 'text' ? message.content[0].text : ''
+    const rawContent = message.content[0].type === 'text' ? message.content[0].text : ''
+    const contentHtml = cleanReportHtml(rawContent)
     if (!contentHtml.trim()) {
       return NextResponse.json({ error: 'Claude returned an empty response. Please try again.' }, { status: 500 })
     }

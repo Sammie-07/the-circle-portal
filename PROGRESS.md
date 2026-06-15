@@ -188,6 +188,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-15
+- **Reports: killed the `` ```html `` banner + banned em dashes.** Claude was wrapping report
+  HTML in a markdown code fence, so a literal `` ```html `` rendered at the top of every report.
+  Added `cleanReportHtml()` in `reports/generate` that (1) strips leading/trailing code fences
+  and (2) removes em/en dashes (replaced with a comma) as a hard guarantee. Also rewrote the
+  generation prompt: explicit "never use em/en dashes," "write flowing prose, not clipped
+  fragments," and "output raw HTML, never wrap in ``` fences"; removed the choppy example lines
+  the model was imitating. **Backfilled all 13 existing reports** in the live DB (fence stripped,
+  dashes → commas; 0 remaining), so the public `/r/[token]` links and `/dashboard/reports/[id]`
+  views are clean too. (Blueprint generation may share the fence behavior, not touched this pass.)
 - **Friday check-in no longer goes to un-invited members.** Members are created in the portal
   before they're granted access (no login link sent yet), but the `cron/friday-reminders` job
   selected *every* member with an email — so people who'd never been invited (e.g. Krystal
