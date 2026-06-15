@@ -196,7 +196,15 @@ Every code change is recorded here, newest first.
   fragments," and "output raw HTML, never wrap in ``` fences"; removed the choppy example lines
   the model was imitating. **Backfilled all 13 existing reports** in the live DB (fence stripped,
   dashes → commas; 0 remaining), so the public `/r/[token]` links and `/dashboard/reports/[id]`
-  views are clean too. (Blueprint generation may share the fence behavior, not touched this pass.)
+  views are clean too.
+- **Blueprints: same fence-strip + em-dash ban (range-safe).** Applied the same treatment to
+  `blueprints/generate`. New `cleanBlueprintPart()` runs on each of the 3 generated HTML parts
+  before they're concatenated: strips any ``` fence, replaces em dashes (—) with a comma, and
+  converts en dashes (–) to plain hyphens. The en-dash distinction matters here, blueprints use
+  ranges like "Q1 · Months 1–3" that a comma would corrupt, so those become "Months 1-3" (verified
+  intact). Added the same punctuation/voice rule to all 3 prompts. **Backfilled all 4 existing
+  blueprints** in the live DB (em → comma, en → hyphen); 0 dashes remain and range labels are
+  preserved.
 - **Friday check-in no longer goes to un-invited members.** Members are created in the portal
   before they're granted access (no login link sent yet), but the `cron/friday-reminders` job
   selected *every* member with an email — so people who'd never been invited (e.g. Krystal

@@ -112,6 +112,30 @@ const BLUEPRINT_CSS = `<style>
   @media print{nav{display:none;}#cover{min-height:auto;padding:72px 56px;}.page-section{padding:40px 56px;}}
 </style>`
 
+// Clean one of the 3 model-generated HTML parts before they're concatenated:
+//  1. Strip any markdown code fence the model wraps the part in (```html … ```).
+//  2. Remove em dashes (—) entirely — these are prose breaks and must never
+//     appear. Replace with a comma so the sentence reads naturally.
+//  3. Convert en dashes (–) to plain hyphens. Blueprints legitimately use them
+//     in numeric ranges ("Months 1–3"), so a comma would corrupt them; a hyphen
+//     keeps the range correct ("Months 1-3") and leaves no en dash behind.
+function cleanBlueprintPart(raw: string): string {
+  let html = raw.trim()
+
+  html = html
+    .replace(/^\s*```[a-zA-Z]*\s*\n?/, '')
+    .replace(/\n?\s*```\s*$/, '')
+    .trim()
+
+  html = html
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/,\s*,/g, ', ')
+    .replace(/\s+,/g, ',')
+    .replace(/–/g, '-')
+
+  return html
+}
+
 function wrapWithShell(body: string, name: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -280,7 +304,7 @@ WRITE THESE 5 ELEMENTS IN FULL — no placeholders, no truncation:
 5. <section id="s3" class="page-section"> — eyebrow "Section 03", h2 "Your Hire Sequence", section-intro, blockquote from Brain (Kristy hire story), hire-timeline with 3-4 hire-items (month label + title + description tailored to their situation), h3 "How to Find Your First Hire", body-text, callout with 71.1% stat, h3 "How to Train Them So They Actually Stick", q-section with q-section-head + 5 q-points (Loom, type it out, checklists, 90-day check-ins, accountability)
 
 ${feedback ? `---\nREFINEMENT REQUEST: The admin has reviewed the previous blueprint and asked for these specific changes:\n${feedback}\nApply these changes where relevant to the sections you are writing. Keep everything else as specified.\n---` : ''}
-RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, personal. No invented facts. Dense content.`
+RULES: Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
   // ── CALL 2 of 3: section 4 only — 12-month quarterly blueprint ───────────
   const prompt2 = `You are writing PART 2 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle." This call is dedicated entirely to Section 04 — the 12-Month Blueprint.
@@ -308,7 +332,7 @@ Q4 (Months 10-12): same complete structure
 Each q-point should be a concrete action item or milestone pulled directly from the transcript. Each q-section-head should name a specific focus area (e.g., "BUILD YOUR SUPPORT TEAM", "SYSTEMIZE LEAD GEN", "LAUNCH PASSIVE STREAMS"). Each q-quote-box should end with a motivating Gogo-voice line specific to that quarter's theme.
 
 ${feedback ? `---\nREFINEMENT REQUEST: The admin has reviewed the previous blueprint and asked for these specific changes:\n${feedback}\nApply these changes where relevant to Section 04. Keep everything else as specified.\n---` : ''}
-RULES: All action items must come directly from the transcript. Gogo's voice — direct, warm, personal. No invented facts. All 4 quarters must be fully written out.`
+RULES: All action items must come directly from the transcript. Gogo's voice, direct, warm, personal. No invented facts. All 4 quarters must be fully written out. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
   // ── CALL 3 of 3: sections 5–7 + footer ───────────────────────────────────
   const prompt3 = `You are writing PART 3 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle."
@@ -355,7 +379,7 @@ WRITE THESE 4 ELEMENTS IN FULL — no placeholders, no truncation:
 4. <footer> — footer-circle (div with span inside), footer-quote with Gogo's warm personal closing line TO this specific person based on their call, footer-meta "The Circle · 12-Month Coaching Program · gogobethke.com", second footer-meta "Confidential · Prepared for ${member.name} · ${today}"
 
 ${feedback ? `---\nREFINEMENT REQUEST: The admin has reviewed the previous blueprint and asked for these specific changes:\n${feedback}\nApply these changes where relevant to the sections you are writing. Keep everything else as specified.\n---` : ''}
-RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, personal. No invented facts. Dense, complete content.`
+RULES: Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense, complete content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
   let part1 = ''
   let part2 = ''
@@ -399,7 +423,8 @@ RULES: Every word from transcript or Brain. Gogo's voice — direct, warm, perso
     return NextResponse.json({ error: `AI generation failed: ${errMsg}` }, { status: 500 })
   }
 
-  const blueprintBody = part1.trim() + '\n' + part2.trim() + '\n' + part3.trim()
+  const blueprintBody =
+    cleanBlueprintPart(part1) + '\n' + cleanBlueprintPart(part2) + '\n' + cleanBlueprintPart(part3)
 
   // Inject CSS shell — keeps CSS out of the prompt entirely
   const blueprintHtml = wrapWithShell(blueprintBody, member.name)
