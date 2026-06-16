@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import DateField from '@/components/shared/DateField'
+import AutoGrowTextarea from '@/components/shared/AutoGrowTextarea'
 import { toast } from '@/lib/toast'
 
 interface HomeworkItem {
@@ -179,13 +180,13 @@ export default function HomeworkPanel({ memberId }: Props) {
       {showForm && (
         <div className="px-5 py-4 bg-[var(--surface-2)] border-b border-[var(--border-color)]">
           <form onSubmit={handleAdd} className="space-y-3">
-            <div className="flex gap-2">
-              <input
+            <div className="flex gap-2 items-start">
+              <AutoGrowTextarea
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="Title…"
                 required
-                className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 leading-relaxed focus:outline-none focus:border-[#C9A227]"
               />
               <select
                 value={form.type}
@@ -196,11 +197,11 @@ export default function HomeworkPanel({ memberId }: Props) {
                 <option value="task">Blueprint Task</option>
               </select>
             </div>
-            <input
+            <AutoGrowTextarea
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Description (optional)"
-              className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+              className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 leading-relaxed focus:outline-none focus:border-[#C9A227]"
             />
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -280,18 +281,18 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
   if (isEditing) {
     return (
       <div className="px-5 py-3 bg-[var(--bg)] space-y-2">
-        <div className="flex gap-2">
-          <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-            className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
+        <div className="flex gap-2 items-start">
+          <AutoGrowTextarea value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+            className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] text-sm rounded px-3 py-1.5 leading-relaxed focus:outline-none focus:border-[#C9A227]" />
           <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value as 'homework' | 'task' })}
             className="bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none">
             <option value="homework">Homework</option>
             <option value="task">Task</option>
           </select>
         </div>
-        <input value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+        <AutoGrowTextarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })}
           placeholder="Description"
-          className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
+          className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-1.5 leading-relaxed focus:outline-none focus:border-[#C9A227]" />
         <div className="flex items-center gap-3">
           <div className="w-44">
             <DateField value={editForm.due_date} onChange={v => setEditForm({ ...editForm, due_date: v })}

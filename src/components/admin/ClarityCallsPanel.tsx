@@ -30,9 +30,9 @@ function zoomExpiryWarning(url: string, callDate: string | null, createdAt: stri
   const ref = callDate ? new Date(callDate) : new Date(createdAt)
   const days = Math.floor((Date.now() - ref.getTime()) / 86400000)
   if (days >= ZOOM_EXPIRY_DAYS) {
-    return { text: `Zoom links usually expire after ~2 weeks. This one is ${days} days old and may no longer play — re-upload to YouTube or Google Drive.`, urgent: true }
+    return { text: `This recording is ${days} days old. Zoom replays usually expire ~2 weeks after the call, so this link may no longer work — expired Zoom recordings can't be recovered.`, urgent: true }
   }
-  return { text: `Heads up: Zoom links usually expire ~2 weeks after the call. Re-upload to YouTube/Drive for a permanent replay.`, urgent: false }
+  return { text: `Heads up: Zoom links usually expire ~2 weeks after the call. To keep this replay permanently, re-upload it to YouTube/Drive before then.`, urgent: false }
 }
 
 export default function ClarityCallsPanel({ memberId }: { memberId: string }) {

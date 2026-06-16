@@ -188,6 +188,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Task fields auto-grow; Zoom replay note reworded.** (1) The task title + description inputs
+  were single-line and clipped long text. New `AutoGrowTextarea` (`src/components/shared/`)
+  expands as you type so the whole task is always visible; wired into the homework add + edit
+  forms. (2) Reworded the member-side Zoom panel note: removed the (non-existent) passcode
+  mention and the "ask your coach to re-post" line (nothing can be done once it's gone), now tells
+  members the replay is only available ~2 weeks and to watch it before then. Also corrected the
+  admin "expired" warning to say expired Zoom recordings can't be recovered (instead of suggesting
+  a re-upload that's no longer possible).
 - **Save confirmations (toasts) across the portal.** Saving billing details (and many other
   forms) silently succeeded with no on-screen acknowledgement. Added a global toast system
   (`src/lib/toast.ts` `toast()` + `<Toaster/>` mounted in the root layout, dispatched via a
