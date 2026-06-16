@@ -188,6 +188,25 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Fixed: "Cannot coerce the result to a single JSON object" when saving a profile.** Two root
+  causes. (1) `members` has no RLS policy letting a member update their own row (only admins),
+  so `/api/profile`'s RLS cookie-client update hit 0 rows and `.single()` threw. (2) The profile
+  page resolves through `resolvePortalContext` (so it shows the impersonated member during a
+  staff preview), but the API matched by raw `user.email` — which for an impersonating admin
+  (e.g. admin@gogosrealestate.com viewing Yvonne) matched no member at all. Rewrote `/api/profile`
+  to resolve the same context and update the resolved member id via the service-role client:
+  normal members edit their own record, staff-in-preview edit the member they're viewing.
+  Now uses `.maybeSingle()` with a clear 404 instead of the cryptic coerce error.
+- **GHL application card now shows all answers.** The "Application (from GHL)" card on the admin
+  member page only rendered three hardcoded fields and silently dropped `investments_text` (the
+  free-text portfolio answer). It now shows credit score / back taxes / investments, the
+  Investments / Portfolio text, plus any other fields GHL sends (rendered generically). Also
+  clarified the empty state: answers are matched to a member by email, so members who applied
+  under a different email (or haven't applied) correctly show "none yet." (Context: only 2
+  applications exist in the DB so far — Krystal Thomas, a member, and one non-member — which is
+  why most member pages looked empty.)
+
+### 2026-06-16
 - **Mobile responsiveness pass (portal + chat).** The portal was desktop-only: a fixed `w-56`
   sidebar sat beside content with no mobile treatment, so phones got a squished two-column
   layout and a chat that was unusable. Fixes:

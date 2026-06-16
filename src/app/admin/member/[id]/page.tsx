@@ -51,13 +51,18 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .maybeSingle()
     : { data: null }
 
-  const appData = (application?.data ?? null) as {
-    credit_score?: number | null
-    owes_back_taxes?: boolean | null
-    has_investments?: boolean | null
-  } | null
-  const fmtBool = (v: boolean | null | undefined) =>
+  const appData = (application?.data ?? null) as Record<string, unknown> | null
+  const fmtBool = (v: unknown) =>
     v === true ? 'Yes' : v === false ? 'No' : '—'
+  const fmtVal = (v: unknown) =>
+    v === null || v === undefined || v === '' ? '—' : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v)
+  const prettifyKey = (k: string) =>
+    k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  // Surface every field GHL sent, not just the three we key financial rules off.
+  const KNOWN_APP_FIELDS = new Set(['credit_score', 'owes_back_taxes', 'has_investments', 'investments_text'])
+  const otherAppEntries = appData
+    ? Object.entries(appData).filter(([k]) => !KNOWN_APP_FIELDS.has(k))
+    : []
 
   const { data: logs } = await supabase
     .from('weekly_logs')
@@ -215,7 +220,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Credit Score</p>
-                  <p className="text-[var(--text)] text-sm">{appData.credit_score ?? '—'}</p>
+                  <p className="text-[var(--text)] text-sm">{fmtVal(appData.credit_score)}</p>
                 </div>
                 <div>
                   <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Owes Back Taxes</p>
@@ -226,9 +231,32 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                   <p className="text-[var(--text)] text-sm">{fmtBool(appData.has_investments)}</p>
                 </div>
               </div>
+
+              {/* Free-text portfolio / investments answer */}
+              {appData.investments_text ? (
+                <div className="mt-4">
+                  <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Investments / Portfolio</p>
+                  <p className="text-[var(--text)] text-sm whitespace-pre-wrap">{String(appData.investments_text)}</p>
+                </div>
+              ) : null}
+
+              {/* Any other fields GHL sent, shown generically */}
+              {otherAppEntries.length > 0 && (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-[var(--border-color)] pt-4">
+                  {otherAppEntries.map(([k, v]) => (
+                    <div key={k}>
+                      <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">{prettifyKey(k)}</p>
+                      <p className="text-[var(--text)] text-sm whitespace-pre-wrap">{fmtVal(v)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
-            <p className="text-[var(--text-3)] text-sm mt-1">No application answers received yet.</p>
+            <p className="text-[var(--text-3)] text-sm mt-1">
+              No application answers received yet. They appear here automatically once a matching
+              application comes in from GHL (matched by the member&apos;s email).
+            </p>
           )}
         </div>
       </div>
