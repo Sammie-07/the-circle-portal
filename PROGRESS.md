@@ -197,14 +197,13 @@ Every code change is recorded here, newest first.
   to resolve the same context and update the resolved member id via the service-role client:
   normal members edit their own record, staff-in-preview edit the member they're viewing.
   Now uses `.maybeSingle()` with a clear 404 instead of the cryptic coerce error.
-- **GHL application card now shows all answers.** The "Application (from GHL)" card on the admin
-  member page only rendered three hardcoded fields and silently dropped `investments_text` (the
-  free-text portfolio answer). It now shows credit score / back taxes / investments, the
-  Investments / Portfolio text, plus any other fields GHL sends (rendered generically). Also
-  clarified the empty state: answers are matched to a member by email, so members who applied
-  under a different email (or haven't applied) correctly show "none yet." (Context: only 2
-  applications exist in the DB so far — Krystal Thomas, a member, and one non-member — which is
-  why most member pages looked empty.)
+- **GHL application answers are backend-only (no UI).** Product decision: applications must not
+  be displayed anywhere in the portal, including the admin member view. Removed the "Application
+  (from GHL)" card (and its fetch/format helpers) from the admin member page. The data flow is
+  unchanged and intentional: GHL webhook → `applications` table (keyed by email) → consumed
+  server-side by `apply-financial-rules.ts` to auto-inject financial tasks when a member's
+  blueprint is generated. Nothing about the table, webhook, or rules changed — only the UI was
+  removed. (Supersedes the earlier same-day note about expanding that card.)
 
 ### 2026-06-16
 - **Mobile responsiveness pass (portal + chat).** The portal was desktop-only: a fixed `w-56`
