@@ -188,6 +188,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Check-in confirmation: "Go to my portal" button.** After a member submits their weekly
+  check-in, the success screen now has a gold button linking to `/dashboard` so they can get
+  back to their portal (previously it was a dead end). If they aren't logged in, `/dashboard`
+  routes them through login as usual.
+
+### 2026-06-16
 - **Fixed: "Cannot coerce the result to a single JSON object" when saving a profile.** Two root
   causes. (1) `members` has no RLS policy letting a member update their own row (only admins),
   so `/api/profile`'s RLS cookie-client update hit 0 rows and `.single()` threw. (2) The profile

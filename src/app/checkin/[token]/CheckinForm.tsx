@@ -78,6 +78,12 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
           <p className="text-[#888] text-sm leading-relaxed">
             Your check-in for the week of <span className="text-white">{weekLabel}</span> is in. See you Tuesday.
           </p>
+          <a
+            href="/dashboard"
+            className="inline-block mt-8 bg-[#C9A227] text-[#0D0D0D] font-semibold text-sm px-6 py-3 rounded-lg hover:bg-[#d4ac2d] transition-colors"
+          >
+            Go to my portal →
+          </a>
         </div>
       </div>
     )
