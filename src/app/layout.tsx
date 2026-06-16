@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ThemeProvider from '@/components/shared/ThemeProvider'
+import Toaster from '@/components/shared/Toaster'
 
 export const metadata: Metadata = {
   title: 'The Circle · Member Portal',
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body className="min-h-full bg-[var(--bg)] text-[var(--text)] antialiased">
         <ThemeProvider>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

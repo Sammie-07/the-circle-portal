@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from '@/lib/toast'
 
 interface Member {
   id: string
@@ -48,13 +49,16 @@ export default function ProfileForm({ member, loginEmail }: ProfileFormProps) {
       const data = await res.json()
       if (!res.ok) {
         setError(data.error ?? 'Something went wrong')
+        toast(data.error ?? 'Could not save your profile', 'error')
         return
       }
 
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
+      toast('Profile saved')
     } catch {
       setError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setSaving(false)
     }

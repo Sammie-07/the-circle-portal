@@ -188,6 +188,25 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Save confirmations (toasts) across the portal.** Saving billing details (and many other
+  forms) silently succeeded with no on-screen acknowledgement. Added a global toast system
+  (`src/lib/toast.ts` `toast()` + `<Toaster/>` mounted in the root layout, dispatched via a
+  window event so any client component can fire one with a one-liner). Wired success/error
+  toasts into every save flow: member billing + payments, homework/tasks (add/edit/delete),
+  office-hours & clarity-call recordings, member documents (upload/delete), edit member,
+  activate/deactivate, weekly log, bulk weekly log, member profile (member-facing), report send,
+  invite member/admin, send invite, and copy sign-in link.
+- **Task due date is optional + owners can manage tasks.** Due date was never `required` in the
+  form, but the homework API gated POST/PATCH/DELETE on `role === 'admin'` only — so an **owner**
+  (Gogo) got 403 when adding/editing tasks. Broadened to `owner/admin/manager` (matching the
+  other editor endpoints) and labelled the field "Due date (optional)" with a "No due date"
+  placeholder. Empty dates already persist as null.
+- **Calendar date picker everywhere.** Replaced every native `<input type="date">` (which only
+  shows a calendar via a small icon and otherwise invites manual typing) with a new dependency-free
+  `DateField` popover calendar (`src/components/shared/DateField.tsx`): click to open a month grid,
+  prev/next, Today, and Clear (for optional dates). Applied to homework due date, member billing
+  (membership start/end), payment due/paid dates, office-hours & clarity-call dates, blueprint call
+  date, and weekly/bulk log week pickers.
 - **Zoom expiry warnings.** Zoom share links expire (~2 weeks, Zoom's retention default), after
   which the recording disappears. The portal can't stop that, but it now surfaces it: the admin
   Office Hours + Clarity Calls panels show an age-based warning on every Zoom entry (amber

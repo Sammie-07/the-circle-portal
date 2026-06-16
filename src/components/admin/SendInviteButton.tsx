@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from '@/lib/toast'
 
 export default function SendInviteButton({ email, memberName }: { email: string; memberName: string }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -21,10 +22,12 @@ export default function SendInviteButton({ email, memberName }: { email: string;
     if (!res.ok) {
       setError(data.error ?? 'Failed to send')
       setStatus('error')
+      toast(data.error ?? 'Failed to send invite', 'error')
       return
     }
 
     setStatus('sent')
+    toast(`Invite sent to ${memberName}`)
   }
 
   if (status === 'sent') {

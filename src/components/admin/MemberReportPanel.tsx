@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { toast } from '@/lib/toast'
 
 interface Report {
   id: string
@@ -178,10 +179,12 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
     const data = await res.json()
     if (!res.ok) {
       setError(data.error ?? 'Send failed.')
+      toast(data.error ?? 'Could not send report', 'error')
     } else {
       setReports(prev =>
         prev.map(r => r.id === reportId ? { ...r, sent_at: new Date().toISOString() } : r)
       )
+      toast(`Report sent to ${memberName}`)
     }
     setSending(null)
   }

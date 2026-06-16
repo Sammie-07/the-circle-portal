@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import DateField from '@/components/shared/DateField'
+import { toast } from '@/lib/toast'
 
 interface HomeworkItem {
   id: string
@@ -60,11 +62,12 @@ export default function HomeworkPanel({ memberId }: Props) {
       body: JSON.stringify({ member_id: memberId, ...form }),
     })
     const data = await res.json()
-    if (!res.ok) { setError(data.error); setSaving(false); return }
+    if (!res.ok) { setError(data.error); toast(data.error ?? 'Could not add item', 'error'); setSaving(false); return }
     setItems(prev => [...prev, data.item])
     setForm(EMPTY_FORM)
     setShowForm(false)
     setSaving(false)
+    toast(data.item.type === 'task' ? 'Task added' : 'Homework added')
   }
 
   async function handleToggle(item: HomeworkItem) {
@@ -85,10 +88,11 @@ export default function HomeworkPanel({ memberId }: Props) {
       body: JSON.stringify(editForm),
     })
     const data = await res.json()
-    if (!res.ok) { setError(data.error); setSaving(false); return }
+    if (!res.ok) { setError(data.error); toast(data.error ?? 'Could not save', 'error'); setSaving(false); return }
     setItems(prev => prev.map(i => i.id === id ? data.item : i))
     setEditId(null)
     setSaving(false)
+    toast('Changes saved')
   }
 
   async function handleGenerateFromBlueprint() {
@@ -115,6 +119,7 @@ export default function HomeworkPanel({ memberId }: Props) {
     if (!confirm('Delete this item?')) return
     setItems(prev => prev.filter(i => i.id !== id))
     await fetch(`/api/homework/${id}`, { method: 'DELETE' })
+    toast('Item deleted')
   }
 
   const filtered = items.filter(i => filter === 'all' || i.type === filter)
@@ -198,14 +203,16 @@ export default function HomeworkPanel({ memberId }: Props) {
               className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]"
             />
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 flex-1">
-                <label className="text-[var(--text-3)] text-xs whitespace-nowrap">Due date</label>
-                <input
-                  type="date"
-                  value={form.due_date}
-                  onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
-                  className="flex-1 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#C9A227]"
-                />
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <label className="text-[var(--text-3)] text-xs whitespace-nowrap">Due date <span className="text-[var(--text-4)]">(optional)</span></label>
+                <div className="flex-1 min-w-0">
+                  <DateField
+                    value={form.due_date}
+                    onChange={v => setForm(f => ({ ...f, due_date: v }))}
+                    placeholder="No due date"
+                    className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#C9A227]"
+                  />
+                </div>
               </div>
               <button type="button" onClick={() => setShowForm(false)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)]">Cancel</button>
               <button type="submit" disabled={saving} className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
@@ -286,8 +293,11 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
           placeholder="Description"
           className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-1.5 focus:outline-none focus:border-[#C9A227]" />
         <div className="flex items-center gap-3">
-          <input type="date" value={editForm.due_date} onChange={e => setEditForm({ ...editForm, due_date: e.target.value })}
-            className="bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none" />
+          <div className="w-44">
+            <DateField value={editForm.due_date} onChange={v => setEditForm({ ...editForm, due_date: v })}
+              placeholder="No due date"
+              className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none" />
+          </div>
           <button onClick={() => setEditId(null)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] ml-auto">Cancel</button>
           <button onClick={() => onEditSave(item.id)} disabled={saving}
             className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">

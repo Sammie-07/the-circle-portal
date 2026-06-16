@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import DateField from '@/components/shared/DateField'
+import { toast } from '@/lib/toast'
 
 interface Member {
   id: string
@@ -99,8 +101,10 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
 
     if (err) {
       setError(err.message)
+      toast(err.message ?? 'Could not save', 'error')
     } else {
       setSaved(true)
+      toast(`Logged ${members.length} member${members.length === 1 ? '' : 's'} for the week`)
     }
     setSaving(false)
   }
@@ -115,11 +119,11 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       <div className="flex items-center gap-4 mb-6">
         <div>
           <label className="block text-xs text-[#555] uppercase tracking-wider mb-1.5">Week of (Tuesday)</label>
-          <input
-            type="date"
+          <DateField
             value={weekOf}
-            onChange={e => { setWeekOf(e.target.value); setSaved(false) }}
-            className="bg-[#1A1A1A] border border-[#2A2A2A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
+            onChange={v => { setWeekOf(v); setSaved(false) }}
+            clearable={false}
+            className="w-44 bg-[#1A1A1A] border border-[#2A2A2A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
           />
         </div>
         <div className="flex-1" />

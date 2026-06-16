@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from '@/lib/toast'
 
 export default function InviteMemberButton() {
   const [open, setOpen] = useState(false)
@@ -32,9 +33,10 @@ export default function InviteMemberButton() {
       })
 
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not add member', 'error'); return }
 
       setSuccess(true)
+      toast(`${name} added`)
       setTimeout(() => {
         setOpen(false)
         reset()

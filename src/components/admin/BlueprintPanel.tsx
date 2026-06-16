@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import DateField from '@/components/shared/DateField'
 
 interface BlueprintPanelProps {
   memberId: string
@@ -324,10 +325,9 @@ export default function BlueprintPanel({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[#C9A227] text-[10px] tracking-[0.2em] uppercase mb-2">Call Date</label>
-                  <input
-                    type="date"
+                  <DateField
                     value={intake.call_date}
-                    onChange={e => setIntake(p => ({ ...p, call_date: e.target.value }))}
+                    onChange={v => setIntake(p => ({ ...p, call_date: v }))}
                     className="w-full bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--text)] text-sm px-3 py-2.5 rounded focus:outline-none focus:border-[#C9A227]/50"
                   />
                 </div>

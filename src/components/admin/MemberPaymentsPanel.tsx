@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import DateField from '@/components/shared/DateField'
+import { toast } from '@/lib/toast'
 
 interface Billing {
   member_id: string
@@ -187,11 +189,13 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setBillingError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setBillingError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not save billing', 'error'); return }
       await loadBilling()
       router.refresh()
+      toast('Billing details saved')
     } catch {
       setBillingError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setSavingBilling(false)
     }
@@ -256,12 +260,14 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
         }
       )
       const data = await res.json()
-      if (!res.ok) { setPayError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setPayError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not save payment', 'error'); return }
       setOpen(false)
       await Promise.all([loadPayments(), loadBilling()])
       router.refresh()
+      toast(editing ? 'Payment updated' : 'Payment added')
     } catch {
       setPayError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setSavingPay(false)
     }
@@ -272,9 +278,10 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
     if (!confirm(`Delete payment "${label}"? This cannot be undone.`)) return
     try {
       const res = await fetch(`/api/member-payments/${p.id}`, { method: 'DELETE' })
-      if (res.ok) { await Promise.all([loadPayments(), loadBilling()]); router.refresh() }
+      if (res.ok) { await Promise.all([loadPayments(), loadBilling()]); router.refresh(); toast('Payment deleted') }
+      else toast('Could not delete payment', 'error')
     } catch {
-      // ignore
+      toast('Network error — please try again', 'error')
     }
   }
 
@@ -389,19 +396,17 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
               <div></div>
               <div>
                 <label className={labelClass}>Membership Start</label>
-                <input
-                  type="date"
+                <DateField
                   value={billingForm.membership_start}
-                  onChange={(e) => setBillingForm((f) => ({ ...f, membership_start: e.target.value }))}
+                  onChange={(v) => setBillingForm((f) => ({ ...f, membership_start: v }))}
                   className={inputClass}
                 />
               </div>
               <div>
                 <label className={labelClass}>Membership End</label>
-                <input
-                  type="date"
+                <DateField
                   value={billingForm.membership_end}
-                  onChange={(e) => setBillingForm((f) => ({ ...f, membership_end: e.target.value }))}
+                  onChange={(v) => setBillingForm((f) => ({ ...f, membership_end: v }))}
                   className={inputClass}
                 />
               </div>
@@ -520,10 +525,9 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Due Date</label>
-                  <input
-                    type="date"
+                  <DateField
                     value={payForm.due_date}
-                    onChange={(e) => setPayForm((f) => ({ ...f, due_date: e.target.value }))}
+                    onChange={(v) => setPayForm((f) => ({ ...f, due_date: v }))}
                     className={inputClass}
                   />
                 </div>
@@ -574,10 +578,9 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
                 </div>
                 <div>
                   <label className={labelClass}>Paid Date</label>
-                  <input
-                    type="date"
+                  <DateField
                     value={payForm.paid_date}
-                    onChange={(e) => setPayForm((f) => ({ ...f, paid_date: e.target.value }))}
+                    onChange={(v) => setPayForm((f) => ({ ...f, paid_date: v }))}
                     className={inputClass}
                   />
                 </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from '@/lib/toast'
 
 interface MemberDocument {
   id: string
@@ -92,12 +93,14 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
       fd.append('file', file)
       const res = await fetch('/api/member-documents', { method: 'POST', body: fd })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Upload failed', 'error'); return }
       setOpen(false)
       await load()
       router.refresh()
+      toast('Document uploaded')
     } catch {
       setError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setSaving(false)
     }
@@ -107,7 +110,8 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
     if (!confirm(`Delete "${doc.title}"? This cannot be undone.`)) return
     try {
       const res = await fetch(`/api/member-documents/${doc.id}`, { method: 'DELETE' })
-      if (res.ok) { await load(); router.refresh() }
+      if (res.ok) { await load(); router.refresh(); toast('Document deleted') }
+      else toast('Could not delete', 'error')
     } catch {
       // ignore — list stays as-is
     }

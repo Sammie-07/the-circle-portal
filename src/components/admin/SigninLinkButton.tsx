@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from '@/lib/toast'
 
 export default function SigninLinkButton({ email }: { email: string }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'copied' | 'error'>('idle')
@@ -14,13 +15,15 @@ export default function SigninLinkButton({ email }: { email: string }) {
         body: JSON.stringify({ email }),
       })
       const data = await res.json()
-      if (!res.ok) { setStatus('error'); setTimeout(() => setStatus('idle'), 3000); return }
+      if (!res.ok) { setStatus('error'); toast(data.error ?? 'Could not generate link', 'error'); setTimeout(() => setStatus('idle'), 3000); return }
 
       await navigator.clipboard.writeText(data.link)
       setStatus('copied')
+      toast('Sign-in link copied to clipboard')
       setTimeout(() => setStatus('idle'), 3000)
     } catch {
       setStatus('error')
+      toast('Could not copy the link', 'error')
       setTimeout(() => setStatus('idle'), 3000)
     }
   }

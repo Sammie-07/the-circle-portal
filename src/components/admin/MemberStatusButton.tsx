@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from '@/lib/toast'
 
 export default function MemberStatusButton({
   memberId,
@@ -33,10 +34,12 @@ export default function MemberStatusButton({
         body: JSON.stringify({ status: nextStatus }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not update', 'error'); return }
       router.refresh()
+      toast(nextStatus === 'active' ? `${memberName} reactivated` : `${memberName} deactivated`)
     } catch {
       setError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setLoading(false)
     }

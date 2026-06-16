@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from '@/lib/toast'
 
 type TeamRole = 'admin' | 'manager' | 'support'
 
@@ -52,9 +53,10 @@ export default function InviteAdminButton() {
       })
 
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not send invite', 'error'); return }
 
       setSuccess(true)
+      toast(`Invite sent to ${name}`)
       setTimeout(() => {
         setOpen(false)
         reset()

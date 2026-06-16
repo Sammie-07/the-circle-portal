@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import DateField from '@/components/shared/DateField'
+import { toast } from '@/lib/toast'
 
 function ToggleButton({ value, active, onClick, yes, no }: {
   value: boolean, active: boolean | null, onClick: (v: boolean) => void, yes: string, no: string
@@ -63,6 +65,9 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       router.refresh()
+      toast('Week logged')
+    } else {
+      toast(error.message ?? 'Could not save', 'error')
     }
     setLoading(false)
   }
@@ -71,10 +76,10 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
     <form onSubmit={handleSubmit} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 space-y-4">
       <div>
         <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Week of</label>
-        <input
-          type="date"
+        <DateField
           value={weekOf}
-          onChange={(e) => setWeekOf(e.target.value)}
+          onChange={setWeekOf}
+          clearable={false}
           className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
         />
       </div>

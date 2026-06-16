@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import DateField from '@/components/shared/DateField'
+import { toast } from '@/lib/toast'
 
 interface ClarityCall {
   id: string
@@ -97,11 +99,13 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
         }
       )
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not save', 'error'); return }
       setOpen(false)
       await loadCalls()
+      toast(isEdit ? 'Recording updated' : 'Recording added')
     } catch {
       setError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setSaving(false)
     }
@@ -111,9 +115,10 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
     if (!confirm(`Delete "${call.title}"? This cannot be undone.`)) return
     try {
       const res = await fetch(`/api/clarity-calls/${call.id}`, { method: 'DELETE' })
-      if (res.ok) await loadCalls()
+      if (res.ok) { await loadCalls(); toast('Recording deleted') }
+      else toast('Could not delete', 'error')
     } catch {
-      // ignore — list stays as-is
+      toast('Network error — please try again', 'error')
     }
   }
 
@@ -236,10 +241,9 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
               </div>
               <div>
                 <label className={labelClass}>Call Date</label>
-                <input
-                  type="date"
+                <DateField
                   value={form.call_date}
-                  onChange={e => setForm(f => ({ ...f, call_date: e.target.value }))}
+                  onChange={(v: string) => setForm(f => ({ ...f, call_date: v }))}
                   className={inputClass}
                 />
               </div>

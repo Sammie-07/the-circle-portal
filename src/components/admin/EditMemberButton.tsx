@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from '@/lib/toast'
 
 interface EditableMember {
   id: string
@@ -82,12 +83,14 @@ export default function EditMemberButton({ member }: { member: EditableMember })
       })
 
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? 'Something went wrong'); return }
+      if (!res.ok) { setError(data.error ?? 'Something went wrong'); toast(data.error ?? 'Could not save', 'error'); return }
 
       setOpen(false)
       router.refresh()
+      toast('Member details saved')
     } catch {
       setError('Network error — please try again')
+      toast('Network error — please try again', 'error')
     } finally {
       setLoading(false)
     }
