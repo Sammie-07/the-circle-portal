@@ -22,19 +22,6 @@ interface FormState {
 
 const EMPTY_FORM: FormState = { title: '', video_url: '', call_date: '', notes: '' }
 
-// Zoom cloud recording share links expire (often ~2 weeks), after which they
-// stop playing. Warn admins so they can re-host before the link dies.
-const ZOOM_EXPIRY_DAYS = 14
-function zoomExpiryWarning(url: string, callDate: string | null, createdAt: string): { text: string; urgent: boolean } | null {
-  if (!/zoom\.us\//i.test(url)) return null
-  const ref = callDate ? new Date(callDate) : new Date(createdAt)
-  const days = Math.floor((Date.now() - ref.getTime()) / 86400000)
-  if (days >= ZOOM_EXPIRY_DAYS) {
-    return { text: `This recording is ${days} days old. Zoom replays usually expire ~2 weeks after the call, so this link may no longer work — expired Zoom recordings can't be recovered.`, urgent: true }
-  }
-  return { text: `Heads up: Zoom links usually expire ~2 weeks after the call. To keep this replay permanently, re-upload it to YouTube/Drive before then.`, urgent: false }
-}
-
 export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
   const [calls, setCalls] = useState<ClarityCall[]>([])
   const [loading, setLoading] = useState(true)
@@ -172,16 +159,6 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
                 >
                   {call.video_url}
                 </a>
-                {(() => {
-                  const w = zoomExpiryWarning(call.video_url, call.call_date, call.created_at)
-                  if (!w) return null
-                  return (
-                    <p className={`text-xs mt-1.5 flex items-start gap-1.5 ${w.urgent ? 'text-[#CC1F1F]' : 'text-amber-500'}`}>
-                      <span className="flex-shrink-0">⚠</span>
-                      <span>{w.text}</span>
-                    </p>
-                  )
-                })()}
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 <button
@@ -229,15 +206,9 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
                   value={form.video_url}
                   onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
                   required
-                  placeholder="YouTube, Vimeo, Loom, Google Drive, or Zoom link"
+                  placeholder="YouTube, Google Drive, Loom, or Vimeo link"
                   className={inputClass}
                 />
-                <p className="text-[var(--text-4)] text-xs mt-1.5">
-                  YouTube, Vimeo, Loom and Google Drive play inline. Zoom recordings open in a new tab (add the passcode in Notes if needed).
-                </p>
-                <p className="text-amber-500 text-xs mt-1.5">
-                  ⚠ Zoom share links usually expire ~2 weeks after the call. For a permanent replay, download the recording and re-upload it to YouTube (unlisted) or Google Drive.
-                </p>
               </div>
               <div>
                 <label className={labelClass}>Call Date</label>

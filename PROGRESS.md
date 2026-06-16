@@ -188,6 +188,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Reverted Zoom support for replays (back to Google Drive / inline embeds).** Per request,
+  removed all the Zoom-specific handling added earlier: the member-side "Watch on Zoom" panel +
+  expiry "Heads up" note (`ClarityCallsList`), the `isZoomUrl` branch, and the admin expiry
+  warnings + Zoom mentions in the Office Hours and Clarity Calls panels. Recordings are back to
+  the original behavior: `getEmbedUrl` inline-embeds YouTube, **Google Drive**, Loom, and Vimeo
+  (Drive support was always there), with a "Watch recording ↗" link fallback for anything else.
+  URL placeholders restored to "YouTube, Google Drive, Loom, or Vimeo link". The
+  `clarity_calls`/`office_hours` tables and APIs are unchanged; this is UI-only. (Supersedes the
+  four Zoom-related notes below.)
 - **Zoom replay "Heads up" note made visible.** It was rendered in the faintest text color
   (`--text-4`) and was hard to read; bumped it to amber, slightly larger, with a bold "Heads up:"
   lead so members actually notice the 2-week expiry warning.

@@ -35,13 +35,6 @@ function getEmbedUrl(url: string): string | null {
   return null
 }
 
-// Zoom cloud recordings (any *.zoom.us/rec/... share or play link). Zoom blocks
-// third-party iframe embedding (X-Frame-Options) and recordings often need a
-// passcode, so these can't play inline — we link out to Zoom instead.
-function isZoomUrl(url: string): boolean {
-  return /(?:^|\/\/|\.)zoom\.us\//i.test(url)
-}
-
 function VideoEmbed({ url, title }: { url: string; title: string }) {
   const embedUrl = getEmbedUrl(url)
 
@@ -58,34 +51,6 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
           allowFullScreen
           className="absolute inset-0 h-full w-full"
         />
-      </div>
-    )
-  }
-
-  // Zoom — can't embed; show a clear, branded "watch on Zoom" panel.
-  if (isZoomUrl(url)) {
-    return (
-      <div
-        className="relative w-full overflow-hidden rounded-lg border border-[var(--border-color)] bg-[var(--surface)] flex flex-col items-center justify-center text-center gap-3 px-6"
-        style={{ paddingTop: '0', minHeight: '220px' }}
-      >
-        <div className="w-12 h-12 rounded-full bg-[#2D8CFF]/15 border border-[#2D8CFF]/40 flex items-center justify-center">
-          <span className="text-[#2D8CFF] text-xl">▶</span>
-        </div>
-        <p className="text-[var(--text-2)] text-sm max-w-xs">
-          This recording is hosted on Zoom and opens in a new tab.
-        </p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-[#2D8CFF] text-white font-medium text-sm px-5 py-2.5 rounded hover:bg-[#2477e0] transition-colors"
-        >
-          Watch on Zoom ↗
-        </a>
-        <p className="text-amber-400 text-sm max-w-sm leading-relaxed">
-          <span className="font-semibold">Heads up:</span> this Zoom replay is only available for about 2 weeks after the session, so be sure to watch it before then. Once it expires, the recording is no longer available.
-        </p>
       </div>
     )
   }
