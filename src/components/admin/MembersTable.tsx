@@ -7,6 +7,7 @@ interface MemberRow {
   name: string
   email: string
   status: string
+  invited_at: string | null
   cohort: string | null
   join_date: string
   calls_attended: number
@@ -16,24 +17,25 @@ interface MemberRow {
   last_active: string | null
 }
 
-function HealthDot({ rate }: { rate: number | null }) {
-  if (rate === null) return <span className="w-2 h-2 rounded-full bg-[var(--border-color)] inline-block" />
-  if (rate >= 75) return <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-  if (rate >= 50) return <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />
-  return <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+// Health = a single readable signal combining attendance and homework, so the
+// admin can scan the roster for who needs attention without reading both numbers.
+function healthInfo(attendance: number | null, homework: number | null) {
+  const vals = [attendance, homework].filter((v): v is number => v !== null)
+  if (vals.length === 0) return { label: 'No data', text: 'text-[var(--text-3)]', dot: 'bg-[var(--border-color)]' }
+  const score = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+  if (score >= 75) return { label: 'On track', text: 'text-green-400', dot: 'bg-green-500' }
+  if (score >= 50) return { label: 'Watch', text: 'text-yellow-400', dot: 'bg-yellow-500' }
+  return { label: 'At risk', text: 'text-red-400', dot: 'bg-red-500' }
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    active: 'bg-green-500/10 text-green-400 border border-green-500/20',
-    inactive: 'bg-red-500/10 text-red-400 border border-red-500/20',
-    graduated: 'bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/20',
-  }
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-sm ${styles[status] ?? styles.inactive}`}>
-      {status}
-    </span>
-  )
+// Status reflects TWO things: membership state (active/paused/graduated) and,
+// for active members, whether they've actually been sent their login invite.
+// A member created but not yet invited shows "Not invited", not "Active".
+function statusInfo(status: string, invitedAt: string | null) {
+  if (status === 'graduated') return { label: 'Graduated', cls: 'bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/25' }
+  if (status === 'inactive') return { label: 'Paused', cls: 'bg-red-500/10 text-red-400 border border-red-500/25' }
+  if (invitedAt) return { label: 'Active', cls: 'bg-green-500/10 text-green-400 border border-green-500/25' }
+  return { label: 'Not invited', cls: 'bg-amber-500/10 text-amber-400 border border-amber-500/30' }
 }
 
 export default function MembersTable({ members }: { members: MemberRow[] }) {
@@ -71,7 +73,10 @@ export default function MembersTable({ members }: { members: MemberRow[] }) {
                 <p className="text-[var(--text-3)] text-xs mt-0.5">{member.email}</p>
               </td>
               <td className="px-4 py-4">
-                <StatusBadge status={member.status} />
+                {(() => {
+                  const s = statusInfo(member.status, member.invited_at)
+                  return <span className={`text-xs px-2 py-0.5 rounded-sm whitespace-nowrap ${s.cls}`}>{s.label}</span>
+                })()}
               </td>
               <td className="px-4 py-4 text-[var(--text-2)] text-xs">
                 {member.cohort ?? '—'}
@@ -92,7 +97,15 @@ export default function MembersTable({ members }: { members: MemberRow[] }) {
                 </span>
               </td>
               <td className="px-4 py-4">
-                <HealthDot rate={member.attendance_rate} />
+                {(() => {
+                  const h = healthInfo(member.attendance_rate, member.homework_rate)
+                  return (
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <span className={`w-2 h-2 rounded-full ${h.dot}`} />
+                      <span className={`text-xs ${h.text}`}>{h.label}</span>
+                    </span>
+                  )
+                })()}
               </td>
               <td className="px-4 py-4 text-right">
                 <div className="flex items-center justify-end gap-3">

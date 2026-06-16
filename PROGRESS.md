@@ -188,6 +188,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Members table: invite-aware Status + meaningful Health.** The Status column showed every
+  member as "active" (raw `members.status`), hiding that many had never been sent their login
+  link. Status now reflects both membership state and invite state: `Active` (green) only when
+  the member is active AND `invited_at` is set; `Not invited` (amber) for active-but-uninvited;
+  plus `Paused` (inactive) and `Graduated`. The summary cards changed to match: `Active (invited)`,
+  `Awaiting Invite`, `Total Enrolled`, `Avg Attendance` (dropped the dead "Reports Sent —"
+  placeholder). The **Health** column was just a bare colored dot mirroring attendance; it's now
+  a labeled signal (`On track` / `Watch` / `At risk` / `No data`) combining attendance + homework
+  so the roster can be scanned at a glance.
 - **Check-in confirmation: "Go to my portal" button.** After a member submits their weekly
   check-in, the success screen now has a gold button linking to `/dashboard` so they can get
   back to their portal (previously it was a dead end). If they aren't logged in, `/dashboard`

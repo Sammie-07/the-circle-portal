@@ -34,7 +34,10 @@ export default async function AdminMembersPage() {
     }
   })
 
-  const active = membersWithStats.filter(m => m.status === 'active').length
+  // "Active" now means active AND actually invited (login link sent). Members
+  // created but not yet invited are counted separately as "Awaiting Invite".
+  const active = membersWithStats.filter(m => m.status === 'active' && m.invited_at).length
+  const awaitingInvite = membersWithStats.filter(m => m.status === 'active' && !m.invited_at).length
   const total = membersWithStats.length
 
   return (
@@ -51,13 +54,13 @@ export default async function AdminMembersPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Active Members', value: active },
+          { label: 'Active (invited)', value: active },
+          { label: 'Awaiting Invite', value: awaitingInvite },
           { label: 'Total Enrolled', value: total },
           { label: 'Avg Attendance', value: membersWithStats.length > 0
             ? `${Math.round(membersWithStats.filter(m => m.attendance_rate !== null).reduce((a, m) => a + (m.attendance_rate ?? 0), 0) / Math.max(membersWithStats.filter(m => m.attendance_rate !== null).length, 1))}%`
             : '—'
           },
-          { label: 'Reports Sent', value: '—' },
         ].map((stat) => (
           <div key={stat.label} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
             <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">{stat.label}</p>
