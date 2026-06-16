@@ -83,8 +83,8 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
         >
           Watch on Zoom ↗
         </a>
-        <p className="text-[var(--text-4)] text-xs max-w-xs">
-          Heads up: this Zoom replay is only available for about 2 weeks after the session, so be sure to watch it before then. Once it expires, the recording is no longer available.
+        <p className="text-amber-400 text-sm max-w-sm leading-relaxed">
+          <span className="font-semibold">Heads up:</span> this Zoom replay is only available for about 2 weeks after the session, so be sure to watch it before then. Once it expires, the recording is no longer available.
         </p>
       </div>
     )

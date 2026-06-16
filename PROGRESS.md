@@ -188,6 +188,9 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Zoom replay "Heads up" note made visible.** It was rendered in the faintest text color
+  (`--text-4`) and was hard to read; bumped it to amber, slightly larger, with a bold "Heads up:"
+  lead so members actually notice the 2-week expiry warning.
 - **Task fields auto-grow; Zoom replay note reworded.** (1) The task title + description inputs
   were single-line and clipped long text. New `AutoGrowTextarea` (`src/components/shared/`)
   expands as you type so the whole task is always visible; wired into the homework add + edit
