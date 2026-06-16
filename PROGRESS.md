@@ -188,6 +188,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Zoom expiry warnings.** Zoom share links expire (~2 weeks, Zoom's retention default), after
+  which the recording disappears. The portal can't stop that, but it now surfaces it: the admin
+  Office Hours + Clarity Calls panels show an age-based warning on every Zoom entry (amber
+  "expires ~2 weeks" while fresh; red "X days old, may no longer play, re-upload" past 14 days,
+  measured from the call date or when it was added). The add/edit forms recommend re-hosting on
+  YouTube/Drive for a permanent replay, and the member-side Zoom panel notes that an expired link
+  may need re-posting. (A durable fix, auto-archiving Zoom recordings via the Zoom API, would be a
+  separate integration.)
 - **Zoom recordings supported for Office Hours / Clarity Call replays.** Zoom cloud recordings
   can't be embedded in an iframe (Zoom sends `X-Frame-Options` and recordings often need a
   passcode), so `ClarityCallsList` (the shared member player) now detects any `*.zoom.us/rec/...`

@@ -83,7 +83,9 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
         >
           Watch on Zoom ↗
         </a>
-        <p className="text-[var(--text-4)] text-xs">If prompted, use the passcode your coach shared.</p>
+        <p className="text-[var(--text-4)] text-xs">
+          If prompted, use the passcode your coach shared. If it no longer opens, the Zoom link may have expired, ask your coach to re-post it.
+        </p>
       </div>
     )
   }
