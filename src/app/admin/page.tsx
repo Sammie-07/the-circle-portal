@@ -38,7 +38,7 @@ export default async function AdminMembersPage() {
   const total = membersWithStats.length
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
@@ -49,7 +49,7 @@ export default async function AdminMembersPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Active Members', value: active },
           { label: 'Total Enrolled', value: total },

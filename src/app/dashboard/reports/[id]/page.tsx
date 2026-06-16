@@ -25,7 +25,7 @@ export default async function ReportPage({ params }: PageProps) {
   if (!report) notFound()
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-8 max-w-3xl">
       {/* Header */}
       <div className="mb-6">
         <Link href="/dashboard/reports" className="text-xs text-[#555] hover:text-[#C9A227] transition-colors">

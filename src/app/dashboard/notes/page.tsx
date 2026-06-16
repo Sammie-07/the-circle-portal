@@ -8,7 +8,7 @@ export default async function NotesPage() {
 
   if (!ctx.member) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-4 sm:p-8 text-center">
         <p className="text-[var(--text-2)]">Your member profile is being set up. Check back soon.</p>
       </div>
     )
@@ -22,7 +22,7 @@ export default async function NotesPage() {
     .order('updated_at', { ascending: false })
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl">
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Private workspace</p>
         <h1 className="text-[var(--text)] font-serif text-3xl">My Notes</h1>

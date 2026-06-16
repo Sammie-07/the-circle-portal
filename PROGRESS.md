@@ -187,6 +187,27 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-16
+- **Mobile responsiveness pass (portal + chat).** The portal was desktop-only: a fixed `w-56`
+  sidebar sat beside content with no mobile treatment, so phones got a squished two-column
+  layout and a chat that was unusable. Fixes:
+  - **Layouts** (`dashboard`, `admin`, and the impersonation branch) now stack:
+    `flex` → `flex flex-col md:flex-row`.
+  - **Sidebar** rebuilt as responsive: a sticky mobile top bar (logo + hamburger) that opens a
+    slide-in drawer with a backdrop; the original `w-56` rail is unchanged on `md+`
+    (`hidden md:flex`). Nav links close the drawer on tap.
+  - **Ask Gogo chat** (`ChatOverlay`): the sessions list now overlays the chat on mobile
+    (absolute, slides in, backdrop) instead of pushing it into a sliver; defaults open on
+    desktop, closed on mobile; selecting a chat or starting a new one closes it on mobile.
+    Header/messages/input padding tightened to `px-4 sm:px-6`.
+  - **Content**: member dashboard stat row `grid-cols-3 → grid-cols-1 sm:grid-cols-3`, its
+    two-column section `→ grid-cols-1 md:grid-cols-2`; admin stat rows (`grid-cols-3/4`) made
+    responsive; member-detail panels stack on small screens. All page paddings `p-8 → p-4 sm:p-8`.
+  - **Tables**: `MembersTable` and `AdminReportsTable` wrapped in `overflow-x-auto` with a
+    `min-w-[640px]` table so they scroll horizontally instead of breaking the layout (payments
+    tables were already wrapped). Modals were already mobile-safe (`w-full max-w-* p-4`).
+  - tsc + lint + `next build` all clean.
+
 ### 2026-06-15
 - **Reports: killed the `` ```html `` banner + banned em dashes.** Claude was wrapping report
   HTML in a markdown code fence, so a literal `` ```html `` rendered at the top of every report.

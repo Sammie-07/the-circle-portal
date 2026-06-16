@@ -24,7 +24,7 @@ export default async function BlueprintPage() {
     : null
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-8 max-w-3xl">
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your 12-Month Plan</p>
         <h1 className="text-[var(--text)] font-serif text-3xl">Business Blueprint</h1>

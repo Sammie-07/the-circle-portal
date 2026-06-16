@@ -29,7 +29,7 @@ export default async function AdminReportsPage() {
   const totalDraft = totalGenerated - totalSent
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
           <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
@@ -53,7 +53,7 @@ export default async function AdminReportsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Total Generated', value: totalGenerated },
           { label: 'Sent to Members', value: totalSent },

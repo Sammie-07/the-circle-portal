@@ -431,7 +431,7 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
           </form>
 
           {/* Summary */}
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <div className="bg-[var(--bg)] border border-[var(--border-color)] rounded p-3">
               <p className="text-[var(--text-3)] text-[10px] uppercase tracking-wider mb-1">Total Due</p>
               <p className="text-[var(--text)] font-serif text-lg">{fmtMoney(totalDue)}</p>

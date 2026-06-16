@@ -97,7 +97,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   const health = getHealthLabel(attendanceRate)
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl">
       {/* Breadcrumb */}
       <Link href="/admin" className="text-[var(--text-3)] text-xs hover:text-[#C9A227] transition-colors">
         ← All Members
@@ -155,7 +155,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
           <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Attendance</p>
           <p className="text-[var(--text)] font-serif text-2xl">{attendanceRate !== null ? `${attendanceRate}%` : '—'}</p>
@@ -212,7 +212,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
               <p className="text-[var(--text-3)] text-xs mb-4">
                 Received {application?.received_at ? new Date(application.received_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}
               </p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Credit Score</p>
                   <p className="text-[var(--text)] text-sm">{appData.credit_score ?? '—'}</p>
@@ -238,7 +238,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         <HomeworkPanel memberId={id} />
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Log Form */}
         <div>
           <h2 className="text-[var(--text)] font-serif text-lg mb-4">Log This Week</h2>

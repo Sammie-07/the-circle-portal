@@ -47,7 +47,7 @@ export default async function MemberDocumentsPage() {
     new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your Files</p>

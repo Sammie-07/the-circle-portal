@@ -31,7 +31,11 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingText, setStreamingText] = useState('')
   const [loadingMessages, setLoadingMessages] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // Sessions sidebar: open by default on desktop, closed on mobile (it overlays
+  // the chat there). This component is loaded client-only, so window is available.
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window === 'undefined' ? true : window.innerWidth >= 768
+  )
   const [attachment, setAttachment] = useState<{ name: string; text: string } | null>(null)
   const [attaching, setAttaching] = useState(false)
   const [attachError, setAttachError] = useState<string | null>(null)
@@ -288,9 +292,22 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
 
   return (
     <div className="fixed inset-0 z-50 flex bg-[var(--bg)]">
-      {/* Sidebar — hidden in preview (ephemeral chat, no saved sessions) */}
+      {/* Mobile backdrop when the sessions list is open */}
+      {!preview && sidebarOpen && (
+        <div
+          className="md:hidden absolute inset-0 bg-black/50 z-20"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — hidden in preview (ephemeral chat, no saved sessions).
+          On mobile it overlays the chat (absolute, slides in); on desktop it
+          pushes the chat (in-flow, width animates between 0 and 16rem). */}
       {!preview && (
-      <div className={`${sidebarOpen ? 'w-64' : 'w-0'} flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-[var(--border-color)] flex flex-col bg-[var(--surface-2)]`}>
+      <div className={`
+        absolute inset-y-0 left-0 z-30 w-64 md:relative md:z-auto
+        ${sidebarOpen ? 'translate-x-0 md:w-64' : '-translate-x-full md:translate-x-0 md:w-0'}
+        flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-[var(--border-color)] flex flex-col bg-[var(--surface-2)]`}>
         {/* Sidebar header */}
         <div className="px-4 py-5 border-b border-[var(--border-color)] flex-shrink-0">
           <div className="flex items-center gap-2.5 mb-4">
@@ -300,7 +317,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
             <span className="text-[var(--text)] font-serif text-sm">Ask Gogo</span>
           </div>
           <button
-            onClick={newChat}
+            onClick={() => { newChat(); if (window.innerWidth < 768) setSidebarOpen(false) }}
             className="w-full bg-[#C9A227] text-[#0D0D0D] text-xs font-medium py-2 rounded hover:bg-[#d4ac2d] transition-colors"
           >
             + New Chat
@@ -315,7 +332,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
             sessions.map(session => (
               <div
                 key={session.id}
-                onClick={() => openSession(session.id)}
+                onClick={() => { openSession(session.id); if (window.innerWidth < 768) setSidebarOpen(false) }}
                 className={`w-full text-left px-4 py-3 transition-all group cursor-pointer flex items-start justify-between gap-2 ${
                   activeSessionId === session.id
                     ? 'bg-[#C9A227]/10 border-l-2 border-[#C9A227]'
@@ -347,7 +364,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] flex-shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[var(--border-color)] flex-shrink-0">
           <div className="flex items-center gap-3">
             {/* Sidebar toggle — hidden in preview (no sidebar) */}
             {!preview && (
@@ -382,7 +399,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
           {!activeSessionId ? (
             /* Empty state — no session selected */
             <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto">
@@ -459,7 +476,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
 
         {/* Input area */}
         {activeSessionId && (
-          <div className="px-6 py-4 border-t border-[var(--border-color)] flex-shrink-0">
+          <div className="px-4 sm:px-6 py-4 border-t border-[var(--border-color)] flex-shrink-0">
             <div className="max-w-3xl mx-auto">
               {/* Attachment chip / state */}
               {(attachment || attaching || attachError) && (

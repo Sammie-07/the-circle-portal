@@ -47,8 +47,8 @@ export default function MembersTable({ members }: { members: MemberRow[] }) {
   }
 
   return (
-    <div className="border border-[var(--border-color)] rounded overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="border border-[var(--border-color)] rounded overflow-x-auto">
+      <table className="w-full text-sm min-w-[640px]">
         <thead>
           <tr className="border-b border-[var(--border-color)] bg-[var(--surface-2)]">
             <th className="text-left px-5 py-3 text-[var(--text-3)] text-xs uppercase tracking-wider font-normal">Member</th>

@@ -45,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               Exit preview
             </a>
           </div>
-          <div className="flex flex-1 min-h-0">
+          <div className="flex flex-col md:flex-row flex-1 min-h-0">
             <Sidebar role="member" memberName={target.name} />
             <main className="flex-1 overflow-auto">{children}</main>
             {/* Bubble shown for portal fidelity. In preview it runs an ephemeral
@@ -87,7 +87,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar role="member" memberName={member?.name ?? profile?.full_name ?? user.email} />
       <main className="flex-1 overflow-auto">
         {children}

@@ -23,7 +23,7 @@ export default async function DashboardPage() {
 
   if (!member) {
     return (
-      <div className="p-8 text-center space-y-2">
+      <div className="p-4 sm:p-8 text-center space-y-2">
         <p className="text-[var(--text-2)]">Your member profile is being set up. Check back soon.</p>
         <p className="text-[var(--text-3)] text-xs">Logged in as: {ctx.user.email}</p>
       </div>
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
   const currentQuarter = Math.min(Math.ceil(weeksIn / 13) || 1, 4)
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 sm:p-8 max-w-4xl">
       {/* Header */}
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Welcome back</p>
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <AttendanceCard logs={logs} joinDate={member.join_date} />
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
           <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Homework</p>
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Two columns: Blueprint + Latest Report */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Blueprint card */}
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
           <div className="flex items-center justify-between mb-4">

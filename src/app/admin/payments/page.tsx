@@ -108,7 +108,7 @@ export default async function AdminPaymentsPage() {
     new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   return (
-    <div className="p-8 max-w-6xl">
+    <div className="p-4 sm:p-8 max-w-6xl">
       <div className="mb-8">
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
         <h1 className="text-[var(--text)] font-serif text-3xl">Payments</h1>
@@ -118,7 +118,7 @@ export default async function AdminPaymentsPage() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4">
           <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Outstanding</p>
           <p className="text-[var(--text)] font-serif text-2xl">{money(totalOutstanding)}</p>

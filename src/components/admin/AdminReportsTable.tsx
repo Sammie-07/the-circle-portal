@@ -36,8 +36,8 @@ export default function AdminReportsTable({ reports }: Props) {
   }
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-x-auto">
+      <table className="w-full text-sm min-w-[640px]">
         <thead>
           <tr className="border-b border-[#2A2A2A]">
             <th className="text-left px-5 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Member</th>
