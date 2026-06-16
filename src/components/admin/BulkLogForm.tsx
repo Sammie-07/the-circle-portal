@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import DateField from '@/components/shared/DateField'
 import { toast } from '@/lib/toast'
@@ -45,6 +45,37 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+
+  // When the admin switches to a different week, load that week's existing logs
+  // so they're editing real data, not blindly overwriting it. The initial week's
+  // logs are already provided via `existingLogs`, so skip the first run.
+  const firstRun = useRef(true)
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return }
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from('weekly_logs')
+        .select('member_id, showed_up, homework_done, questions_asked, notes')
+        .eq('week_of', weekOf)
+        .in('member_id', members.map(m => m.id))
+      if (cancelled) return
+      const next: Record<string, LogEntry> = {}
+      for (const m of members) next[m.id] = { showed_up: false, homework_done: false, questions_asked: 0, notes: '' }
+      for (const row of data ?? []) {
+        next[row.member_id] = {
+          showed_up: row.showed_up,
+          homework_done: row.homework_done,
+          questions_asked: row.questions_asked ?? 0,
+          notes: row.notes ?? '',
+        }
+      }
+      setLogs(next)
+      setSaved(false)
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekOf])
 
   function toggle(memberId: string, field: 'showed_up' | 'homework_done') {
     setLogs(prev => ({

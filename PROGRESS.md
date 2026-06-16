@@ -188,6 +188,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Attendance is now editable everywhere (individual + bulk).** Previously the admin member
+  view's "Recent Weeks" list was read-only, and `BulkLogForm` only preloaded the *current*
+  week's logs. Now: (1) new `WeeklyLogsEditor` replaces the read-only list, every past week's
+  Showed-up / Homework / Questions / Notes is editable inline and saves immediately (upsert on
+  member_id+week_of, toast confirmation, `router.refresh()`); (2) `BulkLogForm` fetches the
+  selected week's existing logs whenever the week picker changes, so switching weeks edits real
+  data instead of blind-overwriting it. The "Log This Week" form (new entries) and the
+  member-facing AttendanceCard (read-only stat, members can't edit their own) are unchanged.
 - **Reverted Zoom support for replays (back to Google Drive / inline embeds).** Per request,
   removed all the Zoom-specific handling added earlier: the member-side "Watch on Zoom" panel +
   expiry "Heads up" note (`ClarityCallsList`), the `isZoomUrl` branch, and the admin expiry

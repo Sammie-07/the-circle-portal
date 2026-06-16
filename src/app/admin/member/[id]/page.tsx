@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { notFound } from 'next/navigation'
 import MemberProfileCard from '@/components/shared/MemberProfileCard'
 import WeeklyLogForm from '@/components/admin/WeeklyLogForm'
+import WeeklyLogsEditor from '@/components/admin/WeeklyLogsEditor'
 import MemberReportPanel from '@/components/admin/MemberReportPanel'
 import BlueprintPanel from '@/components/admin/BlueprintPanel'
 import ClarityCallsPanel from '@/components/admin/ClarityCallsPanel'
@@ -201,25 +202,11 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           <h2 className="text-[var(--text)] font-serif text-lg mb-4">Log This Week</h2>
           <WeeklyLogForm memberId={id} />
 
-          {/* Past logs */}
+          {/* Past logs — editable inline */}
           {allLogs.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-[var(--text-2)] text-xs uppercase tracking-wider mb-3">Recent Weeks</h3>
-              <div className="space-y-2">
-                {allLogs.slice(0, 8).map((log) => (
-                  <div key={log.id} className="flex items-center justify-between bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-2.5">
-                    <span className="text-[var(--text-2)] text-xs">{new Date(log.week_of).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs ${log.showed_up ? 'text-green-400' : 'text-red-400'}`}>
-                        {log.showed_up ? '✓ Showed up' : '✗ Missed'}
-                      </span>
-                      <span className={`text-xs ${log.homework_done ? 'text-green-400' : 'text-[var(--text-3)]'}`}>
-                        {log.homework_done ? '✓ HW done' : '— No HW'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-[var(--text-2)] text-xs uppercase tracking-wider mb-3">Recent Weeks <span className="text-[var(--text-4)] normal-case tracking-normal">· tap to edit</span></h3>
+              <WeeklyLogsEditor memberId={id} logs={allLogs} />
             </div>
           )}
         </div>
