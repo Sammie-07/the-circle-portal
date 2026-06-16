@@ -201,9 +201,12 @@ export default function ClarityCallsPanel({ memberId }: { memberId: string }) {
                   value={form.video_url}
                   onChange={e => setForm(f => ({ ...f, video_url: e.target.value }))}
                   required
-                  placeholder="YouTube, Google Drive, Loom, or Vimeo link"
+                  placeholder="YouTube, Vimeo, Loom, Google Drive, or Zoom link"
                   className={inputClass}
                 />
+                <p className="text-[var(--text-4)] text-xs mt-1.5">
+                  YouTube, Vimeo, Loom and Google Drive play inline. Zoom recordings open in a new tab (add the passcode in Notes if needed).
+                </p>
               </div>
               <div>
                 <label className={labelClass}>Call Date</label>

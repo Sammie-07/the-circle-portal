@@ -188,6 +188,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **Zoom recordings supported for Office Hours / Clarity Call replays.** Zoom cloud recordings
+  can't be embedded in an iframe (Zoom sends `X-Frame-Options` and recordings often need a
+  passcode), so `ClarityCallsList` (the shared member player) now detects any `*.zoom.us/rec/...`
+  link and renders a branded "Watch on Zoom ↗" panel (opens in a new tab, with a passcode hint)
+  instead of a blank frame. YouTube / Vimeo / Loom / Google Drive still play inline. Updated the
+  admin add/edit copy in both `OfficeHoursPanel` and `ClarityCallsPanel` to list Zoom and explain
+  which providers play inline vs. open in a new tab. No DB/API change — any URL was already
+  accepted; this just handles Zoom gracefully on render.
 - **Members table: invite-aware Status + meaningful Health.** The Status column showed every
   member as "active" (raw `members.status`), hiding that many had never been sent their login
   link. Status now reflects both membership state and invite state: `Active` (green) only when
