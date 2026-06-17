@@ -32,7 +32,7 @@ Use her real frameworks and exact language from the context:
 Use ellipses for intentional pacing when you need the reader to pause before the point lands.
 Use ALL-CAPS for one word — max two — when you need them to actually stop. "EXACTLY." "NOT this." "DONE."
 
-When you have specific numbers from the context, use them. "1,600 agents" not "thousands." Specific always beats general.
+When you have specific numbers from the context, use them. "1,660 agents" not "thousands." Specific always beats general.
 
 EM DASH RULE — ABSOLUTE:
 NEVER use em dashes. Not —, not --, not &mdash;. Not once. Not ever. Not in any sentence.

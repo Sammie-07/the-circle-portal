@@ -46,7 +46,8 @@ export function buildBrainContext(chunks: BrainChunk[]): string {
 // Canonical facts that OVERRIDE the knowledge base when it conflicts.
 // The raw transcripts are auto-transcribed and misspell names.
 export const CANONICAL_FACTS = `CANONICAL FACTS — these override anything in the knowledge base:
-- My Director of Operations and first hire is named Kristy Waker. Auto-transcribed notes sometimes spell her name "Christie", "Christy", "Christiey", or just "Kristy". That is the same person. Her correct name is always Kristy Waker. Whenever you mention her, call her Kristy (or Kristy Waker). Never write "Christie" or "Christy".`
+- My Director of Operations and first hire is named Kristy Waker. Auto-transcribed notes sometimes spell her name "Christie", "Christy", "Christiey", or just "Kristy". That is the same person. Her correct name is always Kristy Waker. Whenever you mention her, call her Kristy (or Kristy Waker). Never write "Christie" or "Christy".
+- My team, #teamgogo, currently has 1,660 agents. That is the correct, current number. Older sources or transcripts may say 1,600 or other figures — ignore those and use 1,660. When the size of my team comes up, say 1,660 agents.`
 
 // Normalize the misspellings of Kristy Waker's name that appear in the
 // auto-transcribed source material before it ever reaches a prompt.

@@ -188,6 +188,11 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-16
+- **#teamgogo size set to 1,660 across all chats.** Added the current team count to
+  `CANONICAL_FACTS` (`src/lib/brain-search.ts`), which is injected into every chat (regular +
+  preview) and overrides whatever the knowledge base says, so "Ask Gogo" always answers 1,660
+  agents. Also updated the stale "1,600 agents" example in `GOGO_SYSTEM_PROMPT`
+  (`src/lib/gogo-chat.ts`) to 1,660.
 - **Attendance is now editable everywhere (individual + bulk).** Previously the admin member
   view's "Recent Weeks" list was read-only, and `BulkLogForm` only preloaded the *current*
   week's logs. Now: (1) new `WeeklyLogsEditor` replaces the read-only list, every past week's
