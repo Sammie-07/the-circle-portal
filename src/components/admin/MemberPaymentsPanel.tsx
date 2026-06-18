@@ -324,6 +324,28 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
     }
   }
 
+  const [generating, setGenerating] = useState(false)
+  async function generateSchedule() {
+    if (!confirm('Create the payment due rows from the billing plan above? Existing rows are kept; only missing due dates are added.')) return
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/member-payments/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member_id: memberId }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast(data.error ?? 'Could not generate schedule', 'error'); return }
+      await Promise.all([loadPayments(), loadBilling()])
+      router.refresh()
+      toast(data.added > 0 ? `Added ${data.added} payment${data.added === 1 ? '' : 's'} from the plan` : (data.message ?? 'Schedule already up to date'))
+    } catch {
+      toast('Network error — please try again', 'error')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   async function deletePayment(p: Payment) {
     const label = p.period_label || fmtDate(p.due_date)
     if (!confirm(`Delete payment "${label}"? This cannot be undone.`)) return
@@ -475,7 +497,16 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
 
             {billingError && <p className="text-[#CC1F1F] text-xs mt-3">{billingError}</p>}
 
-            <div className="flex justify-end mt-4">
+            <div className="flex flex-wrap justify-end items-center gap-2 mt-4">
+              <button
+                type="button"
+                onClick={generateSchedule}
+                disabled={generating || savingBilling}
+                title="Create the due rows for the whole membership from this plan"
+                className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors disabled:opacity-40"
+              >
+                {generating ? 'Generating…' : 'Generate schedule'}
+              </button>
               <button
                 type="submit"
                 disabled={savingBilling}
@@ -484,6 +515,9 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
                 {savingBilling ? 'Saving…' : 'Save Billing'}
               </button>
             </div>
+            <p className="text-[var(--text-4)] text-xs mt-2 text-right">
+              &ldquo;Generate schedule&rdquo; fills the ledger with one unpaid row per period from the plan (save billing first).
+            </p>
           </form>
 
           {/* Summary */}
@@ -520,7 +554,17 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
 
           {/* Ledger */}
           {payments.length === 0 ? (
-            <p className="text-[var(--text-3)] text-sm">No payments recorded yet.</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-[var(--text-3)] text-sm">No payments recorded yet.</p>
+              <button
+                type="button"
+                onClick={generateSchedule}
+                disabled={generating}
+                className="text-[#C9A227] text-sm hover:underline disabled:opacity-40"
+              >
+                {generating ? 'Generating…' : 'Generate from billing plan →'}
+              </button>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

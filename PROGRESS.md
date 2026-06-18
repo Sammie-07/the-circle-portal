@@ -188,6 +188,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-18
+- **Payments: auto-generate the due schedule from the billing plan.** New
+  `POST /api/member-payments/generate` (owner/admin/manager) reads the member's billing plan and
+  inserts one unpaid payment row per period — monthly on the `due_day` (12 rows by default, or
+  bounded by membership_start→end), annual on the anniversary (1 by default). Idempotent: skips any
+  due_date that already has a row, capped at 60 rows. Wired a "Generate schedule" button into the
+  Billing Settings footer and a "Generate from billing plan →" link in the empty-ledger state; both
+  reload + toast the count. Now setting up billing and clicking generate populates the ledger and
+  the Total Due / Outstanding totals automatically, instead of adding each payment by hand.
 - **Payments panel: clarified billing vs. ledger + billing now drives "Next Due".** The summary
   cards (Total Due / Paid / Outstanding / Next Due) are computed from the recorded payments ledger,
   so saving Billing Settings (the plan: schedule/amount/dates) didn't visibly change them — which
