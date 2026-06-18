@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
-import { searchBrain, buildBrainContext, CANONICAL_FACTS } from '@/lib/brain-search'
+import { searchBrain, buildBrainContext, buildCanonicalFacts } from '@/lib/brain-search'
+import { getTeamAgentCount } from '@/lib/settings'
 import { GOGO_SYSTEM_PROMPT as SYSTEM_PROMPT } from '@/lib/gogo-chat'
 
 export const maxDuration = 60
@@ -106,9 +107,11 @@ export async function POST(
     // Proceed without brain context — will trigger the "not found" response
   }
 
+  const canonicalFacts = buildCanonicalFacts(await getTeamAgentCount())
+
   const systemWithContext = `${SYSTEM_PROMPT}
 
-${CANONICAL_FACTS}
+${canonicalFacts}
 
 ${brainContext
   ? `GOGO'S BRAIN — RELEVANT KNOWLEDGE:\n\n${brainContext}`

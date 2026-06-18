@@ -20,6 +20,7 @@ const adminNav = [
   { href: '/admin/payments', label: 'Payments', icon: '$' },
   { href: '/admin/office-hours', label: 'Office Hours', icon: '▶' },
   { href: '/admin/team', label: 'Team', icon: '◑' },
+  { href: '/admin/settings', label: 'Settings', icon: '⚙' },
 ]
 
 const memberNav = [

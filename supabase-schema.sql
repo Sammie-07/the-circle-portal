@@ -299,3 +299,19 @@ on conflict (id) do nothing;
 -- ============================================
 -- After Gogo and Adriana first log in, run:
 -- update profiles set role = 'admin' where id = '<their-user-id>';
+
+-- ── Editable app settings (key/value) ──────────────────────────────────────
+-- Lets admins change values like the #teamgogo agent count from the UI without
+-- a code change. Read by the chat routes (buildCanonicalFacts).
+create table if not exists app_settings (
+  key text primary key,
+  value text,
+  updated_at timestamptz default now()
+);
+alter table app_settings enable row level security;
+create policy "authed read settings" on app_settings
+  for select using (auth.uid() is not null);
+create policy "admins manage settings" on app_settings
+  for all using (is_admin()) with check (is_admin());
+insert into app_settings (key, value) values ('teamgogo_agent_count', '1660')
+  on conflict (key) do nothing;

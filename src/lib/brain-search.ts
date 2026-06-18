@@ -45,9 +45,18 @@ export function buildBrainContext(chunks: BrainChunk[]): string {
 
 // Canonical facts that OVERRIDE the knowledge base when it conflicts.
 // The raw transcripts are auto-transcribed and misspell names.
-export const CANONICAL_FACTS = `CANONICAL FACTS — these override anything in the knowledge base:
+// Canonical facts injected into every chat to override stale/mis-transcribed
+// info in the knowledge base. The agent count is editable from the admin
+// Settings page (app_settings.teamgogo_agent_count), so it's passed in.
+export function buildCanonicalFacts(agentCount: string = '1660'): string {
+  return `CANONICAL FACTS — these override anything in the knowledge base:
 - My Director of Operations and first hire is named Kristy Waker. Auto-transcribed notes sometimes spell her name "Christie", "Christy", "Christiey", or just "Kristy". That is the same person. Her correct name is always Kristy Waker. Whenever you mention her, call her Kristy (or Kristy Waker). Never write "Christie" or "Christy".
-- My team, #teamgogo, currently has 1,660 agents. That is the correct, current number. Older sources or transcripts may say 1,600 or other figures — ignore those and use 1,660. When the size of my team comes up, say 1,660 agents.`
+- My team, #teamgogo, currently has ${agentCount} agents. That is the correct, current number. Older sources or transcripts may say a different figure — ignore those and use ${agentCount}. When the size of my team comes up, say ${agentCount} agents.`
+}
+
+// Backwards-compatible default (uses the fallback count). Prefer
+// buildCanonicalFacts(await getTeamAgentCount()) so the live value is used.
+export const CANONICAL_FACTS = buildCanonicalFacts()
 
 // Normalize the misspellings of Kristy Waker's name that appear in the
 // auto-transcribed source material before it ever reaches a prompt.
