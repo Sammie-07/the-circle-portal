@@ -80,6 +80,49 @@ function deriveStatus(amountDue: number, amountPaid: number): 'unpaid' | 'partia
   return 'partial'
 }
 
+function isoDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Project the next due date + amount from the BILLING PLAN (schedule, due day,
+// membership dates) — used so the "Next Due" card reflects the billing settings
+// even before any payment rows are recorded. Returns null when there's nothing
+// to project (no active plan, or membership has ended).
+function nextDueFromBilling(b: Billing | null): { date: string; amount: number | null } | null {
+  if (!b || b.membership_status !== 'active') return null
+  const amount = b.amount !== null && b.amount !== undefined && b.amount !== '' ? Number(b.amount) : null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  let next: Date
+
+  if (b.schedule === 'annual') {
+    if (!b.membership_start) return null
+    const start = new Date(b.membership_start + 'T00:00:00')
+    next = new Date(today.getFullYear(), start.getMonth(), start.getDate())
+    if (next < today) next = new Date(today.getFullYear() + 1, start.getMonth(), start.getDate())
+  } else {
+    // monthly — pay on `due_day` each month (default 1st)
+    const wantedDay = b.due_day ? Math.min(Math.max(Number(b.due_day), 1), 31) : 1
+    const y = today.getFullYear()
+    const m = today.getMonth()
+    const daysThisMonth = new Date(y, m + 1, 0).getDate()
+    next = new Date(y, m, Math.min(wantedDay, daysThisMonth))
+    if (next < today) {
+      const daysNextMonth = new Date(y, m + 2, 0).getDate()
+      next = new Date(y, m + 1, Math.min(wantedDay, daysNextMonth))
+    }
+  }
+
+  if (b.membership_end) {
+    const end = new Date(b.membership_end + 'T00:00:00')
+    if (next > end) return null
+  }
+
+  return { date: isoDate(next), amount }
+}
+
 export default function MemberPaymentsPanel({ memberId }: { memberId: string }) {
   const router = useRouter()
   const [billing, setBilling] = useState<Billing | null>(null)
@@ -167,6 +210,14 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
   const upcoming = payments
     .filter((p) => p.due_date && p.due_date >= today && p.status !== 'paid')
     .sort((a, b) => (a.due_date! < b.due_date! ? -1 : 1))[0]
+
+  // Next due: a recorded upcoming payment if there is one, otherwise projected
+  // from the billing plan so the card reflects the settings above.
+  const ledgerNext = upcoming?.due_date
+    ? { date: upcoming.due_date, amount: Number(upcoming.amount_due), fromLedger: true }
+    : null
+  const planNext = nextDueFromBilling(billing)
+  const nextDue = ledgerNext ?? (planNext ? { ...planNext, fromLedger: false } : null)
 
   async function saveBilling(e: React.FormEvent) {
     e.preventDefault()
@@ -451,9 +502,21 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
             </div>
             <div className="bg-[var(--bg)] border border-[var(--border-color)] rounded p-3">
               <p className="text-[var(--text-3)] text-[10px] uppercase tracking-wider mb-1">Next Due</p>
-              <p className="text-[var(--text)] font-serif text-lg">{upcoming ? fmtDate(upcoming.due_date) : '—'}</p>
+              <p className="text-[var(--text)] font-serif text-lg">{nextDue ? fmtDate(nextDue.date) : '—'}</p>
+              {nextDue && nextDue.amount != null && (
+                <p className="text-[var(--text-3)] text-[10px] mt-0.5">
+                  {fmtMoney(nextDue.amount)}{!nextDue.fromLedger && ' · from plan'}
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Explainer — clears up why saving Billing Settings doesn't move the totals */}
+          <p className="text-[var(--text-4)] text-xs -mt-3 mb-6">
+            Total Due, Total Paid and Outstanding are calculated from the payments you record below.
+            Billing Settings above is the plan (schedule, amount, dates) — it sets the projected Next Due
+            but doesn&apos;t change the totals until you add payment entries.
+          </p>
 
           {/* Ledger */}
           {payments.length === 0 ? (

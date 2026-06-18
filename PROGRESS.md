@@ -187,6 +187,16 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-18
+- **Payments panel: clarified billing vs. ledger + billing now drives "Next Due".** The summary
+  cards (Total Due / Paid / Outstanding / Next Due) are computed from the recorded payments ledger,
+  so saving Billing Settings (the plan: schedule/amount/dates) didn't visibly change them — which
+  read like a bug. Added `nextDueFromBilling()` to project the next due date + amount from the
+  billing plan (monthly due-day or annual anniversary, respecting membership end), used as the
+  "Next Due" fallback when no upcoming payment row exists (shows "· from plan"). Added an explainer
+  under the summary so it's clear the totals come from recorded payments while Billing Settings sets
+  the projected Next Due.
+
 ### 2026-06-16
 - **#teamgogo agent count is now an editable admin setting (no redeploy).** Moved the hard-coded
   1,660 into a new `app_settings` key/value table (migration `add_app_settings`, RLS: authed read
