@@ -2,13 +2,44 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const [signingIn, setSigningIn] = useState(false)
+
+  // Recover the session from an implicit-flow magic link. Some links come back
+  // with the tokens in the URL hash (#access_token=…), which the server route
+  // can't read — so it bounces here. Catch them client-side and set the session.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash
+    if (!hash || !hash.includes('access_token')) return
+
+    const params = new URLSearchParams(hash.slice(1))
+    const access_token = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
+    // Strip the tokens out of the address bar immediately.
+    window.history.replaceState(null, '', window.location.pathname)
+    if (!access_token || !refresh_token) return
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSigningIn(true)
+    createClient()
+      .auth.setSession({ access_token, refresh_token })
+      .then(({ error }) => {
+        if (error) {
+          setError('That sign-in link could not be verified. Please request a new one.')
+          setSigningIn(false)
+        } else {
+          window.location.href = '/dashboard'
+        }
+      })
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -53,7 +84,12 @@ export default function LoginPage() {
 
         <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227] to-transparent mb-8" />
 
-        {sent ? (
+        {signingIn ? (
+          <div className="text-center">
+            <div className="w-10 h-10 border-2 border-[#C9A227]/30 border-t-[#C9A227] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-[var(--text-2)] text-sm">Signing you in…</p>
+          </div>
+        ) : sent ? (
           <div className="text-center">
             <div className="w-12 h-12 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/10 flex items-center justify-center mx-auto mb-4">
               <svg className="w-5 h-5 text-[#C9A227]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
