@@ -188,6 +188,13 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-18
+- **Fix: branded sign-in links bounced back to /login.** The branded emails mint links with the
+  admin `generateLink` API, which has no client-side PKCE verifier — so `/auth/callback`'s `?code`
+  exchange always failed and redirected to /login. Switched to the Supabase SSR token-hash flow:
+  `auth-links.ts` now returns a link to a new `/auth/confirm` route (`token_hash` + `type`) that
+  calls `verifyOtp` to establish the session, then redirects by role. Middleware exempts
+  `/auth/confirm`; the three callers pass the app origin instead of a full callback URL.
+  (`/auth/callback` kept for any PKCE flows.) Re-send any invite/login emails sent before this fix.
 - **Tuesday Office Hours: Join button, no-meeting popup, admin control + Monday reminder.** New
   `office_hours_weeks` table (per-week status keyed by that week's Tuesday; no row = meeting as
   usual) + `office_hours_zoom_link` app setting (default the provided Zoom URL). Member dashboard's

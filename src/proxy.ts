@@ -45,7 +45,7 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse
   }
 
-  if (pathname === '/login' || pathname === '/auth/callback') {
+  if (pathname === '/login' || pathname === '/auth/callback' || pathname === '/auth/confirm') {
     if (user) {
       // Redirect logged-in users away from login
       return NextResponse.redirect(new URL('/dashboard', request.url))

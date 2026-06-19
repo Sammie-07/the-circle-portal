@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   let link: string
   try {
-    link = await generateSigninLink(email, `${appUrl}/auth/callback`, name ?? email)
+    link = await generateSigninLink(email, appUrl, name ?? email)
   } catch (err) {
     return NextResponse.json({ error: `Invite registered but link failed: ${err instanceof Error ? err.message : 'unknown error'}` }, { status: 500 })
   }

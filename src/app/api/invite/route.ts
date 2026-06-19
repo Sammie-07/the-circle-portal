@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   let link: string
   try {
-    link = await generateSigninLink(email, `${appUrl}/auth/callback`, member.name)
+    link = await generateSigninLink(email, appUrl, member.name)
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not generate sign-in link' }, { status: 500 })
   }

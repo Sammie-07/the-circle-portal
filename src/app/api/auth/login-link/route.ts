@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   let link: string | null = null
   try {
-    link = await generateSigninLinkIfExists(email, `${appUrl}/auth/callback`)
+    link = await generateSigninLinkIfExists(email, appUrl)
   } catch {
     // fall through — treated as "no account" below
   }
