@@ -188,6 +188,18 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-18
+- **Branded sign-in / invite emails (were plain Supabase defaults).** The member invite, staff
+  invite, and self-service login all used `signInWithOtp`, which sends Supabase's plain built-in
+  email. Now we generate the magic link ourselves (`src/lib/auth-links.ts`: `generateSigninLink`
+  creates the account if needed for invites; `generateSigninLinkIfExists` does not, for login) and
+  send our own branded HTML via a shared shell (`src/lib/email.ts` `brandedEmail()` + `sendEmail()`,
+  matching the Friday-reminder design: dark bg, red Circle mark, gold eyebrow, serif heading, gold
+  CTA button, divider footer). Wired into: `/api/invite` ("Your access to The Circle is ready"),
+  `/api/admin-invite` ("You've been added to The Circle team"), and a new public
+  `/api/auth/login-link` that the login page now posts to ("Your Circle login link"). Login is now
+  account-enumeration-safe (always reports success) and stays invitation-only (no account created
+  on self-login). Middleware exempts `/api/auth/`. Note: any remaining Supabase auth template
+  emails are now bypassed for these flows (we createUser with email_confirm, no confirmation email).
 - **Payments: auto-generate the due schedule from the billing plan.** New
   `POST /api/member-payments/generate` (owner/admin/manager) reads the member's billing plan and
   inserts one unpaid payment row per period — monthly on the `due_day` (12 rows by default, or

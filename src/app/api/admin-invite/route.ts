@@ -1,7 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
+import { generateSigninLink } from '@/lib/auth-links'
+import { brandedEmail, sendEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 
+export const runtime = 'nodejs'
+
 type TeamRole = 'admin' | 'manager' | 'support'
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: 'an Admin',
+  manager: 'a Manager',
+  support: 'Support',
+}
 
 // POST — invite a team member with a specific role
 export async function POST(request: Request) {
@@ -24,19 +34,33 @@ export async function POST(request: Request) {
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-  // Send magic link
+  // Generate a sign-in link and send our own branded email (no plain Supabase email).
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const { error: otpError } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: true,
-      data: { full_name: name ?? email },
-      emailRedirectTo: `${appUrl}/auth/callback`,
-    },
+  let link: string
+  try {
+    link = await generateSigninLink(email, `${appUrl}/auth/callback`, name ?? email)
+  } catch (err) {
+    return NextResponse.json({ error: `Invite registered but link failed: ${err instanceof Error ? err.message : 'unknown error'}` }, { status: 500 })
+  }
+
+  const firstName = (name || '').split(' ')[0] || 'there'
+  const html = brandedEmail({
+    eyebrow: 'Team Invitation',
+    heading: `You're on the team, ${firstName}.`,
+    body: [
+      `You've been added to The Circle admin portal as <strong style="color:#FFFFFF;">${ROLE_LABEL[role] ?? 'a team member'}</strong>.`,
+      `From here you'll help run the program: members, reports, attendance, payments, and more.`,
+      `Click below to sign in and get started.`,
+    ],
+    cta: { text: 'Accept & Sign In →', url: link },
+    note: 'For security this sign-in link expires after about an hour. If it stops working, ask to be re-invited.',
+    footer: 'The Circle · Admin Portal',
   })
 
-  if (otpError) {
-    return NextResponse.json({ error: `Invite registered but email failed: ${otpError.message}` }, { status: 500 })
+  const sendRes = await sendEmail(email, "You've been added to The Circle team", html)
+  if (!sendRes.ok) {
+    const detail = await sendRes.text().catch(() => '')
+    return NextResponse.json({ error: `Invite registered but email failed. ${detail}`.trim() }, { status: 500 })
   }
 
   return NextResponse.json({ success: true, sent_to: email, role })

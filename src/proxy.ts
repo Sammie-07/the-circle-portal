@@ -39,7 +39,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/checkin/') ||
     pathname.startsWith('/api/ghl/') ||
     pathname.startsWith('/api/cron/') ||
-    pathname.startsWith('/api/checkin/')
+    pathname.startsWith('/api/checkin/') ||
+    pathname.startsWith('/api/auth/')
   ) {
     return supabaseResponse
   }

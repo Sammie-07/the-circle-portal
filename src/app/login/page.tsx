@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -11,26 +10,28 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
 
-  const supabase = createClient()
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-    } else {
-      setSent(true)
+    try {
+      const res = await fetch('/api/auth/login-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Something went wrong. Please try again.')
+      } else {
+        setSent(true)
+      }
+    } catch {
+      setError('Network error — please try again.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
