@@ -6,7 +6,8 @@ import OfficeHoursCard from '@/components/dashboard/OfficeHoursCard'
 import { resolvePortalContext } from '@/lib/portalContext'
 import { getOfficeHoursStatus } from '@/lib/office-hours'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ oh?: string }> }) {
+  const sp = await searchParams
   const ctx = await resolvePortalContext()
   if (!ctx.user) redirect('/login')
   const { db } = ctx
@@ -55,7 +56,12 @@ export default async function DashboardPage() {
   const weeksIn = Math.floor((now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 7))
   const currentQuarter = Math.min(Math.ceil(weeksIn / 13) || 1, 4)
 
-  const officeHours = await getOfficeHoursStatus()
+  let officeHours = await getOfficeHoursStatus()
+  // Opt-in preview overrides for testing (not the real day/state):
+  //   ?oh=tuesday → force the Tuesday "Join the Zoom" state
+  //   ?oh=off     → force the "No Office Hours this week" + popup state
+  if (sp?.oh === 'tuesday') officeHours = { ...officeHours, isTuesdayET: true, hasMeeting: true }
+  else if (sp?.oh === 'off') officeHours = { ...officeHours, hasMeeting: false }
 
   return (
     <div className="p-4 sm:p-8 max-w-4xl">
