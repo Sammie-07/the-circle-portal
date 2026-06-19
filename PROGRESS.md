@@ -188,6 +188,17 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-18
+- **Tuesday Office Hours: Join button, no-meeting popup, admin control + Monday reminder.** New
+  `office_hours_weeks` table (per-week status keyed by that week's Tuesday; no row = meeting as
+  usual) + `office_hours_zoom_link` app setting (default the provided Zoom URL). Member dashboard's
+  office-hours card is now `OfficeHoursCard`: on Tuesdays (ET) it shows a gold **Join the Zoom**
+  button; when a week is marked off it shows a "No Office Hours this week" note + a once-per-week
+  dismissible announcement popup; other days show the normal reminder. ET-aware week logic in
+  `src/lib/office-hours.ts`. Admin **Settings** page gained an Office Hours section
+  (`OfficeHoursSettings`): set this week to meeting/no-meeting + optional note, and edit the Zoom
+  link. APIs: `/api/office-hours-week` (GET/PUT this week) and `office_hours_zoom_link` via
+  `/api/settings`. New **Monday 9am ET cron** (`/api/cron/monday-office-hours`, `0 13 * * 1` in
+  vercel.json, Bearer-guarded) emails owner/admin/manager a branded reminder to set the week.
 - **Branded sign-in / invite emails (were plain Supabase defaults).** The member invite, staff
   invite, and self-service login all used `signInWithOtp`, which sends Supabase's plain built-in
   email. Now we generate the magic link ourselves (`src/lib/auth-links.ts`: `generateSigninLink`

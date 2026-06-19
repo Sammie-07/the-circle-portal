@@ -1,8 +1,11 @@
 import AppSettingsForm from '@/components/admin/AppSettingsForm'
+import OfficeHoursSettings from '@/components/admin/OfficeHoursSettings'
 import { getTeamAgentCount } from '@/lib/settings'
+import { getOfficeHoursStatus } from '@/lib/office-hours'
 
 export default async function AdminSettingsPage() {
   const agentCount = await getTeamAgentCount()
+  const oh = await getOfficeHoursStatus()
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl">
@@ -12,7 +15,16 @@ export default async function AdminSettingsPage() {
         <p className="text-[var(--text-3)] text-sm mt-1">Editable values used across the portal.</p>
       </div>
 
-      <AppSettingsForm initialAgentCount={agentCount} />
+      <div className="space-y-6">
+        <OfficeHoursSettings
+          initialZoomLink={oh.zoomLink}
+          weekOf={oh.tuesdayISO}
+          initialHasMeeting={oh.hasMeeting}
+          initialNote={oh.note ?? ''}
+          initialIsSet={oh.isSet}
+        />
+        <AppSettingsForm initialAgentCount={agentCount} />
+      </div>
     </div>
   )
 }

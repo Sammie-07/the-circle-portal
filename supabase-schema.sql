@@ -315,3 +315,22 @@ create policy "admins manage settings" on app_settings
   for all using (is_admin()) with check (is_admin());
 insert into app_settings (key, value) values ('teamgogo_agent_count', '1660')
   on conflict (key) do nothing;
+
+-- Per-week Tuesday office-hours status (keyed by that week's Tuesday date).
+-- No row = "meeting as usual"; a row marks the week on/off + an optional note.
+create table if not exists office_hours_weeks (
+  week_of date primary key,
+  has_meeting boolean not null default true,
+  note text,
+  updated_by uuid references auth.users,
+  updated_at timestamptz default now()
+);
+alter table office_hours_weeks enable row level security;
+create policy "authed read office hours weeks" on office_hours_weeks
+  for select using (auth.uid() is not null);
+create policy "admins manage office hours weeks" on office_hours_weeks
+  for all using (is_admin()) with check (is_admin());
+-- Default Zoom join link (editable in admin Settings).
+insert into app_settings (key, value)
+values ('office_hours_zoom_link', 'https://us02web.zoom.us/j/7344760289?omn=82664283854&jst=2')
+on conflict (key) do nothing;

@@ -30,15 +30,28 @@ export async function PUT(request: Request) {
 
   const body = await request.json()
 
+  const admin = createAdminClient()
+
   // teamgogo_agent_count — store digits only (accepts "1,660" or "1660").
   if ('teamgogo_agent_count' in body) {
     const raw = String(body.teamgogo_agent_count ?? '').replace(/[^\d]/g, '')
     if (!raw) return NextResponse.json({ error: 'Agent count must be a number' }, { status: 400 })
 
-    const admin = createAdminClient()
     const { error } = await admin
       .from('app_settings')
       .upsert({ key: 'teamgogo_agent_count', value: raw, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // office_hours_zoom_link — the global Zoom join link for Tuesday office hours.
+  if ('office_hours_zoom_link' in body) {
+    const link = String(body.office_hours_zoom_link ?? '').trim()
+    if (link && !/^https?:\/\//i.test(link)) {
+      return NextResponse.json({ error: 'Zoom link must start with http(s)://' }, { status: 400 })
+    }
+    const { error } = await admin
+      .from('app_settings')
+      .upsert({ key: 'office_hours_zoom_link', value: link, updated_at: new Date().toISOString() }, { onConflict: 'key' })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

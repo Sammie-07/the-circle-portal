@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import HomeworkSection from '@/components/dashboard/HomeworkSection'
 import AttendanceCard from '@/components/dashboard/AttendanceCard'
+import OfficeHoursCard from '@/components/dashboard/OfficeHoursCard'
 import { resolvePortalContext } from '@/lib/portalContext'
+import { getOfficeHoursStatus } from '@/lib/office-hours'
 
 export default async function DashboardPage() {
   const ctx = await resolvePortalContext()
@@ -52,6 +54,8 @@ export default async function DashboardPage() {
   const now = new Date()
   const weeksIn = Math.floor((now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 7))
   const currentQuarter = Math.min(Math.ceil(weeksIn / 13) || 1, 4)
+
+  const officeHours = await getOfficeHoursStatus()
 
   return (
     <div className="p-4 sm:p-8 max-w-4xl">
@@ -163,14 +167,14 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Next Tuesday reminder */}
-      <div className="mt-6 border border-[#C9A227]/20 bg-[#C9A227]/5 rounded p-4 flex items-center justify-between">
-        <div>
-          <p className="text-[#C9A227] text-sm font-medium">Tuesday Office Hours — 12 noon ET</p>
-          <p className="text-[var(--text-2)] text-xs mt-0.5">Show up. Ask questions. Do the work.</p>
-        </div>
-        <span className="text-[#C9A227] text-2xl">◈</span>
-      </div>
+      {/* Tuesday Office Hours — Join button on Tuesdays, popup when off */}
+      <OfficeHoursCard
+        isTuesday={officeHours.isTuesdayET}
+        hasMeeting={officeHours.hasMeeting}
+        note={officeHours.note}
+        zoomLink={officeHours.zoomLink}
+        tuesdayISO={officeHours.tuesdayISO}
+      />
 
       {/* GoGet'Em Community */}
       <div className="mt-6 bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
