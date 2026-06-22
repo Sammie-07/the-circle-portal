@@ -112,6 +112,12 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             <p className={`text-sm font-medium ${health.color}`}>{health.label}</p>
             <p className="text-[var(--text-3)] text-xs">Member since {new Date(member.join_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
             <div className="flex flex-wrap justify-end items-center gap-2 pt-1">
+              <a
+                href={`/api/admin/impersonate?member=${id}`}
+                className="text-xs border border-[var(--border-color)] text-[var(--text-2)] px-3 py-1.5 rounded hover:border-[#C9A227] hover:text-[#C9A227] transition-colors"
+              >
+                Access Member&apos;s View
+              </a>
               {member.email && (
                 <SendInviteButton email={member.email} memberName={member.name} />
               )}

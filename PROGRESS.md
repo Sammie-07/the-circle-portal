@@ -188,6 +188,12 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-18
+- **Three admin tweaks.** (1) Attendance records (`WeeklyLogsEditor`) now have a trash-icon
+  delete on each row (confirm + toast, removes the `weekly_logs` row via the RLS admin client).
+  (2) Renamed the payment-panel labels "Membership Start/End" → "Payment Start/End" (wording only,
+  same underlying `membership_start`/`membership_end` fields). (3) Added an "Access Member's View"
+  (impersonation) link to the action-button row on the admin member detail page, matching the one
+  on the members list.
 - **Fix: branded sign-in links bounced back to /login.** The branded emails mint links with the
   admin `generateLink` API, which has no client-side PKCE verifier — so `/auth/callback`'s `?code`
   exchange always failed and redirected to /login. Switched to the Supabase SSR token-hash flow:

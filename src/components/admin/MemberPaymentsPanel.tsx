@@ -468,7 +468,7 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
               </div>
               <div></div>
               <div>
-                <label className={labelClass}>Membership Start</label>
+                <label className={labelClass}>Payment Start</label>
                 <DateField
                   value={billingForm.membership_start}
                   onChange={(v) => setBillingForm((f) => ({ ...f, membership_start: v }))}
@@ -476,7 +476,7 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
                 />
               </div>
               <div>
-                <label className={labelClass}>Membership End</label>
+                <label className={labelClass}>Payment End</label>
                 <DateField
                   value={billingForm.membership_end}
                   onChange={(v) => setBillingForm((f) => ({ ...f, membership_end: v }))}
