@@ -150,8 +150,9 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
         </div>
       )}
 
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 min-h-screen bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex-col">
+      {/* Desktop sidebar — pinned to the viewport so the footer (user / theme /
+          sign out) stays in place and doesn't drop to the bottom of long pages. */}
+      <aside className="hidden md:flex w-56 h-screen sticky top-0 self-start bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex-col">
         <div className="px-6 py-7 border-b border-[var(--border-color)]">
           <Logo subtitle={subtitle} />
         </div>
