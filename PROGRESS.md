@@ -196,12 +196,21 @@ Every code change is recorded here, newest first.
   with a % summary. Read-only glance with a link into the member's full profile to edit. Server
   page (`src/app/admin/homework/page.tsx`) fetches members + homework via the RLS admin client;
   client renderer `HomeworkOverview`.
+- **Desktop sidebar pinned to viewport.** It was `min-h-screen`, so on long pages it stretched and
+  the footer (user email / Light mode / Sign out) dropped to the bottom of the page. Now
+  `h-screen sticky top-0 self-start` so it stays viewport-height and pinned; the nav scrolls
+  internally if needed and the footer is always reachable without scrolling.
 - **Three admin tweaks.** (1) Attendance records (`WeeklyLogsEditor`) now have a trash-icon
   delete on each row (confirm + toast, removes the `weekly_logs` row via the RLS admin client).
   (2) Renamed the payment-panel labels "Membership Start/End" → "Payment Start/End" (wording only,
   same underlying `membership_start`/`membership_end` fields). (3) Added an "Access Member's View"
   (impersonation) link to the action-button row on the admin member detail page, matching the one
   on the members list.
+- **Fix: login recovers session from implicit-flow magic links.** Some magic links come back with
+  the tokens in the URL hash (`#access_token=…`), which the server callback can't read, so it
+  bounced to `/login` leaving the session stranded. The login page now detects those hash tokens
+  client-side, calls `setSession` on the cookie-backed SSR browser client, and redirects in (shows
+  a "Signing you in…" spinner). Belt-and-suspenders alongside the `/auth/confirm` token-hash route.
 - **Fix: branded sign-in links bounced back to /login.** The branded emails mint links with the
   admin `generateLink` API, which has no client-side PKCE verifier — so `/auth/callback`'s `?code`
   exchange always failed and redirected to /login. Switched to the Supabase SSR token-hash flow:
