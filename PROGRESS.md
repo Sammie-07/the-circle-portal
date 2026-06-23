@@ -188,6 +188,14 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-18
+- **New admin "Homework" overview (quick-glance task tracking).** Requested by an admin: a way to
+  scan everyone's homework without opening profiles one by one. New `/admin/homework` page + sidebar
+  nav item (after Members). Left list of members each with a done/total + progress bar; a detail
+  pane with a member dropdown and prev/next arrows to switch without going back; the selected
+  member's tasks split into "To do" (sorted by due date) and "Completed" (sorted by completion),
+  with a % summary. Read-only glance with a link into the member's full profile to edit. Server
+  page (`src/app/admin/homework/page.tsx`) fetches members + homework via the RLS admin client;
+  client renderer `HomeworkOverview`.
 - **Three admin tweaks.** (1) Attendance records (`WeeklyLogsEditor`) now have a trash-icon
   delete on each row (confirm + toast, removes the `weekly_logs` row via the RLS admin client).
   (2) Renamed the payment-panel labels "Membership Start/End" → "Payment Start/End" (wording only,
