@@ -41,8 +41,8 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
   if (embedUrl) {
     // Google Drive's /preview player shows an "open in new window" popout in the
     // top-right that exposes the raw file link. We can't style inside the
-    // cross-origin iframe, so cover that corner with a transparent click-blocker
-    // so members can't use it (playback controls are centre/bottom, unaffected).
+    // cross-origin iframe, so cover that corner with an opaque patch — this hides
+    // the popout AND blocks the click. Playback controls are centre/bottom.
     const isDrive = embedUrl.includes('drive.google.com')
     return (
       <div
@@ -59,7 +59,7 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
         {isDrive && (
           <div
             aria-hidden
-            className="absolute top-0 right-0 w-16 h-16"
+            className="absolute top-0 right-0 w-20 h-16 bg-black rounded-bl-xl"
             style={{ zIndex: 2 }}
             onContextMenu={(e) => e.preventDefault()}
           />
