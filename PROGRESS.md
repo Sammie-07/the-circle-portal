@@ -188,6 +188,13 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-19
+- **Block the Drive popout on call replays.** Google Drive's `/preview` player shows an
+  "open in new window" button (top-right) that exposes the raw file link — members shouldn't get
+  that. Can't style a cross-origin iframe, so `VideoEmbed` (used by Clarity Calls + Office Hours
+  replays) now overlays a transparent click-blocker over that corner for Drive embeds, neutralizing
+  the popout while leaving the centre/bottom playback controls untouched. (The src is still in page
+  source for a determined user via devtools — unavoidable with iframe embeds — but the obvious
+  button is dead.)
 - **Homework overview: type + sent-date filters.** The admin `/admin/homework` detail pane now has
   a filter bar: type tabs (All / Homework / Blueprint) and a "Sent" date range (From / To, on
   `created_at`) so an admin can narrow to e.g. "blueprint tasks I sent last week." The summary % and
