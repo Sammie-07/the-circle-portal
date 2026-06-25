@@ -85,7 +85,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   const health = getHealthLabel(attendanceRate)
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-7xl">
       {/* Breadcrumb */}
       <Link href="/admin" className="text-[var(--text-3)] text-xs hover:text-[#C9A227] transition-colors">
         ← All Members
@@ -167,42 +167,13 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      {/* Blueprint — full width, above the 2-col grid */}
-      <div className="mb-6">
-        <BlueprintPanel
-          memberId={id}
-          memberName={member.name}
-          memberEmail={member.email ?? null}
-          blueprintHtml={member.blueprint_html ?? null}
-          blueprintGeneratedAt={member.blueprint_generated_at ?? null}
-          blueprintSentToGogoAt={member.blueprint_sent_to_gogo_at ?? null}
-          blueprintSentToMemberAt={member.blueprint_sent_to_member_at ?? null}
-          blueprintShareToken={member.blueprint_share_token ?? null}
-          blueprintTranscript={member.blueprint_transcript ?? null}
-        />
-      </div>
-
-      {/* Clarity Calls — full width above the 2-col grid */}
-      <div className="mb-6">
-        <ClarityCallsPanel memberId={member.id} />
-      </div>
-
-      {/* Documents — full width above the 2-col grid */}
-      <div className="mb-6">
-        <MemberDocumentsPanel memberId={member.id} />
-      </div>
-
-      {/* Payments — full width above the 2-col grid (ADMIN ONLY) */}
-      <div className="mb-6">
-        <MemberPaymentsPanel memberId={member.id} />
-      </div>
-
-      {/* Homework & Tasks — full width above the 2-col grid */}
+      {/* Homework & Tasks — FIRST so progress is front-and-center */}
       <div className="mb-6">
         <HomeworkPanel memberId={id} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Log This Week + Reports — the small panels, side by side near the top */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Weekly Log Form */}
         <div>
           <h2 className="text-[var(--text)] font-serif text-lg mb-4">Log This Week</h2>
@@ -222,6 +193,36 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           <h2 className="text-[var(--text)] font-serif text-lg mb-4">Reports</h2>
           <MemberReportPanel memberId={id} memberName={member.name} memberEmail={member.email ?? null} reports={reports ?? []} />
         </div>
+      </div>
+
+      {/* Blueprint */}
+      <div className="mb-6">
+        <BlueprintPanel
+          memberId={id}
+          memberName={member.name}
+          memberEmail={member.email ?? null}
+          blueprintHtml={member.blueprint_html ?? null}
+          blueprintGeneratedAt={member.blueprint_generated_at ?? null}
+          blueprintSentToGogoAt={member.blueprint_sent_to_gogo_at ?? null}
+          blueprintSentToMemberAt={member.blueprint_sent_to_member_at ?? null}
+          blueprintShareToken={member.blueprint_share_token ?? null}
+          blueprintTranscript={member.blueprint_transcript ?? null}
+        />
+      </div>
+
+      {/* Clarity Calls */}
+      <div className="mb-6">
+        <ClarityCallsPanel memberId={member.id} />
+      </div>
+
+      {/* Documents */}
+      <div className="mb-6">
+        <MemberDocumentsPanel memberId={member.id} />
+      </div>
+
+      {/* Payments — LAST (admin only) */}
+      <div className="mb-6">
+        <MemberPaymentsPanel memberId={member.id} />
       </div>
     </div>
   )

@@ -23,16 +23,19 @@ interface BrandedEmailOpts {
   heading: string
   /** Body paragraphs (plain strings; basic inline HTML like <strong> is allowed). */
   body: string[]
+  /** Optional raw HTML block rendered after the paragraphs (e.g. a list/table). */
+  bodyHtml?: string
   cta?: { text: string; url: string }
   /** Small print under the button (e.g. link-expiry note). */
   note?: string
   footer?: string
 }
 
-export function brandedEmail({ eyebrow, heading, body, cta, note, footer = 'The Circle · 12-Month Coaching Program' }: BrandedEmailOpts): string {
+export function brandedEmail({ eyebrow, heading, body, bodyHtml, cta, note, footer = 'The Circle · 12-Month Coaching Program' }: BrandedEmailOpts): string {
   const paragraphs = body
     .map((p) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#AAAAAA;">${p}</p>`)
     .join('')
+  const htmlBlock = bodyHtml ? `<tr><td style="padding-bottom:8px;">${bodyHtml}</td></tr>` : ''
 
   const ctaBlock = cta
     ? `<tr><td style="padding:8px 0 40px;">
@@ -81,6 +84,9 @@ export function brandedEmail({ eyebrow, heading, body, cta, note, footer = 'The 
 
         <!-- Body -->
         <tr><td style="padding-bottom:8px;">${paragraphs}</td></tr>
+
+        <!-- Optional HTML block (lists/tables) -->
+        ${htmlBlock}
 
         <!-- CTA -->
         ${ctaBlock}

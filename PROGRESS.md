@@ -187,6 +187,25 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-19
+- **Homework overview: type + sent-date filters.** The admin `/admin/homework` detail pane now has
+  a filter bar: type tabs (All / Homework / Blueprint) and a "Sent" date range (From / To, on
+  `created_at`) so an admin can narrow to e.g. "blueprint tasks I sent last week." The summary % and
+  the To-do / Completed lists reflect the filter (with a "(filtered)" hint); the member roster counts
+  stay overall. Passed `homework.created_at` through the page.
+- **Member profile reordered + widened.** On the admin member detail page, **Homework/Tasks** now
+  comes first (right after the stats), then **Log This Week + Reports** side-by-side near the top,
+  then Blueprint / Clarity Calls / Documents, with **Payments moved to the very bottom**. Container
+  widened `max-w-5xl → max-w-7xl` to use the empty right-side space.
+- **Task deadline reminders (email + in-portal).** (1) New daily cron `/api/cron/task-reminders`
+  (`0 14 * * *` in vercel.json, Bearer-guarded) emails each active+invited member ONE bundled
+  branded email listing every incomplete task whose due date is within the window (3 days before →
+  3 days after, a short overdue grace), sorted by due date with "Due in N days / Due today / N days
+  overdue" labels — never one email per task, and tasks drop off once completed or >3 days overdue.
+  Added an optional `bodyHtml` block to `brandedEmail()` for the task list/table. (2) In-portal:
+  the member dashboard shows a "⏰ tasks coming due" reminder bubble (amber, red if any overdue)
+  linking down to the homework section; per-task due badges already existed.
+
 ### 2026-06-18
 - **New admin "Homework" overview (quick-glance task tracking).** Requested by an admin: a way to
   scan everyone's homework without opening profiles one by one. New `/admin/homework` page + sidebar

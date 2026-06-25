@@ -48,6 +48,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const tasksDone = allTasks.filter(t => t.completed).length
   const homeworkRate = taskTotal > 0 ? Math.round((tasksDone / taskTotal) * 100) : null
 
+  // Tasks coming due (within 3 days, including overdue) — drives the reminder banner.
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const daysUntilDue = (due: string) =>
+    Math.round((new Date(due + 'T00:00:00').getTime() - startOfToday.getTime()) / 86400000)
+  const dueSoonTasks = allTasks.filter(t => !t.completed && t.due_date && daysUntilDue(t.due_date) <= 3)
+  const overdueCount = dueSoonTasks.filter(t => t.due_date && daysUntilDue(t.due_date) < 0).length
+  const upcomingCount = dueSoonTasks.length - overdueCount
+
   const latestReport = reports[0] ?? null
 
   // Determine current quarter from join date
@@ -75,6 +84,31 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
+
+      {/* Deadline reminder bubble */}
+      {dueSoonTasks.length > 0 && (
+        <a
+          href="#homework"
+          className={`flex items-center gap-3 mb-8 rounded-lg border px-4 py-3 transition-colors ${
+            overdueCount > 0
+              ? 'bg-[#CC1F1F]/10 border-[#CC1F1F]/30 hover:border-[#CC1F1F]/50'
+              : 'bg-[#C9A227]/10 border-[#C9A227]/30 hover:border-[#C9A227]/50'
+          }`}
+        >
+          <span className="text-xl flex-shrink-0">⏰</span>
+          <div className="min-w-0">
+            <p className="text-[var(--text)] text-sm font-medium">
+              {dueSoonTasks.length === 1 ? 'You have a task coming due' : `You have ${dueSoonTasks.length} tasks coming due`}
+            </p>
+            <p className="text-[var(--text-2)] text-xs mt-0.5">
+              {overdueCount > 0 && <span className="text-[#ff8080]">{overdueCount} overdue</span>}
+              {overdueCount > 0 && upcomingCount > 0 && ' · '}
+              {upcomingCount > 0 && `${upcomingCount} due within 3 days`}
+              {' · tap to view ↓'}
+            </p>
+          </div>
+        </a>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -221,10 +255,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       {/* Homework & Blueprint Tasks */}
-      <HomeworkSection
-        memberId={member.id}
-        initialItems={homeworkData ?? []}
-      />
+      <div id="homework" className="scroll-mt-20">
+        <HomeworkSection
+          memberId={member.id}
+          initialItems={homeworkData ?? []}
+        />
+      </div>
 
     </div>
   )

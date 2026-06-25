@@ -34,6 +34,7 @@ export default async function AdminHomeworkPage() {
         completed: t.completed,
         due_date: t.due_date,
         completed_at: t.completed_at,
+        created_at: t.created_at,
       }))
     return { id: m.id as string, name: m.name as string, cohort: (m.cohort as string | null) ?? null, status: m.status as string, tasks }
   })

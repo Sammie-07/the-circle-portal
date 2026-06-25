@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import DateField from '@/components/shared/DateField'
 
 interface Task {
   id: string
@@ -11,7 +12,10 @@ interface Task {
   completed: boolean
   due_date: string | null
   completed_at: string | null
+  created_at: string
 }
+
+type TypeFilter = 'all' | 'homework' | 'task'
 
 interface MemberHW {
   id: string
@@ -71,6 +75,9 @@ function TaskRow({ task }: { task: Task }) {
 
 export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
   const [activeId, setActiveId] = useState<string | null>(members[0]?.id ?? null)
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [sentFrom, setSentFrom] = useState('')
+  const [sentTo, setSentTo] = useState('')
 
   if (members.length === 0) {
     return (
@@ -84,13 +91,23 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
   const idx = members.findIndex((m) => m.id === active.id)
   const go = (delta: number) => setActiveId(members[(idx + delta + members.length) % members.length].id)
 
-  const todo = [...active.tasks]
+  // Apply the type + sent-date (created_at) filters to the detail view.
+  const visible = active.tasks.filter((t) => {
+    if (typeFilter !== 'all' && t.type !== typeFilter) return false
+    const sentDay = (t.created_at ?? '').slice(0, 10)
+    if (sentFrom && sentDay < sentFrom) return false
+    if (sentTo && sentDay > sentTo) return false
+    return true
+  })
+  const filtersActive = typeFilter !== 'all' || !!sentFrom || !!sentTo
+
+  const todo = [...visible]
     .filter((t) => !t.completed)
     .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999'))
-  const completed = [...active.tasks]
+  const completed = [...visible]
     .filter((t) => t.completed)
     .sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
-  const s = stats(active.tasks)
+  const s = stats(visible)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -147,6 +164,49 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
           >›</button>
         </div>
 
+        {/* Filters */}
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-3 mb-4 flex flex-wrap items-center gap-3">
+          {/* Type */}
+          <div className="flex text-xs border border-[var(--border-color)] rounded overflow-hidden">
+            {([
+              { k: 'all', label: 'All' },
+              { k: 'homework', label: 'Homework' },
+              { k: 'task', label: 'Blueprint' },
+            ] as const).map((opt) => (
+              <button
+                key={opt.k}
+                onClick={() => setTypeFilter(opt.k)}
+                className={`px-3 py-1.5 transition-colors ${typeFilter === opt.k ? 'bg-[#C9A227]/10 text-[#C9A227]' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sent date range */}
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-3)] text-xs whitespace-nowrap">Sent</span>
+            <div className="w-36">
+              <DateField value={sentFrom} onChange={setSentFrom} placeholder="From"
+                className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#C9A227]" />
+            </div>
+            <span className="text-[var(--text-4)] text-xs">→</span>
+            <div className="w-36">
+              <DateField value={sentTo} onChange={setSentTo} placeholder="To"
+                className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#C9A227]" />
+            </div>
+          </div>
+
+          {filtersActive && (
+            <button
+              onClick={() => { setTypeFilter('all'); setSentFrom(''); setSentTo('') }}
+              className="text-[var(--text-3)] text-xs hover:text-[#CC1F1F] ml-auto"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
         {/* Progress summary */}
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
@@ -156,7 +216,7 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-[var(--text)] font-serif text-2xl">{s.pct !== null ? `${s.pct}%` : '—'}</p>
-              <p className="text-[var(--text-3)] text-xs">{s.done} of {s.total} done</p>
+              <p className="text-[var(--text-3)] text-xs">{s.done} of {s.total} done{filtersActive ? ' (filtered)' : ''}</p>
             </div>
           </div>
           <div className="h-1.5 bg-[var(--border-color)] rounded-full overflow-hidden">
