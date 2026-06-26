@@ -9,6 +9,7 @@ interface RawTask {
   completed: boolean
   due_date: string | null
   completed_at: string | null
+  notes: string | null
 }
 
 export default async function AdminHomeworkPage() {
@@ -18,7 +19,7 @@ export default async function AdminHomeworkPage() {
     .from('members')
     .select(`
       id, name, cohort, status,
-      homework ( id, title, description, type, completed, due_date, completed_at, sort_order, created_at )
+      homework ( id, title, description, type, completed, due_date, completed_at, sort_order, created_at, notes )
     `)
     .order('name', { ascending: true })
 
@@ -35,6 +36,7 @@ export default async function AdminHomeworkPage() {
         due_date: t.due_date,
         completed_at: t.completed_at,
         created_at: t.created_at,
+        notes: t.notes,
       }))
     return { id: m.id as string, name: m.name as string, cohort: (m.cohort as string | null) ?? null, status: m.status as string, tasks }
   })

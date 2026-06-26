@@ -187,6 +187,13 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 
 Every code change is recorded here, newest first.
 
+### 2026-06-25
+- **Admins can now see members' task notes.** Members write notes on their tasks
+  (`homework.notes`), but the admin views never rendered them. Both admin homework surfaces now
+  show a gold "Member note" block under any task that has one: the per-member `HomeworkPanel`
+  (member detail page) and the `/admin/homework` overview (added `notes` to its query/shape).
+  Read-only display; the data was already being stored.
+
 ### 2026-06-19
 - **Block the Drive popout on call replays.** Google Drive's `/preview` player shows an
   "open in new window" button (top-right) that exposes the raw file link — members shouldn't get

@@ -13,6 +13,7 @@ interface Task {
   due_date: string | null
   completed_at: string | null
   created_at: string
+  notes: string | null
 }
 
 type TypeFilter = 'all' | 'homework' | 'task'
@@ -68,6 +69,12 @@ function TaskRow({ task }: { task: Task }) {
             ? task.completed_at ? `Completed ${fmtDate(task.completed_at)}` : 'Completed'
             : task.due_date ? `Due ${fmtDate(task.due_date)}` : 'No due date'}
         </p>
+        {task.notes && (
+          <div className="mt-2 bg-[var(--surface-2)] border-l-2 border-[#C9A227]/40 rounded-r px-2.5 py-1.5">
+            <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">Member note</p>
+            <p className="text-[var(--text-2)] text-xs whitespace-pre-wrap">{task.notes}</p>
+          </div>
+        )}
       </div>
     </div>
   )

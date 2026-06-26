@@ -14,6 +14,7 @@ interface HomeworkItem {
   completed: boolean
   completed_at: string | null
   created_at: string
+  notes: string | null
 }
 
 interface Props {
@@ -337,6 +338,12 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
           <p className="text-[var(--text-4)] text-[10px] mt-0.5">
             Done {new Date(item.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </p>
+        )}
+        {item.notes && (
+          <div className="mt-2 bg-[var(--surface-2)] border-l-2 border-[#C9A227]/40 rounded-r px-2.5 py-1.5">
+            <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">Member note</p>
+            <p className="text-[var(--text-2)] text-xs whitespace-pre-wrap">{item.notes}</p>
+          </div>
         )}
       </div>
 
