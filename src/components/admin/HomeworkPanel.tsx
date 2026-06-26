@@ -47,7 +47,7 @@ export default function HomeworkPanel({ memberId }: Props) {
   const [generateMsg, setGenerateMsg] = useState('')
 
   useEffect(() => {
-    fetch(`/api/homework?member_id=${memberId}`)
+    fetch(`/api/homework?member_id=${memberId}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => { setItems(d.homework ?? []); setLoading(false) })
       .catch(() => setLoading(false))
