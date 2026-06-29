@@ -188,6 +188,11 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-25
+- **Digest preview made async + exclude internal accounts.** The preview was slow because the AI
+  narrative pass (~30–60s) ran before responding; `/api/admin/digest-preview` now acknowledges
+  instantly and builds+sends in the background via `after()`. Also added `members.is_internal`
+  (migration) flagged true for the 5 staff/test accounts (Ferny Rodriguez, Kristy Waker, Samuel
+  Akinwande, Tech Team, Test member); `buildWeeklyDigest` excludes them so only real members appear.
 - **Tuesday 9am weekly member digest (team briefing).** New `src/lib/weekly-digest.ts`
   `buildWeeklyDigest()` gathers each active+invited member's past 7 days (tasks completed, portal
   notes/comments, this-week attendance from weekly_logs, open/overdue counts) and asks Claude for a

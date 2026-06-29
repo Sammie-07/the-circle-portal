@@ -43,6 +43,9 @@ create table if not exists members (
 );
 -- For existing databases (table created before invited_at existed):
 alter table members add column if not exists invited_at timestamptz;
+-- Staff/test accounts that live in members but aren't real coaching members
+-- (excluded from the weekly team digest).
+alter table members add column if not exists is_internal boolean not null default false;
 
 -- Weekly activity logs
 create table if not exists weekly_logs (

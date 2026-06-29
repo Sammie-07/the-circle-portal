@@ -106,6 +106,7 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
     .select('id, name, cohort')
     .eq('status', 'active')
     .not('invited_at', 'is', null)
+    .eq('is_internal', false) // exclude staff/test accounts from the team digest
     .order('name', { ascending: true })
 
   const memberList = (members ?? []) as { id: string; name: string; cohort: string | null }[]

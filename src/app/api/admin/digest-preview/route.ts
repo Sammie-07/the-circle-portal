@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { buildWeeklyDigest } from '@/lib/weekly-digest'
 import { sendEmail } from '@/lib/email'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
 // POST — send the weekly member digest to the requesting admin's own email,
 // so they can preview it on demand (the real one auto-sends Tuesday 9am ET).
+// The digest involves an AI narrative pass (~30–60s), so we acknowledge
+// immediately and build + send it in the background via after().
 export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -18,12 +20,15 @@ export async function POST() {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
 
-  const { subject, html } = await buildWeeklyDigest()
-  const res = await sendEmail(user.email, `[Preview] ${subject}`, html)
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    return NextResponse.json({ error: `Email failed to send. ${detail}`.trim() }, { status: 500 })
-  }
+  const email = user.email
+  after(async () => {
+    try {
+      const { subject, html } = await buildWeeklyDigest()
+      await sendEmail(email, `[Preview] ${subject}`, html)
+    } catch (err) {
+      console.error('digest preview failed:', err)
+    }
+  })
 
-  return NextResponse.json({ success: true, sent_to: user.email })
+  return NextResponse.json({ success: true, sent_to: email, queued: true })
 }

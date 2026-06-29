@@ -12,7 +12,7 @@ export default function WeeklyDigestCard() {
       const res = await fetch('/api/admin/digest-preview', { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { toast(data.error ?? 'Could not send preview', 'error'); return }
-      toast(`Preview sent to ${data.sent_to}`)
+      toast(`Generating your preview — it'll arrive at ${data.sent_to} within a minute.`)
     } catch {
       toast('Network error — please try again', 'error')
     } finally {
