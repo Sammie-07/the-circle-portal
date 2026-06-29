@@ -1,5 +1,6 @@
 import AppSettingsForm from '@/components/admin/AppSettingsForm'
 import OfficeHoursSettings from '@/components/admin/OfficeHoursSettings'
+import WeeklyDigestCard from '@/components/admin/WeeklyDigestCard'
 import { getTeamAgentCount } from '@/lib/settings'
 import { getOfficeHoursStatus } from '@/lib/office-hours'
 
@@ -24,6 +25,7 @@ export default async function AdminSettingsPage() {
           initialIsSet={oh.isSet}
         />
         <AppSettingsForm initialAgentCount={agentCount} />
+        <WeeklyDigestCard />
       </div>
     </div>
   )

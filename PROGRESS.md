@@ -188,6 +188,15 @@ mid-migration) and have been deleted. The flat directories above are the sole, c
 Every code change is recorded here, newest first.
 
 ### 2026-06-25
+- **Tuesday 9am weekly member digest (team briefing).** New `src/lib/weekly-digest.ts`
+  `buildWeeklyDigest()` gathers each active+invited member's past 7 days (tasks completed, portal
+  notes/comments, this-week attendance from weekly_logs, open/overdue counts) and asks Claude for a
+  warm, factual 2–4 sentence narrative per member (deterministic template fallback if AI is off).
+  Renders a branded email with one section per member (name, stat chips, narrative, quoted notes).
+  New cron `/api/cron/tuesday-digest` (`0 13 * * 2` = Tue 9am ET, Bearer-guarded) emails it to
+  owner/admin/manager before office hours. Also added `/api/admin/digest-preview` (staff POST →
+  sends the digest to the requesting admin's own email) and a "Weekly Member Digest" card on the
+  admin Settings page with a "Send me a preview now" button.
 - **Admins can now see members' task notes.** Members write notes on their tasks
   (`homework.notes`), but the admin views never rendered them. Both admin homework surfaces now
   show a gold "Member note" block under any task that has one: the per-member `HomeworkPanel`
