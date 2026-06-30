@@ -7,6 +7,7 @@ const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
 
 interface RawSession {
   id: string
+  member_id: string | null
   title: string
   created_at: string
   updated_at: string
@@ -28,7 +29,7 @@ export default async function AdminChatsPage() {
   const admin = createAdminClient()
   const { data: raw } = await admin
     .from('chat_sessions')
-    .select('id, title, created_at, updated_at, member:members(name, email), messages:chat_messages(count)')
+    .select('id, member_id, title, created_at, updated_at, member:members(name, email), messages:chat_messages(count)')
     .not('member_id', 'is', null)
     .order('updated_at', { ascending: false })
 
@@ -36,6 +37,7 @@ export default async function AdminChatsPage() {
     const m = Array.isArray(s.member) ? s.member[0] : s.member
     return {
       id: s.id,
+      memberId: s.member_id ?? 'unknown',
       title: s.title,
       updatedAt: s.updated_at,
       memberName: m?.name ?? m?.email ?? 'Unknown member',

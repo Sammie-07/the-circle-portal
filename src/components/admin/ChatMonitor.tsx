@@ -5,10 +5,17 @@ import ReactMarkdown from 'react-markdown'
 
 interface SessionSummary {
   id: string
+  memberId: string
   title: string
   updatedAt: string
   memberName: string
   messageCount: number
+}
+
+interface MemberGroup {
+  memberId: string
+  memberName: string
+  sessions: SessionSummary[]
 }
 
 interface Message {
@@ -29,14 +36,33 @@ export default function ChatMonitor({ sessions }: { sessions: SessionSummary[] }
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
   const [query, setQuery] = useState('')
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const active = sessions.find((s) => s.id === activeId) ?? null
 
-  const filtered = query.trim()
-    ? sessions.filter((s) =>
-        (s.memberName + ' ' + s.title).toLowerCase().includes(query.trim().toLowerCase())
-      )
+  const q = query.trim().toLowerCase()
+  const filtered = q
+    ? sessions.filter((s) => (s.memberName + ' ' + s.title).toLowerCase().includes(q))
     : sessions
+
+  // Group sessions by member. `sessions` is already ordered by updated_at desc,
+  // so each member's first session is their most recent; members are ordered by
+  // whoever chatted most recently.
+  const groups: MemberGroup[] = []
+  const byId = new Map<string, MemberGroup>()
+  for (const s of filtered) {
+    let g = byId.get(s.memberId)
+    if (!g) {
+      g = { memberId: s.memberId, memberName: s.memberName, sessions: [] }
+      byId.set(s.memberId, g)
+      groups.push(g)
+    }
+    g.sessions.push(s)
+  }
+
+  function toggle(memberId: string) {
+    setCollapsed((prev) => ({ ...prev, [memberId]: !prev[memberId] }))
+  }
 
   async function openSession(id: string) {
     setActiveId(id)
@@ -71,24 +97,42 @@ export default function ChatMonitor({ sessions }: { sessions: SessionSummary[] }
           />
         </div>
         <div className="overflow-y-auto max-h-[70vh]">
-          {filtered.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => openSession(s.id)}
-              className={`w-full text-left px-4 py-3 border-b border-[var(--border-color)] last:border-b-0 transition-colors ${
-                activeId === s.id
-                  ? 'bg-[#C9A227]/10 border-l-2 border-l-[#C9A227]'
-                  : 'border-l-2 border-l-transparent hover:bg-[var(--surface)]'
-              }`}
-            >
-              <p className="text-[var(--text)] text-sm font-medium truncate">{s.memberName}</p>
-              <p className="text-[var(--text-3)] text-xs truncate mt-0.5">{s.title}</p>
-              <p className="text-[var(--text-4)] text-[10px] mt-1">
-                {fmtDate(s.updatedAt)} · {s.messageCount} message{s.messageCount === 1 ? '' : 's'}
-              </p>
-            </button>
-          ))}
-          {filtered.length === 0 && (
+          {groups.map((g) => {
+            const isCollapsed = collapsed[g.memberId]
+            return (
+              <div key={g.memberId} className="border-b border-[var(--border-color)] last:border-b-0">
+                {/* Member header */}
+                <button
+                  onClick={() => toggle(g.memberId)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-[var(--surface)] transition-colors"
+                >
+                  <span className={`text-[var(--text-3)] text-[10px] transition-transform ${isCollapsed ? '' : 'rotate-90'}`}>▶</span>
+                  <span className="text-[var(--text)] text-sm font-semibold truncate flex-1">{g.memberName}</span>
+                  <span className="text-[var(--text-4)] text-[10px] flex-shrink-0">
+                    {g.sessions.length} chat{g.sessions.length === 1 ? '' : 's'}
+                  </span>
+                </button>
+                {/* Member's sessions */}
+                {!isCollapsed && g.sessions.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => openSession(s.id)}
+                    className={`w-full text-left pl-9 pr-4 py-2.5 transition-colors ${
+                      activeId === s.id
+                        ? 'bg-[#C9A227]/10 border-l-2 border-l-[#C9A227]'
+                        : 'border-l-2 border-l-transparent hover:bg-[var(--surface)]'
+                    }`}
+                  >
+                    <p className="text-[var(--text-2)] text-xs truncate">{s.title}</p>
+                    <p className="text-[var(--text-4)] text-[10px] mt-0.5">
+                      {fmtDate(s.updatedAt)} · {s.messageCount} message{s.messageCount === 1 ? '' : 's'}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )
+          })}
+          {groups.length === 0 && (
             <p className="text-[var(--text-4)] text-xs px-4 py-6 text-center">No matches.</p>
           )}
         </div>

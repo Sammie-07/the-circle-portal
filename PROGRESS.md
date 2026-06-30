@@ -185,6 +185,11 @@ Every code change is recorded here, newest first.
     (`member_id IS NOT NULL`). New component `src/components/admin/ChatMonitor.tsx`.
   - Added the chat tables to `supabase-schema.sql` (they had never been recorded there) reflecting
     the new staff-owner shape. tsc + lint + `next build` all clean.
+  - **Follow-up: monitor groups chats by member.** The `/admin/chats` list now groups sessions
+    under a collapsible per-member header (member name + chat count) instead of a flat list; each
+    member's sessions nest beneath, ordered most-recent-first, members ordered by latest activity.
+    Passed `member_id` through the page for stable grouping; search still filters across members
+    and titles.
 
 ### 2026-06-25
 - **Digest preview made async + exclude internal accounts.** The preview was slow because the AI
