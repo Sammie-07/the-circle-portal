@@ -48,6 +48,7 @@ export async function applyFinancialRules(
         title: t.title,
         description: t.description ?? null,
         type: 'task' as const,
+        source: 'financial' as const,
         completed: false,
         auto_suggested: false,
         rule_key: t.rule_key,

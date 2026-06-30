@@ -251,6 +251,14 @@ create policy "admins_all_applications" on applications for all using (is_admin(
 -- ============================================
 alter table homework add column if not exists notes text;
 alter table homework add column if not exists auto_suggested boolean not null default false;
+-- How each task entered the system (drives the admin label so AI/auto-added tasks
+-- are distinguishable from admin-assigned "Homework"):
+--   admin | blueprint | financial | ai_followup | followup
+alter table homework add column if not exists source text not null default 'admin';
+do $$ begin
+  alter table homework add constraint homework_source_chk
+    check (source in ('admin','blueprint','financial','ai_followup','followup'));
+exception when duplicate_object then null; end $$;
 
 -- ============================================
 -- Payment tracking (ADMIN ONLY — replaces the payments spreadsheet)

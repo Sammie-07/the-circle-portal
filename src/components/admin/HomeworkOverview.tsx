@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import DateField from '@/components/shared/DateField'
+import { taskSourceLabel, taskSourceBadgeClass, isAdminAssigned } from '@/lib/taskSource'
 
 interface Task {
   id: string
   title: string
   description: string | null
   type: 'homework' | 'task'
+  source: string | null
   completed: boolean
   due_date: string | null
   completed_at: string | null
@@ -16,7 +18,8 @@ interface Task {
   notes: string | null
 }
 
-type TypeFilter = 'all' | 'homework' | 'task'
+// Filter by ORIGIN: admin-assigned homework vs anything AI/automation added.
+type TypeFilter = 'all' | 'admin' | 'ai'
 
 interface MemberHW {
   id: string
@@ -59,9 +62,7 @@ function TaskRow({ task }: { task: Task }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm ${done ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>{task.title}</span>
-          <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-            task.type === 'task' ? 'text-[var(--text-2)] border-[var(--border-hover)]' : 'text-[var(--text-3)] border-[var(--border-color)]'
-          }`}>{task.type === 'task' ? 'Blueprint' : 'HW'}</span>
+          <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${taskSourceBadgeClass(task.source)}`}>{taskSourceLabel(task.source)}</span>
         </div>
         {task.description && <p className="text-[var(--text-3)] text-xs mt-0.5">{task.description}</p>}
         <p className="text-[var(--text-4)] text-[10px] mt-0.5">
@@ -98,9 +99,10 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
   const idx = members.findIndex((m) => m.id === active.id)
   const go = (delta: number) => setActiveId(members[(idx + delta + members.length) % members.length].id)
 
-  // Apply the type + sent-date (created_at) filters to the detail view.
+  // Apply the origin + sent-date (created_at) filters to the detail view.
   const visible = active.tasks.filter((t) => {
-    if (typeFilter !== 'all' && t.type !== typeFilter) return false
+    if (typeFilter === 'admin' && !isAdminAssigned(t.source)) return false
+    if (typeFilter === 'ai' && isAdminAssigned(t.source)) return false
     const sentDay = (t.created_at ?? '').slice(0, 10)
     if (sentFrom && sentDay < sentFrom) return false
     if (sentTo && sentDay > sentTo) return false
@@ -173,12 +175,12 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
 
         {/* Filters */}
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-3 mb-4 flex flex-wrap items-center gap-3">
-          {/* Type */}
+          {/* Origin */}
           <div className="flex text-xs border border-[var(--border-color)] rounded overflow-hidden">
             {([
               { k: 'all', label: 'All' },
-              { k: 'homework', label: 'Homework' },
-              { k: 'task', label: 'Blueprint' },
+              { k: 'admin', label: 'Homework' },
+              { k: 'ai', label: 'AI-added' },
             ] as const).map((opt) => (
               <button
                 key={opt.k}

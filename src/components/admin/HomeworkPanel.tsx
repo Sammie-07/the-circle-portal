@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import DateField from '@/components/shared/DateField'
 import AutoGrowTextarea from '@/components/shared/AutoGrowTextarea'
 import { toast } from '@/lib/toast'
+import { taskSourceLabel, taskSourceBadgeClass } from '@/lib/taskSource'
 
 interface HomeworkItem {
   id: string
@@ -11,6 +12,7 @@ interface HomeworkItem {
   description: string | null
   due_date: string | null
   type: 'homework' | 'task'
+  source: string | null
   completed: boolean
   completed_at: string | null
   created_at: string
@@ -324,9 +326,7 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm ${item.completed ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>{item.title}</span>
-          <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-            item.type === 'task' ? 'text-[var(--text-2)] border-[var(--border-hover)]' : 'text-[var(--text-3)] border-[var(--border-color)]'
-          }`}>{item.type === 'task' ? 'Blueprint' : 'HW'}</span>
+          <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${taskSourceBadgeClass(item.source)}`}>{taskSourceLabel(item.source)}</span>
           {badge && !item.completed && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded border ${badge.cls}`}>{badge.label}</span>
           )}

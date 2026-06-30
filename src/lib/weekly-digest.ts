@@ -14,6 +14,12 @@ interface TaskLite {
   notes: string | null
 }
 
+interface DueTask {
+  title: string
+  due_date: string
+  days: number // days until due (negative = overdue)
+}
+
 interface MemberDigest {
   id: string
   name: string
@@ -21,6 +27,8 @@ interface MemberDigest {
   completedThisWeek: { title: string; type: string }[]
   outstanding: number
   overdue: number
+  dueSoon: DueTask[] // open, due within the next 5 days
+  overdueWeek: DueTask[] // open, overdue by a week or more
   notes: { title: string; note: string }[]
   attendance: { showedUp: boolean; homeworkDone: boolean; questions: number; note: string | null } | null
 }
@@ -132,6 +140,11 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
     if (!latestLog.has(l.member_id)) latestLog.set(l.member_id, l) // first = most recent (sorted desc)
   }
 
+  // Day baseline for due-date math (compare at midnight to avoid time-of-day skew).
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const daysUntil = (due: string) =>
+    Math.round((new Date(due + 'T00:00:00').getTime() - todayMidnight) / 86400000)
+
   const digests: MemberDigest[] = memberList.map((m) => {
     const tasks = homeworkByMember.get(m.id) ?? []
     const completedThisWeek = tasks
@@ -139,6 +152,18 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
       .map((t) => ({ title: t.title, type: t.type }))
     const open = tasks.filter((t) => !t.completed)
     const overdue = open.filter((t) => t.due_date && new Date(t.due_date + 'T00:00:00').getTime() < todayMs).length
+
+    // Open tasks with a due date, classified for the briefing.
+    const dated = open
+      .filter((t): t is TaskLite & { due_date: string } => !!t.due_date)
+      .map((t) => ({ title: t.title, due_date: t.due_date, days: daysUntil(t.due_date) }))
+    const dueSoon = dated
+      .filter((t) => t.days >= 0 && t.days <= 5)
+      .sort((a, b) => a.days - b.days)
+    const overdueWeek = dated
+      .filter((t) => t.days <= -7)
+      .sort((a, b) => a.days - b.days) // most overdue first
+
     const notes = tasks
       .filter((t) => t.notes && t.notes.trim())
       .map((t) => ({ title: t.title, note: t.notes!.trim() }))
@@ -150,6 +175,8 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
       completedThisWeek,
       outstanding: open.length,
       overdue,
+      dueSoon,
+      overdueWeek,
       notes,
       attendance: log ? { showedUp: log.showed_up, homeworkDone: log.homework_done, questions: log.questions_asked ?? 0, note: log.notes } : null,
     }
@@ -175,11 +202,27 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
            </div>`
         : ''
 
+      // Due-soon and overdue task lists — surfaced explicitly so the team can
+      // chase them at office hours, independent of the AI narrative.
+      const dueLabel = (days: number) => (days === 0 ? 'due today' : days === 1 ? 'due tomorrow' : `due in ${days} days`)
+      const overdueLabel = (days: number) => `${Math.abs(days)} days overdue`
+      const taskListHtml = (heading: string, color: string, items: DueTask[], labeller: (d: number) => string) =>
+        items.length
+          ? `<div style="margin-top:10px;">
+               <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:${color};">${esc(heading)}</p>
+               ${items.map((t) => `<p style="margin:0 0 3px;font-size:13px;color:#CCCCCC;">• ${esc(t.title)} <span style="color:#777;">(${esc(labeller(t.days))})</span></p>`).join('')}
+             </div>`
+          : ''
+      const overdueHtml = taskListHtml(`Overdue a week or more (${m.overdueWeek.length})`, '#CC1F1F', m.overdueWeek, overdueLabel)
+      const dueSoonHtml = taskListHtml(`Due in the next 5 days (${m.dueSoon.length})`, '#C9A227', m.dueSoon, dueLabel)
+
       return `<div style="padding:16px 0;border-bottom:1px solid #1E1E1E;">
         <p style="margin:0 0 6px;font-family:Georgia,serif;font-size:18px;color:#FFFFFF;">${esc(m.name)}${m.cohort ? ` <span style="font-family:Helvetica Neue,Arial,sans-serif;font-size:12px;color:#666;">· ${esc(m.cohort)}</span>` : ''}</p>
         <div style="margin-bottom:8px;">${chipHtml}</div>
         <p style="margin:0;font-size:14px;line-height:1.6;color:#CCCCCC;">${esc(narrative)}</p>
         ${notesHtml}
+        ${overdueHtml}
+        ${dueSoonHtml}
       </div>`
     })
     .join('')

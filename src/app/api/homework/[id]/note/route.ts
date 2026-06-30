@@ -121,6 +121,7 @@ If there is no clear new action, respond {"create": false, "title": "", "descrip
         title,
         description,
         type: 'task',
+        source: 'ai_followup',
         auto_suggested: true,
         completed: false,
         created_by: user.id,

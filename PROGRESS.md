@@ -161,6 +161,29 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-06-30
+- **Task labels now reflect origin (admin vs AI), not just type.** Admins couldn't tell tasks they
+  assigned apart from ones AI/automation added — everything read as homework. New
+  `homework.source` column (migration `homework_add_source`, applied live + recorded in
+  `supabase-schema.sql`, check-constrained) records how each task entered:
+  `admin` (manual add), `blueprint` (AI from blueprint), `financial` (GHL financial rules),
+  `ai_followup` (AI suggested from a note), `followup` (manual "make follow-up" button). Set at all
+  five insert sites. New `src/lib/taskSource.ts` maps source → label
+  (**Homework** / AI · Blueprint / AI · Finance / AI · Note / Follow-up) + badge style (admin = gold,
+  AI/auto = muted). Swapped the old type-based "Blueprint/HW" badge for the source badge in both
+  admin surfaces (`HomeworkPanel`, `HomeworkOverview`); the overview's filter tabs are now
+  All / Homework / AI-added. Backfill heuristic: `rule_key`→financial, `auto_suggested`→ai_followup,
+  else admin — so **pre-existing blueprint tasks can't be distinguished from manual ones and read as
+  "Homework"; only newly generated blueprint tasks get tagged** (live counts after backfill:
+  admin 97, ai_followup 10). Member-facing UI unchanged.
+- **Tuesday digest now lists due-soon + overdue tasks per member.** Each member section in the
+  weekly team briefing (`src/lib/weekly-digest.ts`) now shows two explicit, deterministic lists
+  beneath the narrative: **Overdue a week or more** (open, due ≥7 days ago, red, most-overdue first)
+  and **Due in the next 5 days** (open, due today→+5, gold, soonest first), each with a per-task
+  "N days overdue" / "due today/tomorrow/in N days" label. Independent of the AI narrative so they
+  always render. Verified against live data (e.g. Krystal Thomas → 1 overdue + 4 due-today).
+- **Chat monitor now excludes internal/test accounts.** `/admin/chats` filters out members flagged
+  `is_internal` (matching the digest), so it shows real members only instead of being dominated by
+  staff test chats.
 - **Ask Gogo for staff + member-chat monitoring tab.** Two asks: (1) give Gogo/admins their own
   Ask Gogo bubble, and (2) let staff read every member's Ask Gogo conversation to check the Brain's
   accuracy.

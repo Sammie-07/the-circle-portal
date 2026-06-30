@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       description: description?.trim() || null,
       due_date: due_date || null,
       type: type || 'homework',
+      source: 'admin',
       created_by: user.id,
     })
     .select()

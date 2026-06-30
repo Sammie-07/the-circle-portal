@@ -67,6 +67,7 @@ export async function POST(request: Request, { params }: Params) {
       title,
       description,
       type: 'task',
+      source: 'followup',
       auto_suggested: true,
       completed: false,
       created_by: user.id,

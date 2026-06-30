@@ -113,6 +113,7 @@ ${blueprintText}`
         title: String(t.title).slice(0, 200),
         description: t.description ? String(t.description).slice(0, 1000) : null,
         type: t.type === 'task' ? 'task' : 'homework',
+        source: 'blueprint',
         due_date: t.due_date ?? null,
         sort_order: typeof t.sort_order === 'number' ? t.sort_order : i,
         created_by: user.id,
