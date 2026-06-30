@@ -1,22 +1,29 @@
 # Circle Portal — Progress
 
-> Status snapshot last updated 2026-06-03 from project structure, schema, package.json,
-> and entry points. Most completion claims are **inferred from file/route structure, not
-> verified against running code** — see "Open Questions." This file is the canonical status
-> doc for the project (README is still create-next-app boilerplate).
+> **Canonical status doc.** Snapshot refreshed 2026-06-30 against the live code, schema, and
+> deployment. Sections 1–8 below are the current state; **§9 Changelog** is the full dated
+> history of every change (newest first). README and CLAUDE.md are real docs now.
 >
-> **This file is kept in sync automatically — every code change is logged in §11 Changelog.**
+> **Kept in sync:** every code change is logged in §9. Spot-check periodically that recent
+> commits all have an entry (`git log --oneline` vs §9).
 
 ---
 
 ## 1. What it is
 
-A member portal for "The Circle" (Gogo Bethke's coaching program). Two roles —
-**admin** (Gogo & Adriana) and **member**. Features: authentication + invites,
-AI-generated blueprints and reports, weekly check-ins, homework, member notes,
-a team page, and an AI chat feature. Deployed on Vercel.
+A member portal for **The Circle**, Gogo Bethke's 12-month real-estate coaching program.
+Live at **https://the-circle-portal.vercel.app**.
 
-Root entry (`src/app/page.tsx`) does nothing but `redirect('/login')`.
+- **Staff roles** (`owner`/`admin`/`manager`/`support`/`tech`) — Gogo, Adriana, Kristy, etc.
+- **Members** — the coaching clients.
+
+Members get: AI-generated 12-month blueprint, monthly/quarterly/annual reports, weekly
+check-ins, homework/tasks (with notes), coaching-call + office-hours replays, documents, an
+"Ask Gogo" AI chat grounded in her knowledge base ("the Brain"), Tuesday office-hours info,
+and deadline reminders. Staff get: full member management, attendance logging (individual +
+bulk), payments/billing, report & blueprint generation, a Homework overview, impersonation
+("Access Member's View"), Settings, and automated team emails. Root (`src/app/page.tsx`)
+redirects to `/login`.
 
 ---
 
@@ -40,150 +47,116 @@ Root entry (`src/app/page.tsx`) does nothing but `redirect('/login')`.
 - `dev`: `env -u ANTHROPIC_API_KEY next dev` — deliberately **unsets `ANTHROPIC_API_KEY` in dev** (important quirk; likely forces OpenAI path or a local key in dev).
 - `build`: `next build`  •  `start`: `next start`  •  `lint`: `eslint`
 
-**Config files present:** `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`,
+**Config files:** `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`,
 `postcss.config.mjs`, `components.json`, `.env.example`, `.env.local`,
-`AGENTS.md`, `CLAUDE.md` (~11 bytes, effectively empty), `supabase-schema.sql`.
+`AGENTS.md` (modified-Next.js rules), `CLAUDE.md` (real working guide, imports `@AGENTS.md`),
+`supabase-schema.sql`, `vercel.json` (crons). README is a real project doc.
 
 ---
 
-## 3. Data model (`supabase-schema.sql`)
+## 3. Data model (`supabase-schema.sql` is the source of truth)
 
-Fully defined with RLS policies and an `is_admin()` SECURITY DEFINER helper.
+Postgres on Supabase with RLS on every table + an `is_admin()` SECURITY DEFINER helper
+(matches all staff roles: owner/admin/manager/support/tech). Live project ref
+`kfstwljubakcgjvyljba`. A **separate** Supabase project (`BRAIN_SUPABASE_*`) holds Gogo's
+embedded wiki ("the Brain") used to ground chat/blueprints/reports.
 
-- **`profiles`** — extends `auth.users` (`id` FK, cascade). `role` text default `member`,
-  check in (`admin`,`member`); `full_name`; `created_at`.
-  Auto-created on signup via `handle_new_user()` trigger (`on_auth_user_created`),
-  pulling `full_name` from `raw_user_meta_data`.
-- **`members`** — `id` uuid PK; `user_id` FK (set null on delete); `name`; `email` (unique);
-  `join_date` (default today); `cohort`; `status` check in (`active`,`inactive`,`graduated`);
-  `blueprint_data` **jsonb**; `created_at`.
-- **`weekly_logs`** — `member_id` FK (cascade); `week_of` date; `showed_up` bool; `homework_done` bool;
-  `questions_asked` int; `notes`; `logged_by` FK; **unique (member_id, week_of)**.
-- **`reports`** — `member_id` FK (cascade); `period_type` check in (`monthly`,`quarterly`,`yearly`);
-  `period_label`; `content_html`; `generated_at`; `sent_at`; `sent_by` FK.
+Tables (13): `profiles` (extends `auth.users`; `role`, `full_name`; auto-created by the
+`handle_new_user` trigger, which also auto-promotes staff from `admin_invites`), `members`
+(`status` active/inactive/graduated, `cohort`, `blueprint_*`, `invited_at`, `is_internal`,
+profile fields; member↔login matched by **email**, `user_id` is unused), `weekly_logs`
+(attendance per week, unique member+week), `reports`, `homework` (tasks/homework with
+`completed`, `due_date`, `notes`=member's comment, `auto_suggested`, `rule_key`),
+`clarity_calls` (per-member replays), `office_hours` (global replays), `office_hours_weeks`
+(per-week meeting on/off), `member_billing` + `member_payments` (admin-only finances),
+`member_documents` (private bucket), `member_note_entries` (member's "My Notes"),
+`applications` (GHL webhook landing zone, keyed by email), `app_settings` (key/value:
+`teamgogo_agent_count`, `office_hours_zoom_link`). Also `admin_invites` and a `weekly_checkins`
+table. Storage buckets: `blueprints` (public), `member-documents` (private).
 
-**RLS summary:** All four tables have RLS enabled.
-- Profiles: users read/update only their own.
-- Members: admins all; members read only their own record (matched by email).
-- Weekly logs: admins all; members read only their own.
-- Reports: admins all; members read only their **sent** reports (`sent_at is not null`).
+**RLS pattern:** admins (via `is_admin()`) manage all; members read/write only their own
+(matched by email). Reports: members read only **sent** ones. Finances: admin-only, no member
+policy. **Promote staff** once via SQL: `update profiles set role='owner' where id='<uid>'`.
 
-**Manual seed step:** after Gogo and Adriana first log in, promote them via SQL:
-`update profiles set role = 'admin' where id = '<user-id>';`
+## 4. Routes
 
----
+**Pages** — Admin: `/admin` (members) · `member/[id]` · `homework` · `reports` · `bulk-reports`
+· `log` · `payments` · `office-hours` · `team` · `settings`. Member: `/dashboard` · `blueprint`
+· `reports[/[id]]` · `calls` · `documents` · `notes` · `profile`. Auth: `login`, `auth/callback`,
+`auth/confirm`. Public token (no login): `/b/[token]` (blueprint), `/r/[token]` (report),
+`/checkin/[token]`.
 
-## 4. File structure (`src/`)
+**API** (~48 routes under `src/app/api/`): auth/invites (`invite`, `invite/signin-link`,
+`admin-invite`, `auth/login-link`); AI gen (`blueprints/generate|send|upload`,
+`reports/generate|send`, `homework/generate-from-blueprint`); chat (`chat/sessions[...]`,
+`chat/[sessionId]/messages`, `chat/preview`, `chat/extract`); CRUD (`members[/[id]]`, `profile`,
+`team/[profileId]`, `homework[/[id]][/note|/followup]`, `clarity-calls[/[id]]`,
+`office-hours[/[id]]`, `office-hours-week`, `member-billing`, `member-payments[/[id]|/generate]`,
+`member-documents[...]`, `member-note-entries[...]`, `member-notes`, `settings`); check-ins
+(`checkin/generate`, `checkin/[token]/submit`); GHL (`ghl/application`); admin
+(`admin/impersonate`, `admin/digest-preview`); **crons** (`cron/*`, see §6).
 
-```
-src/
-├── app/          ← App Router routes (see §5)
-├── components/
-├── lib/
-├── types/        (index.ts)
-└── proxy.ts
-```
+**Middleware** (`src/proxy.ts`): redirects unauthenticated users to `/login`, EXCEPT
+self-authenticating routes it exempts: `/b/`, `/r/`, `/checkin/`, `/api/ghl/`, `/api/cron/`,
+`/api/checkin/`, `/api/auth/`, `/auth/confirm`. Gates `/admin` to staff roles.
 
-(`components/`, `lib/`, `types/`, and `proxy.ts` contents not yet inspected.)
+## 5. Architecture & conventions (the golden rules)
 
----
+- **Two Supabase clients, pick deliberately.** `@/lib/supabase/server` (`createClient`) =
+  RLS-bound cookie client (act *as the logged-in user*). `@/lib/supabase/admin`
+  (`createAdminClient`) = service-role, **bypasses RLS, server-only** — for token-gated public
+  routes and admin writes after a role check. Never import admin into a client component.
+- **Public token routes** (`/b`, `/r`, `/checkin`) have **no public RLS policy** — they MUST use
+  the service-role client or anon visitors 404.
+- **Impersonation:** `resolvePortalContext()` (`src/lib/portalContext.ts`) — staff + a
+  `view_as_member` cookie renders that member's portal via the admin client; member pages use it.
+- **AI:** Anthropic = text generation (`CLAUDE_MODEL='claude-opus-4-5'`), OpenAI = embeddings only.
+  Go through `src/lib/ai.ts`. Chat/blueprints/reports are grounded via `src/lib/brain-search.ts`,
+  which also normalizes canonical names and injects `buildCanonicalFacts(agentCount)` (Kristy
+  Waker spelling; #teamgogo = editable agent count, default 1660).
+- **Emails:** all branded via `src/lib/email.ts` `brandedEmail()` + `sendEmail()` (SendGrid),
+  matching the Friday-reminder design. Sign-in links: generated ourselves (`src/lib/auth-links.ts`)
+  so we control the email, NOT Supabase's plain default. Magic-link recovery handled both
+  server-side (`/auth/confirm`) and client-side (login page reads `#access_token` hash).
+- **Output cleaning:** generated blueprint/report HTML strips ```` ```html ```` fences and bans
+  em dashes (reports → comma; blueprints → comma for em, hyphen for en to keep ranges).
+- **Save feedback:** global toast — `src/lib/toast.ts` `toast()` + `<Toaster/>` in root layout.
+- **Dates:** custom `DateField` popover calendar (`src/components/shared/DateField.tsx`) instead
+  of native inputs everywhere.
+- **Deploy: single path.** Push to `main` → Vercel Git integration builds + promotes. Do NOT also
+  run `vercel --prod` (double-deploy). Before pushing: `npx tsc --noEmit` (0) + `npm run lint` (0).
+  Log every change in §9.
 
-## 5. Routes
+## 6. Automation (crons — `vercel.json`, all Bearer `CRON_SECRET`-guarded)
 
-### API routes (20) — `src/app/api/`
+| Cron | Schedule (UTC) | What |
+|---|---|---|
+| `friday-reminders` | `0 13 * * 5` (Fri 9am ET) | Weekly check-in emails to members + admin reminder |
+| `monday-office-hours` | `0 13 * * 1` (Mon 9am ET) | Ask admins to set whether Tue office hours happen |
+| `task-reminders` | `0 14 * * *` (daily ~9–10am ET) | One bundled email per member of tasks near deadline (3 days before → 3 after) |
+| `tuesday-digest` | `0 13 * * 2` (Tue 9am ET) | AI narrative recap of each real member's past week to Gogo+admins, before office hours |
 
-- **Auth / invites:** `invite/`, `invite/signin-link/`, `admin-invite/`  (+ page route `app/auth/callback/`)
-- **AI generation:** `blueprints/generate/`, `blueprints/send/`, `reports/generate/`, `reports/send/`, `homework/generate-from-blueprint/`
-- **CRUD:** `members/`, `profile/`, `team/[profileId]/`, `member-notes/`, `homework/`, `homework/[id]/`
-- **Chat:** `chat/sessions/`, `chat/sessions/[sessionId]/`, `chat/[sessionId]/messages/`
-- **Check-ins:** `checkin/generate/`, `checkin/[token]/submit/`
-- **Automation:** `cron/friday-reminders/`
+## 7. Environment variables
 
-### Page routes — flat directories
+`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`ANTHROPIC_API_KEY`, `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL`, `BRAIN_SUPABASE_URL` /
+`BRAIN_SUPABASE_ANON_KEY`, `CRON_SECRET`, `GHL_WEBHOOK_SECRET`, `NEXT_PUBLIC_APP_URL`. (`dev`
+script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending tokens.)
 
-- **Root:** `app/page.tsx` → redirect to `/login`
-- **Admin:** `admin/` → `members/`, `member/[id]/`, `team/`, `reports/`, `bulk-reports/`, `log/`
-- **Member:** `dashboard/` → `blueprint/`, `notes/`, `profile/`, `reports/`, `reports/[id]/`
-- **Auth:** `login/`, `auth/callback/`
-- **Public token (share) routes:** `b/[token]/` (blueprint), `r/[token]/` (report), `checkin/[token]/`
+## 8. Known limitations / things to watch
 
-### Route groups (REMOVED 2026-06-03)
-
-The `(admin)`, `(auth)`, `(member)` route groups were empty scaffolding (zero files, abandoned
-mid-migration) and have been deleted. The flat directories above are the sole, canonical route set.
-
----
-
-## 6. What's built (inferred)
-
-- ✅ Complete Supabase schema with auth trigger, RLS, role helper, manual admin seed.
-- ✅ Auth flow scaffolding: login page, OAuth/magic-link callback, invite + admin-invite + signin-link APIs.
-- ✅ Full admin surface: members list, member detail, team management, reports, bulk reports, activity log.
-- ✅ Full member surface: dashboard with blueprint, notes, profile, reports (list + detail).
-- ✅ AI generation endpoints for blueprints, reports, and homework-from-blueprint.
-- ✅ Public, tokenized share/access routes for blueprints, reports, and check-ins (no-login access).
-- ✅ AI chat feature (sessions + messages endpoints).
-- ✅ Weekly check-in generation + token-based submission.
-- ✅ Friday-reminders cron endpoint.
-
----
-
-## 7. In progress / needs attention
-
-1. ✅ **RESOLVED — Duplicate route structures.** The `(admin)`/`(auth)`/`(member)` route groups
-   were empty (zero files) and have been deleted. Flat dirs are canonical. `tsc` clean.
-2. ✅ **RESOLVED — Docs.** `README.md` rewritten from create-next-app boilerplate into a real
-   project doc; `CLAUDE.md` expanded into a working guide (keeps `@AGENTS.md` import);
-   `AGENTS.md` already held the modified-Next.js rules. (2026-06-09)
-3. ✅ **RESOLVED — AI provider ambiguity.** Anthropic = text generation (all 4 AI routes),
-   OpenAI = embeddings only (Brain search). Clients centralized in `src/lib/ai.ts` with lazy,
-   guarded init (no more module-scope `process.env.X!` clients that crashed on missing keys).
-4. ✅ **RESOLVED — Cron.** `cron/friday-reminders` is scheduled in `vercel.json` (`0 13 * * 5`,
-   Fri 13:00 UTC) and now hardened with a strict `Bearer ${CRON_SECRET}` → 401 guard
-   (previously open when the secret was unset). `CRON_SECRET` documented in `.env.example`
-   and **set in Vercel Production env (2026-06-03)** — redeploy required for it to take effect.
-
----
-
-## 8. What's next (suggested, pending user direction)
-
-- [ ] Resolve duplicate route groups vs flat dirs — pick one, remove the other, retest routing.
-- [ ] Audit env/key wiring: read `.env.example` / `.env.local` and the generation/chat routes to
-      confirm provider usage and that prod keys are set in Vercel.
-- [ ] Verify `vercel.json` cron config for `friday-reminders` and its auth guard.
-- [ ] Inspect `src/lib/`, `src/components/`, `src/types/index.ts`, `proxy.ts` to document the
-      Supabase client setup, shared components, and the `proxy.ts` role.
-- [ ] Replace boilerplate README and fill in `CLAUDE.md` / `AGENTS.md`.
-- [ ] Confirm per-page completion state (structure alone can't prove pages are finished).
+- **Drive replay popout:** call replays are Google Drive `/preview` iframes; an opaque patch hides
+  the "open in new window" button, but the URL still lives in page source for a determined user.
+  Truly private hosting (signed URLs) is the only full fix — not yet done.
+- **GHL applications are backend-only** by product decision (not shown in any UI); they feed
+  financial-task injection on blueprint generation via `src/lib/apply-financial-rules.ts`.
+- **`members.user_id` is unused** — member↔auth is matched by email; don't rely on `user_id`.
+- **Pre-existing component lint** was cleared to zero (legitimate React-19 effect patterns carry
+  justified `eslint-disable`); keep `npm run lint` green.
 
 ---
 
-## 9. Decisions & session context
-
-- **No PROGRESS.md existed** before this session; the user asked to create one *before* reading
-  more of the codebase, then to expand it thoroughly ahead of running `/compact`.
-- **Read scope was intentionally minimal**: only `src/app/page.tsx`, `README.md`, `package.json`,
-  `supabase-schema.sql`, and directory listings of `src/app`. Deeper files (`lib`, `components`,
-  `types`, individual route handlers, pages) were **not** read — so all per-route behavior above is
-  inferred from naming/structure, not source.
-- **Key open architectural question carried forward:** the flat-vs-grouped route duplication (§7.1)
-  is the most important thing to resolve next.
-
----
-
-## 10. Open questions (need file inspection to answer)
-
-- Which route set (groups vs flat) is live and which is dead?
-- Which AI provider does each generation/chat route use, and are prod keys configured?
-- Is the Friday-reminders cron scheduled and firing, and is it auth-guarded?
-- What's in `proxy.ts`, `src/lib/`, `src/components/`, `src/types/index.ts`?
-- ✅ Actual completion state of each admin/member page — **verified 2026-06-09**: all 19 pages
-  + 40 API routes export properly with real content; `tsc` clean, `next build` compiles all
-  routes. (Pre-existing component lint errors remain — see §11.)
-
----
-
-## 11. Changelog
+## 9. Changelog
 
 Every code change is recorded here, newest first.
 
@@ -694,7 +667,7 @@ Every code change is recorded here, newest first.
   the server. Upload handler code is correct; a fresh page load fixes future uploads.
 - ~~**KNOWN ISSUE (pre-existing, not yet fixed): `/b/[token]` share links require login.**~~
   ✅ **FIXED 2026-06-09** — route now uses the service-role `createAdminClient()` for the token
-  lookup (see §11). `/r/[token]` had the same latent bug and was fixed too.
+  lookup (see §9). `/r/[token]` had the same latent bug and was fixed too.
 - **Uploaded PDF blueprints now use the branded Circle shell.** Previously a PDF opened in the raw
   browser PDF viewer (no branding). New `src/lib/blueprint-shell.ts` `wrapPdfBlueprint()` reproduces
   the generated blueprint's dark theme + "The Circle" sticky `<nav>`, embeds the PDF cleanly
