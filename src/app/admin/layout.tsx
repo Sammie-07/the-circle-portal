@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
+import ChatBubble from '@/components/dashboard/ChatBubble'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -22,6 +23,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+      {/* Staff get their own persisted Ask Gogo chat (staff-keyed sessions). */}
+      <ChatBubble />
     </div>
   )
 }

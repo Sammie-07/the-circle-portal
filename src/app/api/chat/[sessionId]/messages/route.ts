@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { resolveChatOwner } from '@/lib/chatOwner'
 import { NextResponse } from 'next/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, buildCanonicalFacts } from '@/lib/brain-search'
@@ -14,16 +15,12 @@ export async function GET(
 ) {
   const { sessionId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const owner = await resolveChatOwner(supabase)
+  if (!owner) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: member } = await supabase
-    .from('members').select('id').eq('email', user.email).single()
-  if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
-
-  // Verify ownership
+  // Verify ownership (member OR staff, depending on who's asking)
   const { data: session } = await supabase
-    .from('chat_sessions').select('id').eq('id', sessionId).eq('member_id', member.id).single()
+    .from('chat_sessions').select('id').eq('id', sessionId).eq(owner.ownerCol, owner.ownerId).single()
   if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
   const { data: messages, error } = await supabase
@@ -44,19 +41,15 @@ export async function POST(
   const { sessionId } = await params
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
+  const owner = await resolveChatOwner(supabase)
+  if (!owner) return new Response('Unauthorized', { status: 401 })
 
-  const { data: member } = await supabase
-    .from('members').select('id').eq('email', user.email).single()
-  if (!member) return new Response('Member not found', { status: 404 })
-
-  // Verify session belongs to this member
+  // Verify session belongs to this owner (member OR staff)
   const { data: session } = await supabase
     .from('chat_sessions')
     .select('id, title')
     .eq('id', sessionId)
-    .eq('member_id', member.id)
+    .eq(owner.ownerCol, owner.ownerId)
     .single()
   if (!session) return new Response('Session not found', { status: 404 })
 

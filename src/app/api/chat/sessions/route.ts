@@ -1,39 +1,32 @@
 import { createClient } from '@/lib/supabase/server'
+import { resolveChatOwner } from '@/lib/chatOwner'
 import { NextResponse } from 'next/server'
 
-// GET — list all sessions for the current member
+// GET — list all sessions for the current chat owner (member OR staff)
 export async function GET() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { data: member } = await supabase
-    .from('members').select('id').eq('email', user.email).single()
-  if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+  const owner = await resolveChatOwner(supabase)
+  if (!owner) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: sessions, error } = await supabase
     .from('chat_sessions')
     .select('id, title, created_at, updated_at')
-    .eq('member_id', member.id)
+    .eq(owner.ownerCol, owner.ownerId)
     .order('updated_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ sessions: sessions ?? [] })
 }
 
-// POST — create a new session
+// POST — create a new session for the current chat owner (member OR staff)
 export async function POST() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { data: member } = await supabase
-    .from('members').select('id').eq('email', user.email).single()
-  if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+  const owner = await resolveChatOwner(supabase)
+  if (!owner) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: session, error } = await supabase
     .from('chat_sessions')
-    .insert({ member_id: member.id, title: 'New Chat' })
+    .insert({ [owner.ownerCol]: owner.ownerId, title: 'New Chat' })
     .select()
     .single()
 

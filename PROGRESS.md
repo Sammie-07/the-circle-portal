@@ -160,6 +160,32 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-06-30
+- **Ask Gogo for staff + member-chat monitoring tab.** Two asks: (1) give Gogo/admins their own
+  Ask Gogo bubble, and (2) let staff read every member's Ask Gogo conversation to check the Brain's
+  accuracy.
+  - **Staff chats now persist with history.** `chat_sessions` was member-only (`member_id NOT NULL`,
+    FK → members, member-own RLS). Migration `chat_sessions_allow_staff_owner` (applied to live DB):
+    made `member_id` nullable, added `staff_id uuid → profiles`, an XOR check
+    (`chat_sessions_owner_chk` — exactly one owner), an `idx_chat_sessions_staff` index, and
+    `staff_own_sessions`/`staff_own_messages` RLS policies (parallel to the member ones; permissive
+    policies OR together). Verified the XOR rejects both-null and both-set.
+  - New `src/lib/chatOwner.ts` `resolveChatOwner()` resolves the current user to a chat owner —
+    staff (by `auth.uid()` → `staff_id`) checked first, else member (by email → `member_id`) — and
+    returns the column to filter/insert on. Rewired `/api/chat/sessions` (GET/POST) and
+    `/api/chat/[sessionId]/messages` (GET/POST) through it, so the existing `ChatOverlay` now works
+    for staff with zero client changes. Admin layout renders `<ChatBubble />` (persisted, NOT the
+    ephemeral `preview` path; impersonation still uses `preview`).
+  - **New `/admin/chats` monitoring tab** (sidebar "Ask Gogo Chats", after Office Hours). Read-only
+    master-detail: left list of every **member** session (member name, title, last-updated, message
+    count, searchable); right pane loads the full transcript with Ask Gogo's markdown rendered.
+    Server page is staff-gated (all roles: owner/admin/manager/support/tech) and reads via the
+    **service-role** client since chat RLS is owner-only (no admin policy). Transcript fetched from
+    new staff-gated `GET /api/admin/chats/[sessionId]` (service-role). Staff test chats are excluded
+    (`member_id IS NOT NULL`). New component `src/components/admin/ChatMonitor.tsx`.
+  - Added the chat tables to `supabase-schema.sql` (they had never been recorded there) reflecting
+    the new staff-owner shape. tsc + lint + `next build` all clean.
+
 ### 2026-06-25
 - **Digest preview made async + exclude internal accounts.** The preview was slow because the AI
   narrative pass (~30–60s) ran before responding; `/api/admin/digest-preview` now acknowledges

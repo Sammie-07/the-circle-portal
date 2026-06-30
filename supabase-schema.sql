@@ -337,3 +337,47 @@ create policy "admins manage office hours weeks" on office_hours_weeks
 insert into app_settings (key, value)
 values ('office_hours_zoom_link', 'https://us02web.zoom.us/j/7344760289?omn=82664283854&jst=2')
 on conflict (key) do nothing;
+
+-- ============================================
+-- ASK GOGO CHAT (member + staff conversations)
+-- ============================================
+-- Each session belongs to EITHER a member (member_id, matched by email) OR a
+-- staff profile (staff_id) — never both (chat_sessions_owner_chk enforces XOR).
+-- Members get the bubble on their portal; staff/Gogo get it in the admin portal.
+-- Staff (owner/admin/manager/support/tech) monitor member chats read-only at
+-- /admin/chats via the service-role client (no admin RLS policy here by design).
+create table if not exists chat_sessions (
+  id uuid primary key default gen_random_uuid(),
+  member_id uuid references members(id) on delete cascade,
+  staff_id uuid references profiles(id) on delete cascade,
+  title text not null default 'New Chat',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint chat_sessions_owner_chk check ((member_id is not null) <> (staff_id is not null))
+);
+create index if not exists idx_chat_sessions_member on chat_sessions(member_id, updated_at desc);
+create index if not exists idx_chat_sessions_staff on chat_sessions(staff_id, updated_at desc);
+
+create table if not exists chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references chat_sessions(id) on delete cascade,
+  role text not null check (role in ('user', 'assistant')),
+  content text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_chat_messages_session on chat_messages(session_id, created_at);
+
+alter table chat_sessions enable row level security;
+alter table chat_messages enable row level security;
+
+-- Owners (member or staff) read/write only their own sessions + messages.
+create policy "members_own_sessions" on chat_sessions for all
+  using (member_id = (select id from members where email = (auth.jwt() ->> 'email')));
+create policy "staff_own_sessions" on chat_sessions for all
+  using (staff_id = auth.uid()) with check (staff_id = auth.uid());
+create policy "members_own_messages" on chat_messages for all
+  using (session_id in (select id from chat_sessions
+    where member_id = (select id from members where email = (auth.jwt() ->> 'email'))));
+create policy "staff_own_messages" on chat_messages for all
+  using (session_id in (select id from chat_sessions where staff_id = auth.uid()))
+  with check (session_id in (select id from chat_sessions where staff_id = auth.uid()));

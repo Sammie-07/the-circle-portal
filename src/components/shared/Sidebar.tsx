@@ -20,6 +20,7 @@ const adminNav = [
   { href: '/admin/log', label: 'Log This Week', icon: '◆' },
   { href: '/admin/payments', label: 'Payments', icon: '$' },
   { href: '/admin/office-hours', label: 'Office Hours', icon: '▶' },
+  { href: '/admin/chats', label: 'Ask Gogo Chats', icon: '◌' },
   { href: '/admin/team', label: 'Team', icon: '◑' },
   { href: '/admin/settings', label: 'Settings', icon: '⚙' },
 ]
