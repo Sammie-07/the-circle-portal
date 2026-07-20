@@ -135,6 +135,7 @@ self-authenticating routes it exempts: `/b/`, `/r/`, `/checkin/`, `/api/ghl/`, `
 | `monday-office-hours` | `0 13 * * 1` (Mon 9am ET) | Ask admins to set whether Tue office hours happen |
 | `task-reminders` | `0 14 * * *` (daily ~9–10am ET) | One bundled email per member of tasks near deadline (3 days before → 3 after) |
 | `tuesday-digest` | `0 13 * * 2` (Tue 9am ET) | AI narrative recap of each real member's past week to Gogo+admins, before office hours |
+| `payment-reminders` | `30 13 * * *` (daily 9:30am ET) | Emails admins about member payments due today (+ still-unpaid overdue) so they check Stripe & update the portal |
 
 ## 7. Environment variables
 
@@ -159,6 +160,22 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 ## 9. Changelog
 
 Every code change is recorded here, newest first.
+
+### 2026-07-10
+- **Payment due-date reminders to admins (new daily cron).** Requested: nudge admins on a member's
+  payment due date so they remember to check Stripe and mark it paid in the portal. New
+  `/api/cron/payment-reminders` (`30 13 * * *` = daily 9:30am ET, Bearer `CRON_SECRET`-guarded,
+  service-role). Finds `member_payments` rows still `unpaid`/`partial` with a remaining balance and
+  `due_date <= today (ET)`, splits into **Due today** (gold) and **Overdue and still unpaid** (red,
+  so a missed update keeps nudging), excludes `is_internal` accounts, formats each line with the
+  member, remaining amount (member's `member_billing.currency`, default USD), period label and due
+  date. Sends ONE branded email per admin (owner/admin/manager, via `profiles.email`) with a CTA to
+  `/admin/payments`; sends nothing on a quiet day. Registered in `vercel.json`. Admin-only, no
+  member-facing change. Current data: 0 due/overdue today, 19 future (earliest 2026-08-12), so it
+  stays silent until real due dates arrive.
+- **Backfilled Kristy Waker's `profiles.email`** (`kristy@gogosrealestate.com`) — it was NULL from
+  the manual profile fix, which would have excluded her from every admin email (digest, office-hours,
+  payment reminders). All four owner/admin/manager profiles now have emails.
 
 ### 2026-06-30
 - **Task labels now reflect origin (admin vs AI), not just type.** Admins couldn't tell tasks they
