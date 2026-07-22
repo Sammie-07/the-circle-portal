@@ -126,9 +126,13 @@ export default function HomeworkPanel({ memberId }: Props) {
     toast('Item deleted')
   }
 
+  // Sort by the date each task was sent (created_at), newest first, so recent
+  // homework is up top and long-waiting old items are at the bottom.
+  const bySentDesc = (a: HomeworkItem, b: HomeworkItem) =>
+    (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id)
   const filtered = items.filter(i => filter === 'all' || i.type === filter)
-  const pending = filtered.filter(i => !i.completed)
-  const done = filtered.filter(i => i.completed)
+  const pending = filtered.filter(i => !i.completed).sort(bySentDesc)
+  const done = filtered.filter(i => i.completed).sort(bySentDesc)
 
   return (
     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded overflow-hidden">

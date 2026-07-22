@@ -162,6 +162,13 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-07-10
+- **Admin homework now sorts by date sent (newest first).** Per admin request: tasks were mixed up
+  so recent homework and months-old items were interleaved and hard to track. Both admin surfaces
+  now sort each list by `created_at` (the "sent" date, same field the date filter uses) descending,
+  tie-broken by id for stability on batch inserts: the `/admin/homework` overview (`HomeworkOverview`
+  To-do + Completed lists, was due-date / completion-date) and the per-member `HomeworkPanel` on the
+  member detail page (pending + done, was the API's `sort_order` order). Sorting only (no display or
+  filter change); member-facing homework order is untouched.
 - **Payment due-date reminders to admins (new daily cron).** Requested: nudge admins on a member's
   payment due date so they remember to check Stripe and mark it paid in the portal. New
   `/api/cron/payment-reminders` (`30 13 * * *` = daily 9:30am ET, Bearer `CRON_SECRET`-guarded,

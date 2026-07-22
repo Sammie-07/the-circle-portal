@@ -110,12 +110,13 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
   })
   const filtersActive = typeFilter !== 'all' || !!sentFrom || !!sentTo
 
-  const todo = [...visible]
-    .filter((t) => !t.completed)
-    .sort((a, b) => (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999'))
-  const completed = [...visible]
-    .filter((t) => t.completed)
-    .sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
+  // Sort by the date each task was sent (created_at), newest first — so last
+  // week's homework sits at the top and long-waiting old items sink to the bottom.
+  // Tie-break on id for a stable order when created_at ties (e.g. batch inserts).
+  const bySentDesc = (a: Task, b: Task) =>
+    (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id)
+  const todo = [...visible].filter((t) => !t.completed).sort(bySentDesc)
+  const completed = [...visible].filter((t) => t.completed).sort(bySentDesc)
   const s = stats(visible)
 
   return (
