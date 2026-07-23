@@ -162,6 +162,11 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-07-10
+- **Admin homework rows now show the auto-captured "Added" date.** Small, muted "Added {Mon D, YYYY}"
+  in the top-right corner of each task row on both admin surfaces (`HomeworkOverview` TaskRow +
+  `HomeworkPanel` row), so admins have a record of when each task was created. Uses the existing
+  `created_at` (system-set on insert — no manual entry, no schema/API change); display-only. Pairs
+  with the newest-first sort below.
 - **Admin homework now sorts by date sent (newest first).** Per admin request: tasks were mixed up
   so recent homework and months-old items were interleaved and hard to track. Both admin surfaces
   now sort each list by `created_at` (the "sent" date, same field the date filter uses) descending,

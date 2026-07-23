@@ -351,6 +351,13 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
         )}
       </div>
 
+      {/* Auto-captured date the task was added (system-recorded on creation). */}
+      {item.created_at && (
+        <span className="text-[var(--text-4)] text-[10px] whitespace-nowrap flex-shrink-0 mt-0.5" title="Date this task was added">
+          Added {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </span>
+      )}
+
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
         <button onClick={() => { setEditId(item.id); setEditForm({ title: item.title, description: item.description ?? '', due_date: item.due_date ?? '', type: item.type }) }}

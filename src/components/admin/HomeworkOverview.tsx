@@ -77,6 +77,12 @@ function TaskRow({ task }: { task: Task }) {
           </div>
         )}
       </div>
+      {/* Auto-captured date the task was added (system-recorded on creation). */}
+      {task.created_at && (
+        <span className="text-[var(--text-4)] text-[10px] whitespace-nowrap flex-shrink-0 mt-0.5" title="Date this task was added">
+          Added {fmtDate(task.created_at)}
+        </span>
+      )}
     </div>
   )
 }
