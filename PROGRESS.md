@@ -162,6 +162,20 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-07-10
+- **Billing: 6-month (and custom) plan length + fixed a false-outstanding case.** Billing assumed a
+  12-month program, so a special short deal generated too many payment rows and looked outstanding
+  forever. Added a **Plan length** selector to Billing Settings (12 months / 6 months) backed by a
+  new `member_billing.term_months` column (migration `member_billing_add_term_months`, int 1-60 or
+  null = legacy 12-mo default; recorded in `supabase-schema.sql`). Wired through:
+  `/api/member-billing` PUT (validate + persist), the schedule generator
+  (`/api/member-payments/generate` monthly cap = `term_months`, so a 6-month plan makes exactly 6
+  rows), and the client `nextDueFromBilling()` projection (stops after the agreed number of monthly
+  payments, so no phantom "next due"). Backward compatible: existing members read as 12 and behave
+  as before until edited. **Fixed Sean Bates** (a real 6-month / 6×$2,500 = $15,000 deal): his
+  ledger had 10 rows (membership_end was set ~10 months out), leaving 4 unpaid phantom rows =
+  $10,000 false outstanding (also overdue, which the new payment-reminder cron would have emailed
+  daily). Deleted the 4 unpaid rows and set his `term_months = 6`; he now shows 6 paid rows,
+  $15,000 paid, **$0 outstanding**. Admin-only; no member-facing change.
 - **Admin homework rows now show the auto-captured "Added" date.** Small, muted "Added {Mon D, YYYY}"
   in the top-right corner of each task row on both admin surfaces (`HomeworkOverview` TaskRow +
   `HomeworkPanel` row), so admins have a record of when each task was created. Uses the existing

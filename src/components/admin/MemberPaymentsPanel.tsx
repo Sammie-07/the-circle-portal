@@ -11,6 +11,7 @@ interface Billing {
   amount: number | string | null
   currency: string | null
   due_day: number | null
+  term_months: number | null
   membership_start: string | null
   membership_end: string | null
   membership_status: 'active' | 'paused' | 'cancelled'
@@ -35,6 +36,7 @@ interface BillingForm {
   amount: string
   currency: string
   due_day: string
+  term_months: string
   membership_start: string
   membership_end: string
   membership_status: 'active' | 'paused' | 'cancelled'
@@ -57,6 +59,7 @@ const EMPTY_BILLING: BillingForm = {
   amount: '',
   currency: 'USD',
   due_day: '',
+  term_months: '12',
   membership_start: '',
   membership_end: '',
   membership_status: 'active',
@@ -120,6 +123,15 @@ function nextDueFromBilling(b: Billing | null): { date: string; amount: number |
     if (next > end) return null
   }
 
+  // Plan length: for monthly plans, stop projecting once the agreed number of
+  // payments has passed (a 6-month deal shouldn't show a phantom 7th due). The
+  // payment index is how many months from the membership start the next due is.
+  if (b.schedule !== 'annual' && b.term_months && b.membership_start) {
+    const start = new Date(b.membership_start + 'T00:00:00')
+    const idx = (next.getFullYear() - start.getFullYear()) * 12 + (next.getMonth() - start.getMonth())
+    if (idx >= b.term_months) return null
+  }
+
   return { date: isoDate(next), amount }
 }
 
@@ -154,6 +166,7 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
             amount: b.amount === null || b.amount === undefined ? '' : String(b.amount),
             currency: b.currency ?? 'USD',
             due_day: b.due_day === null || b.due_day === undefined ? '' : String(b.due_day),
+            term_months: b.term_months === null || b.term_months === undefined ? '12' : String(b.term_months),
             membership_start: b.membership_start ?? '',
             membership_end: b.membership_end ?? '',
             membership_status: b.membership_status ?? 'active',
@@ -233,6 +246,7 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
           amount: billingForm.amount === '' ? null : billingForm.amount,
           currency: billingForm.currency.trim() || 'USD',
           due_day: billingForm.due_day === '' ? null : billingForm.due_day,
+          term_months: billingForm.term_months === '' ? null : billingForm.term_months,
           membership_start: billingForm.membership_start || null,
           membership_end: billingForm.membership_end || null,
           membership_status: billingForm.membership_status,
@@ -420,6 +434,20 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
                   <option value="monthly">Monthly</option>
                   <option value="annual">Annual</option>
                 </select>
+              </div>
+              <div>
+                <label className={labelClass}>Plan length</label>
+                <select
+                  value={billingForm.term_months}
+                  onChange={(e) => setBillingForm((f) => ({ ...f, term_months: e.target.value }))}
+                  className={inputClass}
+                >
+                  <option value="12">12 months (1 year)</option>
+                  <option value="6">6 months</option>
+                </select>
+                {billingForm.schedule === 'monthly' && (
+                  <p className="text-[var(--text-4)] text-[10px] mt-1">Number of monthly payments to generate.</p>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Membership Status</label>

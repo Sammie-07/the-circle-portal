@@ -20,6 +20,7 @@ interface PlanRow { due_date: string; period_label: string }
 function buildSchedule(b: {
   schedule: string
   due_day: number | null
+  term_months: number | null
   membership_start: string | null
   membership_end: string | null
 }): PlanRow[] {
@@ -38,9 +39,11 @@ function buildSchedule(b: {
       d.setFullYear(d.getFullYear() + 1)
     }
   } else {
-    // monthly — pay on due_day each month
+    // monthly — pay on due_day each month. Plan length (term_months) caps the number
+    // of payments so a 6-month deal makes exactly 6 rows, not the 12-month default.
     const wantedDay = b.due_day ? Math.min(Math.max(Number(b.due_day), 1), 31) : start.getDate()
-    const limit = end ? MAX_ROWS : DEFAULT_MONTHLY_COUNT
+    const term = b.term_months && b.term_months > 0 ? b.term_months : null
+    const limit = term ?? (end ? MAX_ROWS : DEFAULT_MONTHLY_COUNT)
     let y = start.getFullYear()
     let m = start.getMonth()
     for (let i = 0; i < limit && rows.length < MAX_ROWS; i++) {
@@ -81,7 +84,7 @@ export async function POST(request: Request) {
 
   const { data: billing } = await db
     .from('member_billing')
-    .select('schedule, amount, due_day, membership_start, membership_end')
+    .select('schedule, amount, due_day, term_months, membership_start, membership_end')
     .eq('member_id', member_id)
     .maybeSingle()
 

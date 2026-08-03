@@ -269,6 +269,7 @@ create table if not exists member_billing (
   amount            numeric(10,2),
   currency          text not null default 'USD',
   due_day           int check (due_day between 1 and 31),
+  term_months       int check (term_months is null or term_months between 1 and 60), -- plan length (# monthly payments); null = legacy 12-mo default
   membership_start  date,
   membership_end    date,
   membership_status text not null default 'active' check (membership_status in ('active','paused','cancelled')),
