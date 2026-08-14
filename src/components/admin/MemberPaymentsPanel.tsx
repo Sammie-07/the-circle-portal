@@ -135,8 +135,11 @@ function nextDueFromBilling(b: Billing | null): { date: string; amount: number |
   return { date: isoDate(next), amount }
 }
 
-export default function MemberPaymentsPanel({ memberId }: { memberId: string }) {
+export default function MemberPaymentsPanel({ memberId, programStart }: { memberId: string; programStart?: string | null }) {
   const router = useRouter()
+  // Program start date — drives the member's quarter (stored on members.join_date).
+  const [startDate, setStartDate] = useState<string>(programStart ?? '')
+  const [savingStart, setSavingStart] = useState(false)
   const [billing, setBilling] = useState<Billing | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
@@ -231,6 +234,25 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
     : null
   const planNext = nextDueFromBilling(billing)
   const nextDue = ledgerNext ?? (planNext ? { ...planNext, fromLedger: false } : null)
+
+  async function saveProgramStart() {
+    setSavingStart(true)
+    try {
+      const res = await fetch(`/api/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ join_date: startDate || null }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { toast(data.error ?? 'Could not save start date', 'error'); return }
+      router.refresh()
+      toast('Program start date saved')
+    } catch {
+      toast('Network error — please try again', 'error')
+    } finally {
+      setSavingStart(false)
+    }
+  }
 
   async function saveBilling(e: React.FormEvent) {
     e.preventDefault()
@@ -408,6 +430,25 @@ export default function MemberPaymentsPanel({ memberId }: { memberId: string }) 
         >
           + Add Payment
         </button>
+      </div>
+
+      {/* Program start date — sets the member's actual coaching start, which drives
+          their Current Quarter on the dashboard (not the date they were added). */}
+      <div className="bg-[var(--bg)] border border-[var(--border-color)] rounded p-4 mb-6">
+        <label className={labelClass}>Program start date</label>
+        <p className="text-[var(--text-4)] text-[10px] mb-2">When their coaching actually began. Drives the member&apos;s Current Quarter.</p>
+        <div className="flex items-end gap-2">
+          <div className="flex-1 max-w-[220px]">
+            <DateField value={startDate} onChange={setStartDate} />
+          </div>
+          <button
+            onClick={saveProgramStart}
+            disabled={savingStart || (startDate === (programStart ?? ''))}
+            className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {savingStart ? 'Saving…' : 'Save'}
+          </button>
+        </div>
       </div>
 
       {loading ? (

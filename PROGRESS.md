@@ -162,6 +162,25 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-07-10
+- **Member quarter now comes from actual program start, not signup date.** The dashboard derived the
+  Current Quarter from `members.join_date`, which was auto-set to when the member was added, so
+  everyone showed Q1. `join_date` is now the editable **program start date**: exposed as a
+  "Program start date" field in the admin Payments panel (`MemberPaymentsPanel`, saved via
+  `PATCH /api/members/[id]` — added `join_date` to the editable fields with date validation).
+  **Backfilled** all 5 real members' `join_date` from their `member_billing.membership_start`
+  (the real start), so quarters corrected immediately (Allison Q3, Gina Q3, Krystal Q1, Sean Q4,
+  Yvonne Q1). Note: quarter must stay on `members` (member-readable) not `member_billing`
+  (admin-only RLS), so the field writes `join_date`, and AttendanceCard's month range now starts
+  from the true start too.
+- **Member dashboard decluttered + dedicated "My Homework" page.** Homework was a long list at the
+  bottom of the dashboard, mixed and messy. New member nav item **My Homework** →
+  `/dashboard/homework` (server page, loads the member's tasks and renders `HomeworkSection`). The
+  dashboard now stays analytics + shortcuts only: removed the homework list; the deadline-reminder
+  bubble and the Homework stat card now link to `/dashboard/homework` (was an on-page anchor).
+- **Member homework sorted: unfinished first.** `HomeworkSection` now sorts BOTH the "This Week's
+  Homework" and "Blueprint Tasks" lists by a shared comparator — incomplete first (soonest due
+  first, undated last), completed sink to the bottom — so done/not-done no longer interleave. (The
+  Blueprint list already did this; homework didn't.)
 - **Billing: 6-month (and custom) plan length + fixed a false-outstanding case.** Billing assumed a
   12-month program, so a special short deal generated too many payment rows and looked outstanding
   forever. Added a **Plan length** selector to Billing Settings (12 months / 6 months) backed by a

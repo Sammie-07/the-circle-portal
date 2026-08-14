@@ -222,7 +222,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
       {/* Payments — LAST (admin only) */}
       <div className="mb-6">
-        <MemberPaymentsPanel memberId={member.id} />
+        <MemberPaymentsPanel memberId={member.id} programStart={member.join_date ?? null} />
       </div>
     </div>
   )

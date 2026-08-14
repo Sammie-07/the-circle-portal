@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 const EDITOR_ROLES = ['owner', 'admin', 'manager']
 // Deleting a member is more sensitive than editing — owner/admin only
 const DELETER_ROLES = ['owner', 'admin']
-const EDITABLE_FIELDS = ['name', 'email', 'cohort', 'status', 'phone', 'city', 'instagram', 'website', 'bio'] as const
+const EDITABLE_FIELDS = ['name', 'email', 'cohort', 'status', 'phone', 'city', 'instagram', 'website', 'bio', 'join_date'] as const
 const VALID_STATUS = ['active', 'inactive', 'graduated']
 
 // PATCH — staff edit of a member's profile
@@ -44,6 +44,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if ('status' in updates && updates.status && !VALID_STATUS.includes(updates.status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+  // join_date drives the member's program quarter — accept a YYYY-MM-DD date or null.
+  if ('join_date' in updates && updates.join_date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(updates.join_date) || Number.isNaN(new Date(updates.join_date + 'T00:00:00').getTime())) {
+      return NextResponse.json({ error: 'Invalid program start date' }, { status: 400 })
+    }
   }
 
   // Role check above is the security boundary. Use admin client so RLS doesn't block manager edits.

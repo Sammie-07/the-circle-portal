@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import HomeworkSection from '@/components/dashboard/HomeworkSection'
 import AttendanceCard from '@/components/dashboard/AttendanceCard'
 import OfficeHoursCard from '@/components/dashboard/OfficeHoursCard'
 import { resolvePortalContext } from '@/lib/portalContext'
@@ -87,8 +86,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       {/* Deadline reminder bubble */}
       {dueSoonTasks.length > 0 && (
-        <a
-          href="#homework"
+        <Link
+          href="/dashboard/homework"
           className={`flex items-center gap-3 mb-8 rounded-lg border px-4 py-3 transition-colors ${
             overdueCount > 0
               ? 'bg-[#CC1F1F]/10 border-[#CC1F1F]/30 hover:border-[#CC1F1F]/50'
@@ -104,17 +103,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               {overdueCount > 0 && <span className="text-[#ff8080]">{overdueCount} overdue</span>}
               {overdueCount > 0 && upcomingCount > 0 && ' · '}
               {upcomingCount > 0 && `${upcomingCount} due within 3 days`}
-              {' · tap to view ↓'}
+              {' · tap to view →'}
             </p>
           </div>
-        </a>
+        </Link>
       )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <AttendanceCard logs={logs} joinDate={member.join_date} />
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
-          <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Homework</p>
+        <Link href="/dashboard/homework" className="block bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 hover:border-[#C9A227]/40 transition-colors group">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[var(--text-3)] text-xs uppercase tracking-wider">Homework</p>
+            <span className="text-[#C9A227] text-xs opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
+          </div>
           <p className="text-[var(--text)] font-serif text-3xl">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
           <p className="text-[var(--text-3)] text-xs mt-2">{tasksDone} of {taskTotal} tasks complete</p>
           <div className="mt-3 h-1 bg-[var(--border-color)] rounded-full overflow-hidden">
@@ -123,7 +125,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               style={{ width: `${homeworkRate ?? 0}%` }}
             />
           </div>
-        </div>
+        </Link>
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
           <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Current Quarter</p>
           <p className="text-[var(--text)] font-serif text-3xl">Q{currentQuarter}</p>
@@ -252,14 +254,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </a>
           </div>
         </div>
-      </div>
-
-      {/* Homework & Blueprint Tasks */}
-      <div id="homework" className="scroll-mt-20">
-        <HomeworkSection
-          memberId={member.id}
-          initialItems={homeworkData ?? []}
-        />
       </div>
 
     </div>

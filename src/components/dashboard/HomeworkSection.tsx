@@ -47,8 +47,17 @@ export default function HomeworkSection({ initialItems }: Props) {
   const [toggling, setToggling] = useState<string | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
 
-  const homework = items.filter(i => i.type === 'homework')
-  const tasks = items.filter(i => i.type === 'task')
+  // Show unfinished work first, then completed at the bottom; within each group,
+  // soonest due date first (undated last). Keeps the list from looking mixed-up.
+  const byPendingThenDue = (a: HomeworkItem, b: HomeworkItem) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1
+    if (!a.due_date && !b.due_date) return 0
+    if (!a.due_date) return 1
+    if (!b.due_date) return -1
+    return a.due_date.localeCompare(b.due_date)
+  }
+  const homework = items.filter(i => i.type === 'homework').sort(byPendingThenDue)
+  const tasks = items.filter(i => i.type === 'task').sort(byPendingThenDue)
 
   // Map: source task id -> follow-up tasks its note generated
   const followUpsBySource = new Map<string, FollowUp[]>()
@@ -155,20 +164,12 @@ export default function HomeworkSection({ initialItems }: Props) {
             </span>
           </div>
           <div className="space-y-2">
-            {tasks
-              .sort((a, b) => {
-                if (a.completed !== b.completed) return a.completed ? 1 : -1
-                if (!a.due_date && !b.due_date) return 0
-                if (!a.due_date) return 1
-                if (!b.due_date) return -1
-                return a.due_date.localeCompare(b.due_date)
-              })
-              .map(item => (
-                <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
-                  onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
-                  onCreateFollowUp={handleCreateFollowUp}
-                  onJump={jumpTo} highlighted={highlightId === item.id} />
-              ))}
+            {tasks.map(item => (
+              <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
+                onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
+                onCreateFollowUp={handleCreateFollowUp}
+                onJump={jumpTo} highlighted={highlightId === item.id} />
+            ))}
           </div>
         </div>
       )}
