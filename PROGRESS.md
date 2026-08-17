@@ -162,6 +162,20 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-07-10
+- **Office Hours: third weekly option — "Rescheduled" to another day/time.** The Settings
+  Tuesday-Office-Hours control was a two-way toggle (meeting / no-meeting). Added a **Rescheduled
+  this week** option where the admin picks a **day of the week** (dropdown) and **time** (time
+  input); members then see the call moved to that day/time. Migration
+  `office_hours_weeks_add_rescheduled` adds `status` ('meeting'|'no_meeting'|'rescheduled', backfilled
+  from `has_meeting` which is kept in sync), `rescheduled_date`, `rescheduled_time` (recorded in
+  `supabase-schema.sql`). `getOfficeHoursStatus()` now returns `status` + rescheduled fields + an
+  `isMeetingDayET` flag (true on Tuesday for normal weeks, or on the moved date for rescheduled
+  weeks). `OfficeHoursCard` renders three states: on the call day it shows the **Join the Zoom**
+  button (with the moved time for reschedules); otherwise a "moved to {Day} at {time}" notice, plus a
+  once-per-week announcement popup for changed weeks. `OfficeHoursSettings` got the 3-way selector +
+  weekday/time pickers (weekday → concrete date within the week); `/api/office-hours-week`
+  GET/PUT handle `status`/`rescheduled_*` (back-compat with old `has_meeting` payloads); the Monday
+  reminder cron reports the rescheduled slot. Preview overrides: `?oh=moved` / `?oh=movedtoday`.
 - **Member quarter now comes from actual program start, not signup date.** The dashboard derived the
   Current Quarter from `members.join_date`, which was auto-set to when the member was added, so
   everyone showed Q1. `join_date` is now the editable **program start date**: exposed as a

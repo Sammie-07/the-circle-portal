@@ -333,6 +333,11 @@ insert into app_settings (key, value) values ('teamgogo_agent_count', '1660')
 create table if not exists office_hours_weeks (
   week_of date primary key,
   has_meeting boolean not null default true,
+  -- status supersedes has_meeting: 'meeting' (as usual) | 'no_meeting' | 'rescheduled'.
+  -- has_meeting kept in sync (true unless 'no_meeting') for any legacy reader.
+  status text not null default 'meeting' check (status in ('meeting','no_meeting','rescheduled')),
+  rescheduled_date date, -- when status='rescheduled': the moved call's date (that week)
+  rescheduled_time text, -- when status='rescheduled': the moved call's time (HH:MM, ET)
   note text,
   updated_by uuid references auth.users,
   updated_at timestamptz default now()

@@ -20,8 +20,10 @@ export default async function AdminSettingsPage() {
         <OfficeHoursSettings
           initialZoomLink={oh.zoomLink}
           weekOf={oh.tuesdayISO}
-          initialHasMeeting={oh.hasMeeting}
+          initialStatus={oh.status}
           initialNote={oh.note ?? ''}
+          initialRescheduledDate={oh.rescheduledDate ?? ''}
+          initialRescheduledTime={oh.rescheduledTime ?? ''}
           initialIsSet={oh.isSet}
         />
         <AppSettingsForm initialAgentCount={agentCount} />

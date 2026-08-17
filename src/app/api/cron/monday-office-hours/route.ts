@@ -26,9 +26,22 @@ export async function GET(request: Request) {
   // Has anyone already set it this week?
   const { data: existing } = await supabase
     .from('office_hours_weeks')
-    .select('has_meeting')
+    .select('status, has_meeting, rescheduled_date, rescheduled_time')
     .eq('week_of', tuesdayISO)
     .maybeSingle()
+
+  const statusLabel = (() => {
+    if (!existing) return null
+    const s = existing.status ?? (existing.has_meeting ? 'meeting' : 'no_meeting')
+    if (s === 'no_meeting') return 'No meeting'
+    if (s === 'rescheduled') {
+      const day = existing.rescheduled_date
+        ? new Date(existing.rescheduled_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+        : 'another day'
+      return `Rescheduled to ${day}${existing.rescheduled_time ? ` at ${existing.rescheduled_time} ET` : ''}`
+    }
+    return 'Meeting as usual'
+  })()
 
   const { data: admins } = await supabase
     .from('profiles')
@@ -43,9 +56,9 @@ export async function GET(request: Request) {
     body: [
       `It's Monday. Please confirm whether <strong style="color:#FFFFFF;">Tuesday Office Hours</strong> are happening this week (${tuesdayLabel}, 12 noon ET).`,
       existing
-        ? `This week is currently set to: <strong style="color:#FFFFFF;">${existing.has_meeting ? 'Meeting as usual' : 'No meeting'}</strong>. You can change it from Settings.`
+        ? `This week is currently set to: <strong style="color:#FFFFFF;">${statusLabel}</strong>. You can change it from Settings.`
         : `It hasn't been set yet — if you do nothing, members will see the usual &ldquo;Join the Zoom&rdquo; button on Tuesday.`,
-      `Open Settings to confirm a meeting or mark the week off (members then see a no-meeting notice instead of the join button).`,
+      `Open Settings to confirm a meeting, mark the week off, or reschedule it to another day/time (members see the matching notice).`,
     ],
     cta: { text: 'Set This Week →', url: `${APP_URL}/admin/settings` },
     footer: 'The Circle · Admin Portal',

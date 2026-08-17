@@ -66,10 +66,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   let officeHours = await getOfficeHoursStatus()
   // Opt-in preview overrides for testing (not the real day/state):
-  //   ?oh=tuesday → force the Tuesday "Join the Zoom" state
-  //   ?oh=off     → force the "No Office Hours this week" + popup state
-  if (sp?.oh === 'tuesday') officeHours = { ...officeHours, isTuesdayET: true, hasMeeting: true }
-  else if (sp?.oh === 'off') officeHours = { ...officeHours, hasMeeting: false }
+  //   ?oh=tuesday → the Tuesday "Join the Zoom" state
+  //   ?oh=off     → the "No Office Hours this week" + popup state
+  //   ?oh=moved   → the "rescheduled, not today" notice + popup
+  //   ?oh=movedtoday → the rescheduled Join button (moved day is today)
+  if (sp?.oh === 'tuesday') officeHours = { ...officeHours, status: 'meeting', isMeetingDayET: true }
+  else if (sp?.oh === 'off') officeHours = { ...officeHours, status: 'no_meeting', hasMeeting: false, isMeetingDayET: false }
+  else if (sp?.oh === 'moved' || sp?.oh === 'movedtoday') officeHours = {
+    ...officeHours,
+    status: 'rescheduled',
+    isMeetingDayET: sp.oh === 'movedtoday',
+    rescheduledDate: officeHours.rescheduledDate ?? officeHours.tuesdayISO,
+    rescheduledTime: officeHours.rescheduledTime ?? '14:00',
+  }
 
   return (
     <div className="p-4 sm:p-8 max-w-4xl">
@@ -211,11 +220,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       {/* Tuesday Office Hours — Join button on Tuesdays, popup when off */}
       <OfficeHoursCard
-        isTuesday={officeHours.isTuesdayET}
-        hasMeeting={officeHours.hasMeeting}
+        status={officeHours.status}
+        isMeetingDay={officeHours.isMeetingDayET}
         note={officeHours.note}
         zoomLink={officeHours.zoomLink}
         tuesdayISO={officeHours.tuesdayISO}
+        rescheduledDate={officeHours.rescheduledDate}
+        rescheduledTime={officeHours.rescheduledTime}
       />
 
       {/* GoGet'Em Community */}
