@@ -40,6 +40,21 @@ export async function generateSigninLink(email: string, appUrl: string, fullName
   return confirmUrl(appUrl, data.properties.hashed_token)
 }
 
+// Generate the 6-digit email OTP that pairs with a magic link, WITHOUT creating
+// an account if one doesn't exist. Returns null for unknown emails (portal stays
+// invitation-only). Codes are immune to email link-scanners (Outlook SafeLinks
+// etc.) that "pre-click" and burn one-time magic links.
+export async function generateSigninOtpIfExists(email: string, appUrl: string): Promise<string | null> {
+  const admin = createAdminClient()
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+    options: { redirectTo: `${appUrl.replace(/\/$/, '')}/auth/callback` },
+  })
+  if (error || !data?.properties?.email_otp) return null
+  return data.properties.email_otp
+}
+
 // Like generateSigninLink, but does NOT create an account if one doesn't exist.
 // Returns null for unknown emails — used by self-service login so the portal
 // stays invitation-only (you must be invited before you can sign yourself in).

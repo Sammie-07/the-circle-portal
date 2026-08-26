@@ -5,12 +5,19 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+type Mode = 'link' | 'code'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
   const [signingIn, setSigningIn] = useState(false)
+
+  const [mode, setMode] = useState<Mode>('link')
+  const [codeStep, setCodeStep] = useState<'request' | 'enter'>('request')
+  const [code, setCode] = useState('')
+  const [suggestCode, setSuggestCode] = useState(false)
 
   // Recover the session from an implicit-flow magic link. Some links come back
   // with the tokens in the URL hash (#access_token=…), which the server route
@@ -42,23 +49,24 @@ export default function LoginPage() {
   }, [])
 
   // A failed/expired sign-in link (from /auth/confirm) bounces here with
-  // ?error=auth_failed. Surface a clear message so members don't silently loop
-  // by re-clicking a dead link — they need a fresh one.
+  // ?error=auth_failed. Surface a clear message + steer them to the code option,
+  // which survives email link-scanners that "pre-click" one-time links.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     if (params.get('error') === 'auth_failed') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setError('That sign-in link has expired or was already used. Enter your email below and we’ll send you a fresh one. Tip: open the link in Safari or Chrome, not inside your email app.')
+      setError('That sign-in link didn’t work — it may have expired, already been used, or been opened by your email’s security scanner. Get a 6-digit code instead (it works even when links don’t).')
+      setSuggestCode(true)
       window.history.replaceState(null, '', window.location.pathname)
     }
   }, [])
 
+  // Send a magic link (default).
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
       const res = await fetch('/api/auth/login-link', {
         method: 'POST',
@@ -77,6 +85,82 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
+
+  // Request a 6-digit code.
+  async function requestCode(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/auth/otp-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Something went wrong. Please try again.')
+      } else {
+        setCodeStep('enter')
+      }
+    } catch {
+      setError('Network error — please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Verify the 6-digit code and sign in.
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/auth/otp-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token: code }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error ?? 'That code is invalid or has expired.')
+      } else {
+        window.location.href = data.redirect ?? '/dashboard'
+      }
+    } catch {
+      setError('Network error — please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function switchTo(next: Mode) {
+    setMode(next)
+    setError('')
+    setSuggestCode(false)
+    setCodeStep('request')
+    setCode('')
+  }
+
+  const inputClass =
+    'w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors'
+  const primaryBtn =
+    'w-full bg-[#C9A227] text-[#0D0D0D] font-medium text-sm py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+
+  const errorBox = error && (
+    <div className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5 space-y-2">
+      <p>{error}</p>
+      {suggestCode && mode === 'link' && (
+        <button
+          type="button"
+          onClick={() => switchTo('code')}
+          className="inline-block bg-[#C9A227] text-[#0D0D0D] font-medium text-xs px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors"
+        >
+          Email me a 6-digit code instead →
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-4">
@@ -114,40 +198,109 @@ export default function LoginPage() {
               We sent a login link to<br />
               <span className="text-[#C9A227]">{email}</span>
             </p>
+            <p className="text-[var(--text-3)] text-xs mt-4 leading-relaxed">
+              Link keeps bouncing you back here? Some email providers (Outlook/Hotmail) open the link
+              automatically and use it up.
+            </p>
             <button
-              onClick={() => { setSent(false); setEmail('') }}
-              className="mt-6 text-xs text-[var(--text-2)] hover:text-[#C9A227] transition-colors"
+              onClick={() => { setSent(false); switchTo('code') }}
+              className="mt-2 text-xs text-[#C9A227] hover:underline"
             >
-              Use a different email
+              Email me a 6-digit code instead →
             </button>
+            <div>
+              <button
+                onClick={() => { setSent(false); setEmail('') }}
+                className="mt-4 text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
+              >
+                Use a different email
+              </button>
+            </div>
           </div>
+        ) : mode === 'code' ? (
+          codeStep === 'enter' ? (
+            /* Enter the code */
+            <form onSubmit={verifyCode} className="space-y-4">
+              <div className="text-center mb-2">
+                <h2 className="text-[var(--text)] font-serif text-lg mb-1">Enter your code</h2>
+                <p className="text-[var(--text-3)] text-xs leading-relaxed">
+                  We sent a 6-digit code to <span className="text-[#C9A227]">{email}</span>
+                </p>
+              </div>
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                required
+                placeholder="123456"
+                className={`${inputClass} text-center tracking-[0.5em] text-lg font-mono`}
+              />
+              {errorBox}
+              <button type="submit" disabled={loading || code.length < 6} className={primaryBtn}>
+                {loading ? 'Verifying…' : 'Verify & sign in'}
+              </button>
+              <div className="flex items-center justify-between text-xs">
+                <button type="button" onClick={() => setCodeStep('request')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                  ← Resend / change email
+                </button>
+                <button type="button" onClick={() => switchTo('link')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                  Use a link instead
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Request a code */
+            <form onSubmit={requestCode} className="space-y-4">
+              <div>
+                <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className={inputClass}
+                />
+              </div>
+              {errorBox}
+              <button type="submit" disabled={loading || !email} className={primaryBtn}>
+                {loading ? 'Sending…' : 'Email me a 6-digit code'}
+              </button>
+              <p className="text-center text-xs">
+                <button type="button" onClick={() => switchTo('link')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                  Prefer a login link? →
+                </button>
+              </p>
+              <p className="text-center text-[var(--text-3)] text-xs">Access is by invitation only.</p>
+            </form>
+          )
         ) : (
+          /* Default: send a magic link */
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2">
-                Email address
-              </label>
+              <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2">Email address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors"
+                className={inputClass}
               />
             </div>
 
-            {error && (
-              <p className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5">{error}</p>
-            )}
+            {errorBox}
 
-            <button
-              type="submit"
-              disabled={loading || !email}
-              className="w-full bg-[#C9A227] text-[#0D0D0D] font-medium text-sm py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={loading || !email} className={primaryBtn}>
               {loading ? 'Sending…' : 'Send login link'}
             </button>
+
+            <p className="text-center text-xs">
+              <button type="button" onClick={() => switchTo('code')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                Trouble with the link? Email me a 6-digit code instead →
+              </button>
+            </p>
 
             <p className="text-center text-[var(--text-3)] text-xs">
               Access is by invitation only.

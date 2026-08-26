@@ -162,6 +162,18 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-26
+- **Login by 6-digit code (fallback for when links get eaten by email scanners).** Root problem:
+  Outlook/Hotmail "SafeLinks" (and similar corporate scanners) pre-open one-time magic links to
+  vet them, consuming the token before the member clicks — an unbreakable loop for those members
+  (Rachel Bucci). Added a code-based path ALONGSIDE the existing magic link (both options kept):
+  `generateSigninOtpIfExists()` (`auth-links.ts`) mints the 6-digit `email_otp` paired with a magic
+  link (invitation-only, no account creation); `POST /api/auth/otp-request` emails it branded (big
+  gold code block, enumeration-safe); `POST /api/auth/otp-verify` verifies it server-side
+  (`verifyOtp`, tries type 'email' then 'magiclink' for version-safety), ensures a profile row, and
+  returns the role-based redirect. Login page reworked into link/code modes: "Trouble with the link?
+  Email me a 6-digit code instead" on the link form and the inbox screen, and the `auth_failed`
+  notice now shows a one-tap "Email me a 6-digit code instead" button. Codes can't be consumed by a
+  URL scanner, so they work when links don't.
 - **Login: expired/used sign-in links no longer silently loop.** A member (Rachel Bucci) was stuck
   re-clicking an old invite link and landing back on /login with no explanation. Root cause: sign-in
   links are one-time + short-lived (Supabase magic-link expiry), and `/auth/confirm` bounces failures
