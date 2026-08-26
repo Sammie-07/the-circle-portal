@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     footer: 'The Circle · Admin Portal',
   })
 
-  const sendRes = await sendEmail(email, "You've been added to The Circle team", html)
+  const sendRes = await sendEmail(email, "You've been added to The Circle team", html, { disableClickTracking: true })
   if (!sendRes.ok) {
     const detail = await sendRes.text().catch(() => '')
     return NextResponse.json({ error: `Invite registered but email failed. ${detail}`.trim() }, { status: 500 })

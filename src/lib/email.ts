@@ -2,19 +2,36 @@
 // design: dark background, red Circle mark, gold eyebrow, serif heading, gold
 // CTA button, divider footer).
 
-export async function sendEmail(to: string, subject: string, html: string) {
+// opts.disableClickTracking — turn OFF SendGrid click tracking for this send.
+// REQUIRED for auth emails: with tracking on, SendGrid rewrites every link to a
+// one-time redirect through its tracking domain (url*.gogosrealestate.com/ls/click),
+// which adds latency and, worse, lets scanners/previews consume our single-use
+// magic-link token before the member clicks. Disabling it sends the clean direct link.
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts?: { disableClickTracking?: boolean }
+) {
+  const payload: Record<string, unknown> = {
+    personalizations: [{ to: [{ email: to }] }],
+    from: { email: process.env.SENDGRID_FROM_EMAIL! },
+    subject,
+    content: [{ type: 'text/html', value: html }],
+  }
+  if (opts?.disableClickTracking) {
+    payload.tracking_settings = {
+      click_tracking: { enable: false, enable_text: false },
+      open_tracking: { enable: false },
+    }
+  }
   return fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: process.env.SENDGRID_FROM_EMAIL! },
-      subject,
-      content: [{ type: 'text/html', value: html }],
-    }),
+    body: JSON.stringify(payload),
   })
 }
 

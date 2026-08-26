@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       bodyHtml: codeHtml,
       note: 'This code expires after about an hour. If you didn\'t request it, you can ignore this email.',
     })
-    await sendEmail(email, `Your Circle login code: ${code}`, html)
+    await sendEmail(email, `Your Circle login code: ${code}`, html, { disableClickTracking: true })
   }
 
   return NextResponse.json({ success: true })

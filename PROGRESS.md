@@ -162,6 +162,13 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-26
+- **Disabled SendGrid click-tracking on auth emails (the actual root cause).** Rachel's link came
+  through `url6427.gogosrealestate.com/ls/click?...` — SendGrid was rewriting every login link into a
+  one-time tracking redirect. That added latency AND gave scanners/previews an extra hop to consume
+  the single-use token. `sendEmail()` gained an `opts.disableClickTracking` flag (sets
+  `tracking_settings.click_tracking/open_tracking.enable=false`); applied to all auth sends: invite,
+  admin-invite, login-link, and login-code. Login emails now carry the clean direct
+  `/auth/confirm` link (marketing/reminder emails keep tracking). Pairs with the interstitial below.
 - **Permanent fix for Outlook/Hotmail "SafeLinks" burning magic links: click-to-continue
   interstitial.** Root cause of the login loop: email security scanners pre-fetch the link (GET) to
   vet it, which our `/auth/confirm` verified immediately — consuming the one-time token before the

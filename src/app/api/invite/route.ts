@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     note: 'For security this sign-in link expires after about an hour. If it stops working, ask your coach to send a fresh one.',
   })
 
-  const sendRes = await sendEmail(email, 'Your access to The Circle is ready', html)
+  const sendRes = await sendEmail(email, 'Your access to The Circle is ready', html, { disableClickTracking: true })
   if (!sendRes.ok) {
     const detail = await sendRes.text().catch(() => '')
     return NextResponse.json({ error: `Email failed to send. ${detail}`.trim() }, { status: 500 })

@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       cta: { text: 'Sign In →', url: link },
       note: 'For security this link expires after about an hour. You can request a new one any time from the login page.',
     })
-    await sendEmail(email, 'Your Circle login link', html)
+    await sendEmail(email, 'Your Circle login link', html, { disableClickTracking: true })
   }
 
   // Always report success so we don't reveal whether an account exists.
