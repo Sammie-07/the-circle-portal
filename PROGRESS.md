@@ -162,7 +162,18 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-26
-- **Login by 6-digit code (fallback for when links get eaten by email scanners).** Root problem:
+- **Permanent fix for Outlook/Hotmail "SafeLinks" burning magic links: click-to-continue
+  interstitial.** Root cause of the login loop: email security scanners pre-fetch the link (GET) to
+  vet it, which our `/auth/confirm` verified immediately — consuming the one-time token before the
+  human clicked. Reworked `/auth/confirm`: **GET now renders a branded "Continue to sign in"
+  interstitial and does NOT verify**; the token is verified only on the **POST** that a real click
+  submits (303 → /admin or /dashboard by role; failure → /login?error=auth_failed). Scanners issue
+  GET/HEAD and don't submit forms, so the token survives the scan and only the human consumes it.
+  Costs one extra click for everyone (standard mitigation). Pairs with the login-code fallback below
+  and the middleware already exempts /auth/confirm (path-based, so POST is allowed too).
+- **Login-code input accepts 8 digits.** Supabase is configured for 8-digit OTPs but the code box
+  capped at 6; widened to 8 and made all member-facing copy length-agnostic ("login code").
+- **Login by code (fallback for when links get eaten by email scanners).** Root problem:
   Outlook/Hotmail "SafeLinks" (and similar corporate scanners) pre-open one-time magic links to
   vet them, consuming the token before the member clicks — an unbreakable loop for those members
   (Rachel Bucci). Added a code-based path ALONGSIDE the existing magic link (both options kept):
