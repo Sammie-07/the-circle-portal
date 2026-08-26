@@ -268,7 +268,7 @@ export default function LoginPage() {
                 {loading ? 'Sending…' : 'Email me a 6-digit code'}
               </button>
               <p className="text-center text-xs">
-                <button type="button" onClick={() => switchTo('link')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                <button type="button" onClick={() => switchTo('link')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
                   Prefer a login link? →
                 </button>
               </p>
@@ -297,7 +297,7 @@ export default function LoginPage() {
             </button>
 
             <p className="text-center text-xs">
-              <button type="button" onClick={() => switchTo('code')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+              <button type="button" onClick={() => switchTo('code')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
                 Trouble with the link? Email me a 6-digit code instead →
               </button>
             </p>
