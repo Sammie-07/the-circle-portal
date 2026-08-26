@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 // POST — public self-service login by CODE (alternative to the magic link).
-// Emails a branded 6-digit code if an account exists. Codes survive email
+// Emails a branded login code if an account exists. Codes survive email
 // link-scanners that consume one-time magic links. Always returns success
 // (no account enumeration; the portal is invitation-only).
 export async function POST(request: Request) {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       eyebrow: 'Sign In',
       heading: 'Your login code',
       body: [
-        `Enter this 6-digit code on the Circle login page to sign in.`,
+        `Enter this login code on the Circle login page to sign in.`,
       ],
       bodyHtml: codeHtml,
       note: 'This code expires after about an hour. If you didn\'t request it, you can ignore this email.',

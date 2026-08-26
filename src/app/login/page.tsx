@@ -56,7 +56,7 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search)
     if (params.get('error') === 'auth_failed') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setError('That sign-in link didn’t work — it may have expired, already been used, or been opened by your email’s security scanner. Get a 6-digit code instead (it works even when links don’t).')
+      setError('That sign-in link didn’t work — it may have expired, already been used, or been opened by your email’s security scanner. Get a login code instead (it works even when links don’t).')
       setSuggestCode(true)
       window.history.replaceState(null, '', window.location.pathname)
     }
@@ -86,7 +86,7 @@ export default function LoginPage() {
     }
   }
 
-  // Request a 6-digit code.
+  // Request a login code.
   async function requestCode(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -110,7 +110,7 @@ export default function LoginPage() {
     }
   }
 
-  // Verify the 6-digit code and sign in.
+  // Verify the login code and sign in.
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -156,7 +156,7 @@ export default function LoginPage() {
           onClick={() => switchTo('code')}
           className="inline-block bg-[#C9A227] text-[#0D0D0D] font-medium text-xs px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors"
         >
-          Email me a 6-digit code instead →
+          Email me a login code instead →
         </button>
       )}
     </div>
@@ -206,7 +206,7 @@ export default function LoginPage() {
               onClick={() => { setSent(false); switchTo('code') }}
               className="mt-2 text-xs text-[#C9A227] hover:underline"
             >
-              Email me a 6-digit code instead →
+              Email me a login code instead →
             </button>
             <div>
               <button
@@ -224,17 +224,17 @@ export default function LoginPage() {
               <div className="text-center mb-2">
                 <h2 className="text-[var(--text)] font-serif text-lg mb-1">Enter your code</h2>
                 <p className="text-[var(--text-3)] text-xs leading-relaxed">
-                  We sent a 6-digit code to <span className="text-[#C9A227]">{email}</span>
+                  We sent a login code to <span className="text-[#C9A227]">{email}</span>
                 </p>
               </div>
               <input
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 8))}
                 required
-                placeholder="123456"
-                className={`${inputClass} text-center tracking-[0.5em] text-lg font-mono`}
+                placeholder="12345678"
+                className={`${inputClass} text-center tracking-[0.35em] text-lg font-mono`}
               />
               {errorBox}
               <button type="submit" disabled={loading || code.length < 6} className={primaryBtn}>
@@ -265,7 +265,7 @@ export default function LoginPage() {
               </div>
               {errorBox}
               <button type="submit" disabled={loading || !email} className={primaryBtn}>
-                {loading ? 'Sending…' : 'Email me a 6-digit code'}
+                {loading ? 'Sending…' : 'Email me a login code'}
               </button>
               <p className="text-center text-xs">
                 <button type="button" onClick={() => switchTo('link')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
@@ -298,7 +298,7 @@ export default function LoginPage() {
 
             <p className="text-center text-xs">
               <button type="button" onClick={() => switchTo('code')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
-                Trouble with the link? Email me a 6-digit code instead →
+                Trouble with the link? Email me a login code instead →
               </button>
             </p>
 
