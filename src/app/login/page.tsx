@@ -41,6 +41,19 @@ export default function LoginPage() {
       })
   }, [])
 
+  // A failed/expired sign-in link (from /auth/confirm) bounces here with
+  // ?error=auth_failed. Surface a clear message so members don't silently loop
+  // by re-clicking a dead link — they need a fresh one.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('error') === 'auth_failed') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError('That sign-in link has expired or was already used. Enter your email below and we’ll send you a fresh one. Tip: open the link in Safari or Chrome, not inside your email app.')
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [])
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -125,7 +138,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-[#CC1F1F] text-xs">{error}</p>
+              <p className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5">{error}</p>
             )}
 
             <button

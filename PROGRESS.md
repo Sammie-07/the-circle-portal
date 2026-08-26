@@ -161,6 +161,17 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-08-26
+- **Login: expired/used sign-in links no longer silently loop.** A member (Rachel Bucci) was stuck
+  re-clicking an old invite link and landing back on /login with no explanation. Root cause: sign-in
+  links are one-time + short-lived (Supabase magic-link expiry), and `/auth/confirm` bounces failures
+  to `/login?error=auth_failed`, but the login page never read that param — so the member got zero
+  feedback and looped. The login page now detects `?error=auth_failed` on mount and shows a clear
+  notice ("that link expired or was already used, enter your email for a fresh one; open it in
+  Safari/Chrome, not your email app") and strips the param. Also restyled the error slot as a
+  readable notice box. No auth-flow change; token-hash verify is unchanged. (Immediate member fix is
+  a fresh link, opened in a real browser, used promptly.)
+
 ### 2026-07-10
 - **Office Hours: third weekly option — "Rescheduled" to another day/time.** The Settings
   Tuesday-Office-Hours control was a two-way toggle (meeting / no-meeting). Added a **Rescheduled
