@@ -161,6 +161,14 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-08-27
+- **Admins can send a member a password reset link.** New "🔑 Send Password Reset" button on each
+  member's admin detail page (`SendResetButton`, in the action-button row next to Copy Sign-In Link).
+  New admin-gated endpoint `POST /api/auth/admin-reset` (owner/admin/manager) emails the member a
+  branded "Reset your Circle password" email with a `ctx=reset` token link (auto-verifies via the
+  `/auth/confirm` interstitial → `/set-password`; code is the fallback), click-tracking disabled.
+  NOT yet pushed — awaiting approval.
+
 ### 2026-08-26
 - **Auth reshaped: password-only login; links removed; invites = activation + set-password.**
   Per request, after another loop (Chrissi). Changes: (1) **Login (`/login`) is password-only** —

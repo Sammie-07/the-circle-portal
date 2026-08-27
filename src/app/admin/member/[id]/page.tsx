@@ -13,6 +13,7 @@ import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
 import SigninLinkButton from '@/components/admin/SigninLinkButton'
+import SendResetButton from '@/components/admin/SendResetButton'
 import EditMemberButton from '@/components/admin/EditMemberButton'
 import MemberStatusButton from '@/components/admin/MemberStatusButton'
 import DeleteMemberButton from '@/components/admin/DeleteMemberButton'
@@ -123,6 +124,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
               )}
               <CheckinLinkButton memberId={id} />
               {member.email && <SigninLinkButton email={member.email} />}
+              {member.email && <SendResetButton email={member.email} memberName={member.name} />}
               <EditMemberButton
                 member={{
                   id: member.id,
