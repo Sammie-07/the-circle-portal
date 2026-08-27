@@ -40,7 +40,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/api/ghl/') ||
     pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/api/checkin/') ||
-    pathname.startsWith('/api/auth/')
+    pathname.startsWith('/api/auth/') ||
+    // Self-contained password setup/reset — must be reachable whether or not the
+    // visitor is signed in (new members activate here before they have a session;
+    // verified users finish choosing a password without being bounced away).
+    pathname === '/set-password'
   ) {
     return supabaseResponse
   }

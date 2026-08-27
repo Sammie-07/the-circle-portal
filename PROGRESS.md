@@ -162,6 +162,23 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-26
+- **Auth reshaped: password-only login; links removed; invites = activation + set-password.**
+  Per request, after another loop (Chrissi). Changes: (1) **Login (`/login`) is password-only** —
+  email + password, a "Forgot your password? Reset it →" link, and a **transition banner** steering
+  existing (now logged-out) members to set their password. No magic-link send, no in-login code entry.
+  (2) **`/set-password` is now a self-contained flow** (`PasswordSetupFlow`): verify email by 8-digit
+  code (browser `verifyOtp`, email→magiclink fallback), then choose a password (`updateUser`).
+  Contextual copy via `?ctx=` — `activate` (new member), `transition` (existing), `reset` (forgot).
+  Reachable logged-out (invites) or logged-in (finish setup); middleware `/set-password` exempted.
+  (3) **Invites carry a token link that AUTO-VERIFIES** — clicking it from the email goes through the
+  `/auth/confirm` interstitial (scanner-safe click-to-continue), verifies, and lands them on
+  `/set-password` already signed in, so they just pick a password (NO code). `generateSigninLink`
+  now takes a `ctx` that flows through the interstitial → `/set-password?ctx=…`. `/api/invite`,
+  `/api/admin-invite`, and the admin "copy sign-in link" all send `ctx=activate` token links. The
+  code is only the FALLBACK (link expired/eaten → they land unauthenticated and the flow asks email
+  → code). (4) **Removed** the magic-link login endpoint (`/api/auth/login-link`), old
+  `SetPasswordForm`, and `generateSigninLinkIfExists`. Codes only for reset / failed-link fallback.
+  tsc + lint + build clean. NOT yet pushed — awaiting approval.
 - **Password login (the permanent answer to the magic-link loops).** Recurring loops (Rachel, then
   Chrissi Pollizi — who only got in via the code) come from email link-scanners/prefetch that we
   can't control. Switched the portal to **email + password as the normal login** (`signInWithPassword`

@@ -4,13 +4,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // route them through /auth/confirm (the Supabase SSR "token hash" verify flow).
 // This works without a client-side PKCE verifier — unlike the /auth/callback
 // `?code` exchange, which only works for client-initiated signInWithOtp.
-function confirmUrl(appUrl: string, tokenHash: string): string {
-  return `${appUrl.replace(/\/$/, '')}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink`
+function confirmUrl(appUrl: string, tokenHash: string, ctx?: string): string {
+  const c = ctx ? `&ctx=${encodeURIComponent(ctx)}` : ''
+  return `${appUrl.replace(/\/$/, '')}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink${c}`
 }
 
 // Generate a branded magic sign-in link. Creates the auth user first if they
-// don't have an account yet, so invites work for brand-new members.
-export async function generateSigninLink(email: string, appUrl: string, fullName?: string): Promise<string> {
+// don't have an account yet, so invites work for brand-new members. Clicking it
+// (through the /auth/confirm interstitial) verifies them and drops them on
+// /set-password already signed in — no code needed. `ctx` steers the copy there.
+export async function generateSigninLink(email: string, appUrl: string, fullName?: string, ctx?: string): Promise<string> {
   const admin = createAdminClient()
   const redirectTo = `${appUrl.replace(/\/$/, '')}/auth/callback`
 
@@ -37,7 +40,7 @@ export async function generateSigninLink(email: string, appUrl: string, fullName
   if (error || !data?.properties?.hashed_token) {
     throw error ?? new Error('Could not generate sign-in link')
   }
-  return confirmUrl(appUrl, data.properties.hashed_token)
+  return confirmUrl(appUrl, data.properties.hashed_token, ctx)
 }
 
 // Generate the 6-digit email OTP that pairs with a magic link, WITHOUT creating
@@ -53,18 +56,4 @@ export async function generateSigninOtpIfExists(email: string, appUrl: string): 
   })
   if (error || !data?.properties?.email_otp) return null
   return data.properties.email_otp
-}
-
-// Like generateSigninLink, but does NOT create an account if one doesn't exist.
-// Returns null for unknown emails — used by self-service login so the portal
-// stays invitation-only (you must be invited before you can sign yourself in).
-export async function generateSigninLinkIfExists(email: string, appUrl: string): Promise<string | null> {
-  const admin = createAdminClient()
-  const { data, error } = await admin.auth.admin.generateLink({
-    type: 'magiclink',
-    email,
-    options: { redirectTo: `${appUrl.replace(/\/$/, '')}/auth/callback` },
-  })
-  if (error || !data?.properties?.hashed_token) return null
-  return confirmUrl(appUrl, data.properties.hashed_token)
 }

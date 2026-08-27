@@ -23,24 +23,26 @@ export async function POST(request: Request) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
+  // Token link (interstitial-protected) → clicking it verifies them and drops them
+  // on the set-password page already signed in, so they just choose a password.
   let link: string
   try {
-    link = await generateSigninLink(email, appUrl, member.name)
+    link = await generateSigninLink(email, appUrl, member.name, 'activate')
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not generate sign-in link' }, { status: 500 })
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not generate the activation link' }, { status: 500 })
   }
 
   const firstName = (member.name || '').split(' ')[0] || 'there'
   const html = brandedEmail({
-    eyebrow: 'Your Portal Access',
+    eyebrow: 'Your Account Is Live',
     heading: `Welcome to The Circle, ${firstName}.`,
     body: [
       `Your member portal is ready. It's where you'll find your 12-month blueprint, weekly check-ins, homework, your coaching call replays, and your progress reports.`,
-      `You can also ask me anything, any time, right inside the portal.`,
-      `Click below to sign in. This link is just for you, so please don't forward it.`,
+      `Click below to activate your account and set your password. That password is how you'll sign in from then on.`,
+      `This link is just for you, so please don't forward it.`,
     ],
-    cta: { text: 'Open My Portal →', url: link },
-    note: 'For security this sign-in link expires after about an hour. If it stops working, ask your coach to send a fresh one.',
+    cta: { text: 'Activate & Set My Password →', url: link },
+    note: 'If the button ever bounces you to the login page, use "Forgot your password?" there to set it with a code instead.',
   })
 
   const sendRes = await sendEmail(email, 'Your access to The Circle is ready', html, { disableClickTracking: true })

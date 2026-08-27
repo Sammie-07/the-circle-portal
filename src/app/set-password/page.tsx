@@ -1,14 +1,9 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import SetPasswordForm from '@/components/SetPasswordForm'
+import PasswordSetupFlow from '@/components/PasswordSetupFlow'
 
 export const dynamic = 'force-dynamic'
 
-// Reached right after verifying identity by code/link. The member chooses a
-// password here, then logs in with email + password from then on.
-export default async function SetPasswordPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-  return <SetPasswordForm email={user.email ?? ''} />
+// Self-contained: verify email by code, then choose a password. Reachable both
+// unauthenticated (from an invite/reset link) and authenticated (already verified).
+export default function SetPasswordPage() {
+  return <PasswordSetupFlow />
 }

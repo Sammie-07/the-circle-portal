@@ -34,11 +34,11 @@ export async function POST(request: Request) {
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-  // Generate a sign-in link and send our own branded email (no plain Supabase email).
+  // Token link (interstitial-protected) → verifies them and lands on set-password.
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   let link: string
   try {
-    link = await generateSigninLink(email, appUrl, name ?? email)
+    link = await generateSigninLink(email, appUrl, name ?? email, 'activate')
   } catch (err) {
     return NextResponse.json({ error: `Invite registered but link failed: ${err instanceof Error ? err.message : 'unknown error'}` }, { status: 500 })
   }
@@ -50,10 +50,10 @@ export async function POST(request: Request) {
     body: [
       `You've been added to The Circle admin portal as <strong style="color:#FFFFFF;">${ROLE_LABEL[role] ?? 'a team member'}</strong>.`,
       `From here you'll help run the program: members, reports, attendance, payments, and more.`,
-      `Click below to sign in and get started.`,
+      `Click below to activate your account and set your password.`,
     ],
-    cta: { text: 'Accept & Sign In →', url: link },
-    note: 'For security this sign-in link expires after about an hour. If it stops working, ask to be re-invited.',
+    cta: { text: 'Activate & Set My Password →', url: link },
+    note: 'If the button ever bounces you to the login page, use "Forgot your password?" there to set it with a code instead.',
     footer: 'The Circle · Admin Portal',
   })
 

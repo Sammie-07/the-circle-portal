@@ -1,8 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { generateSigninLink } from '@/lib/auth-links'
 import { NextResponse } from 'next/server'
 
-// POST — generate a magic sign-in link for a member without sending an email
+// POST — return a member's activation/sign-in link (to copy/share) without sending
+// an email. Clicking it verifies them (through the /auth/confirm interstitial) and
+// lands them on the set-password page, already signed in — no code needed.
 export async function POST(request: Request) {
   const supabase = await createClient()
 
@@ -18,23 +21,21 @@ export async function POST(request: Request) {
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
+
+  let link: string
+  try {
+    link = await generateSigninLink(email, appUrl, undefined, 'activate')
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not generate the link' }, { status: 500 })
+  }
+
+  // Granting access marks them invited (gates the Friday check-in cron).
   const adminDb = createAdminClient()
-
-  const { data, error } = await adminDb.auth.admin.generateLink({
-    type: 'magiclink',
-    email,
-    options: { redirectTo: `${appUrl}/auth/callback` },
-  })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Generating a sign-in link grants the member access, so mark them invited
-  // (only if not already) — this is what gates the Friday check-in cron.
   await adminDb
     .from('members')
     .update({ invited_at: new Date().toISOString() })
     .eq('email', email)
     .is('invited_at', null)
 
-  return NextResponse.json({ link: data.properties.action_link })
+  return NextResponse.json({ link })
 }

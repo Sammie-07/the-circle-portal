@@ -16,7 +16,7 @@ function esc(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-function interstitialHtml(tokenHash: string, type: string): string {
+function interstitialHtml(tokenHash: string, type: string, ctx: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,6 +49,7 @@ function interstitialHtml(tokenHash: string, type: string): string {
     <form method="POST" action="/auth/confirm">
       <input type="hidden" name="token_hash" value="${esc(tokenHash)}" />
       <input type="hidden" name="type" value="${esc(type)}" />
+      <input type="hidden" name="ctx" value="${esc(ctx)}" />
       <button type="submit">Continue to sign in →</button>
     </form>
     <p class="fine">For your security, this link only signs you in when you click above.</p>
@@ -62,14 +63,20 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const token_hash = searchParams.get('token_hash')
   const type = (searchParams.get('type') as EmailOtpType | null) ?? 'magiclink'
+  const ctx = normalizeCtx(searchParams.get('ctx'))
 
   if (!token_hash) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`)
   }
 
-  return new Response(interstitialHtml(token_hash, type), {
+  return new Response(interstitialHtml(token_hash, type, ctx), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   })
+}
+
+// Only allow the known set-password contexts; default to activate for invite links.
+function normalizeCtx(v: string | null): 'activate' | 'transition' | 'reset' {
+  return v === 'transition' || v === 'reset' ? v : 'activate'
 }
 
 // POST — the human clicked "Continue": now verify the token and establish the session.
@@ -78,10 +85,12 @@ export async function POST(request: Request) {
 
   let token_hash = ''
   let type: EmailOtpType = 'magiclink'
+  let ctx: 'activate' | 'transition' | 'reset' = 'activate'
   try {
     const form = await request.formData()
     token_hash = String(form.get('token_hash') ?? '')
     type = (String(form.get('type') ?? 'magiclink') as EmailOtpType)
+    ctx = normalizeCtx(String(form.get('ctx') ?? ''))
   } catch {
     return NextResponse.redirect(`${origin}/login?error=auth_failed`)
   }
@@ -107,9 +116,9 @@ export async function POST(request: Request) {
           })
         }
 
-        // Links are only for first-time setup / password reset → set a password.
+        // Verified via the email link → straight to choosing a password (no code).
         // 303 so the browser follows with a GET after the POST.
-        return NextResponse.redirect(`${origin}/set-password`, { status: 303 })
+        return NextResponse.redirect(`${origin}/set-password?ctx=${ctx}`, { status: 303 })
       }
     }
   }
