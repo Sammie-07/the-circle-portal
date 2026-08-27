@@ -4,9 +4,7 @@ import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
-
-// POST — verify a 6-digit email login code and establish the session (cookies
+// POST — verify an email login code and establish the session (cookies
 // are set on the SSR client). Returns the role-appropriate redirect path.
 export async function POST(request: Request) {
   let email: string
@@ -47,6 +45,7 @@ export async function POST(request: Request) {
     await supabase.from('profiles').insert({ id: user.id, role: 'member', full_name: user.email })
   }
 
-  const redirect = STAFF_ROLES.includes(profile?.role ?? '') ? '/admin' : '/dashboard'
-  return NextResponse.json({ success: true, redirect })
+  // Code/link are used only for first-time setup or a password reset, so send
+  // them to choose a password next.
+  return NextResponse.json({ success: true, redirect: '/set-password' })
 }

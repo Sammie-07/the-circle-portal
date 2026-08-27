@@ -5,35 +5,32 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-type Mode = 'link' | 'code'
+// Normal login is email + PASSWORD. Members who don't have a password yet (or
+// forgot it) verify by emailed code/link, which routes them to /set-password.
+type Mode = 'password' | 'code' | 'link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
   const [signingIn, setSigningIn] = useState(false)
 
-  const [mode, setMode] = useState<Mode>('link')
+  const [mode, setMode] = useState<Mode>('password')
   const [codeStep, setCodeStep] = useState<'request' | 'enter'>('request')
   const [code, setCode] = useState('')
-  const [suggestCode, setSuggestCode] = useState(false)
 
-  // Recover the session from an implicit-flow magic link. Some links come back
-  // with the tokens in the URL hash (#access_token=…), which the server route
-  // can't read — so it bounces here. Catch them client-side and set the session.
+  // Recover the session from an implicit-flow magic link (#access_token=…).
   useEffect(() => {
     if (typeof window === 'undefined') return
     const hash = window.location.hash
     if (!hash || !hash.includes('access_token')) return
-
     const params = new URLSearchParams(hash.slice(1))
     const access_token = params.get('access_token')
     const refresh_token = params.get('refresh_token')
-    // Strip the tokens out of the address bar immediately.
     window.history.replaceState(null, '', window.location.pathname)
     if (!access_token || !refresh_token) return
-
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSigningIn(true)
     createClient()
@@ -43,42 +40,51 @@ export default function LoginPage() {
           setError('That sign-in link could not be verified. Please request a new one.')
           setSigningIn(false)
         } else {
-          window.location.href = '/dashboard'
+          window.location.href = '/set-password'
         }
       })
   }, [])
 
-  // A failed/expired sign-in link (from /auth/confirm) bounces here with
-  // ?error=auth_failed. Surface a clear message + steer them to the code option,
-  // which survives email link-scanners that "pre-click" one-time links.
+  // A failed/expired sign-in link bounces here with ?error=auth_failed.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     if (params.get('error') === 'auth_failed') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setError('That sign-in link didn’t work — it may have expired, already been used, or been opened by your email’s security scanner. Get a login code instead (it works even when links don’t).')
-      setSuggestCode(true)
+      setMode('code')
+      setError('That sign-in link didn’t work — it may have expired, already been used, or been opened by your email’s security scanner. Use a code instead (it always works).')
       window.history.replaceState(null, '', window.location.pathname)
     }
   }, [])
 
-  // Send a magic link (default).
-  async function handleLogin(e: React.FormEvent) {
+  // Normal login: email + password.
+  async function handlePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const { error } = await createClient().auth.signInWithPassword({ email, password })
+    if (error) {
+      setError('Incorrect email or password. First time here, or forgot it? Use the link below to set your password.')
+      setLoading(false)
+    } else {
+      window.location.href = '/dashboard' // layout sends staff on to /admin
+    }
+  }
+
+  // Send a magic link (for setting/resetting a password).
+  async function handleLink(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
       const res = await fetch('/api/auth/login-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Something went wrong. Please try again.')
-      } else {
-        setSent(true)
-      }
+      } else setSent(true)
     } catch {
       setError('Network error — please try again.')
     } finally {
@@ -86,23 +92,20 @@ export default function LoginPage() {
     }
   }
 
-  // Request a login code.
+  // Request a verification code.
   async function requestCode(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
       const res = await fetch('/api/auth/otp-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? 'Something went wrong. Please try again.')
-      } else {
-        setCodeStep('enter')
-      }
+      } else setCodeStep('enter')
     } catch {
       setError('Network error — please try again.')
     } finally {
@@ -110,22 +113,21 @@ export default function LoginPage() {
     }
   }
 
-  // Verify the login code and sign in.
+  // Verify the code → routes to /set-password.
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
     try {
       const res = await fetch('/api/auth/otp-verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, token: code }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setError(data.error ?? 'That code is invalid or has expired.')
       } else {
-        window.location.href = data.redirect ?? '/dashboard'
+        window.location.href = data.redirect ?? '/set-password'
       }
     } catch {
       setError('Network error — please try again.')
@@ -137,28 +139,20 @@ export default function LoginPage() {
   function switchTo(next: Mode) {
     setMode(next)
     setError('')
-    setSuggestCode(false)
     setCodeStep('request')
     setCode('')
+    setSent(false)
   }
 
   const inputClass =
     'w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors'
   const primaryBtn =
     'w-full bg-[#C9A227] text-[#0D0D0D] font-medium text-sm py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+  const labelClass = 'block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2'
 
   const errorBox = error && (
-    <div className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5 space-y-2">
+    <div className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5">
       <p>{error}</p>
-      {suggestCode && mode === 'link' && (
-        <button
-          type="button"
-          onClick={() => switchTo('code')}
-          className="inline-block bg-[#C9A227] text-[#0D0D0D] font-medium text-xs px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors"
-        >
-          Email me a login code instead →
-        </button>
-      )}
     </div>
   )
 
@@ -195,25 +189,18 @@ export default function LoginPage() {
             </div>
             <h2 className="text-[var(--text)] font-serif text-lg mb-2">Check your inbox</h2>
             <p className="text-[var(--text-2)] text-sm leading-relaxed">
-              We sent a login link to<br />
-              <span className="text-[#C9A227]">{email}</span>
+              We sent a link to<br /><span className="text-[#C9A227]">{email}</span><br />
+              Open it to set your password.
             </p>
             <p className="text-[var(--text-3)] text-xs mt-4 leading-relaxed">
-              Link keeps bouncing you back here? Some email providers (Outlook/Hotmail) open the link
-              automatically and use it up.
+              Link keeps bouncing you back here? Some email providers open it automatically and use it up.
             </p>
-            <button
-              onClick={() => { setSent(false); switchTo('code') }}
-              className="mt-2 text-xs text-[#C9A227] hover:underline"
-            >
-              Email me a login code instead →
+            <button onClick={() => switchTo('code')} className="mt-2 text-xs text-[#C9A227] hover:underline">
+              Use a code instead →
             </button>
             <div>
-              <button
-                onClick={() => { setSent(false); setEmail('') }}
-                className="mt-4 text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
-              >
-                Use a different email
+              <button onClick={() => { switchTo('password') }} className="mt-4 text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                ← Back to sign in
               </button>
             </div>
           </div>
@@ -224,7 +211,7 @@ export default function LoginPage() {
               <div className="text-center mb-2">
                 <h2 className="text-[var(--text)] font-serif text-lg mb-1">Enter your code</h2>
                 <p className="text-[var(--text-3)] text-xs leading-relaxed">
-                  We sent a login code to <span className="text-[#C9A227]">{email}</span>
+                  We sent a code to <span className="text-[#C9A227]">{email}</span>. Next you’ll set your password.
                 </p>
               </div>
               <input
@@ -238,73 +225,93 @@ export default function LoginPage() {
               />
               {errorBox}
               <button type="submit" disabled={loading || code.length < 6} className={primaryBtn}>
-                {loading ? 'Verifying…' : 'Verify & sign in'}
+                {loading ? 'Verifying…' : 'Verify & continue'}
               </button>
               <div className="flex items-center justify-between text-xs">
                 <button type="button" onClick={() => setCodeStep('request')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
                   ← Resend / change email
                 </button>
-                <button type="button" onClick={() => switchTo('link')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
-                  Use a link instead
+                <button type="button" onClick={() => switchTo('password')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                  Back to sign in
                 </button>
               </div>
             </form>
           ) : (
-            /* Request a code */
+            /* Request a code (first-time / forgot password) */
             <form onSubmit={requestCode} className="space-y-4">
+              <div className="text-center mb-2">
+                <h2 className="text-[var(--text)] font-serif text-lg mb-1">Set your password</h2>
+                <p className="text-[var(--text-3)] text-xs leading-relaxed">
+                  Enter your email and we’ll send a code to verify it’s you. Then you’ll choose a password.
+                </p>
+              </div>
               <div>
-                <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2">Email address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className={inputClass}
-                />
+                <label className={labelClass}>Email address</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" className={inputClass} />
               </div>
               {errorBox}
               <button type="submit" disabled={loading || !email} className={primaryBtn}>
-                {loading ? 'Sending…' : 'Email me a login code'}
+                {loading ? 'Sending…' : 'Email me a code'}
               </button>
               <p className="text-center text-xs">
-                <button type="button" onClick={() => switchTo('link')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
-                  Prefer a login link? →
+                <button type="button" onClick={() => switchTo('link')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                  Prefer a link? →
                 </button>
               </p>
-              <p className="text-center text-[var(--text-3)] text-xs">Access is by invitation only.</p>
+              <p className="text-center text-xs">
+                <button type="button" onClick={() => switchTo('password')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                  ← Back to sign in
+                </button>
+              </p>
             </form>
           )
-        ) : (
-          /* Default: send a magic link */
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2">Email address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className={inputClass}
-              />
+        ) : mode === 'link' ? (
+          /* Send a link (alternative to code) */
+          <form onSubmit={handleLink} className="space-y-4">
+            <div className="text-center mb-2">
+              <h2 className="text-[var(--text)] font-serif text-lg mb-1">Set your password</h2>
+              <p className="text-[var(--text-3)] text-xs leading-relaxed">We’ll email you a link to verify it’s you, then you’ll choose a password.</p>
             </div>
-
+            <div>
+              <label className={labelClass}>Email address</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" className={inputClass} />
+            </div>
             {errorBox}
-
             <button type="submit" disabled={loading || !email} className={primaryBtn}>
-              {loading ? 'Sending…' : 'Send login link'}
+              {loading ? 'Sending…' : 'Email me a link'}
             </button>
-
             <p className="text-center text-xs">
               <button type="button" onClick={() => switchTo('code')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
-                Trouble with the link? Email me a login code instead →
+                Use a code instead (more reliable) →
               </button>
             </p>
-
-            <p className="text-center text-[var(--text-3)] text-xs">
-              Access is by invitation only.
+            <p className="text-center text-xs">
+              <button type="button" onClick={() => switchTo('password')} className="text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+                ← Back to sign in
+              </button>
             </p>
+          </form>
+        ) : (
+          /* Default: email + password */
+          <form onSubmit={handlePassword} className="space-y-4">
+            <div>
+              <label className={labelClass}>Email address</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="username" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Your password" autoComplete="current-password" className={inputClass} />
+            </div>
+            {errorBox}
+            <button type="submit" disabled={loading || !email || !password} className={primaryBtn}>
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+            <p className="text-center text-xs">
+              <button type="button" onClick={() => switchTo('code')} className="text-[#C9A227] font-medium hover:underline underline-offset-2 transition-colors">
+                First time here, or forgot your password? →
+              </button>
+            </p>
+            <p className="text-center text-[var(--text-3)] text-xs">Access is by invitation only.</p>
           </form>
         )}
       </div>

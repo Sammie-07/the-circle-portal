@@ -107,11 +107,9 @@ export async function POST(request: Request) {
           })
         }
 
-        const dest = ['owner', 'admin', 'manager', 'support', 'tech'].includes(profile?.role ?? '')
-          ? '/admin'
-          : '/dashboard'
+        // Links are only for first-time setup / password reset → set a password.
         // 303 so the browser follows with a GET after the POST.
-        return NextResponse.redirect(`${origin}${dest}`, { status: 303 })
+        return NextResponse.redirect(`${origin}/set-password`, { status: 303 })
       }
     }
   }

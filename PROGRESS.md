@@ -162,6 +162,17 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-26
+- **Password login (the permanent answer to the magic-link loops).** Recurring loops (Rachel, then
+  Chrissi Pollizi — who only got in via the code) come from email link-scanners/prefetch that we
+  can't control. Switched the portal to **email + password as the normal login** (`signInWithPassword`
+  on the browser client). Magic links/codes are now used ONLY for first-time setup and password
+  resets: after verifying by code or link, the user lands on a new **`/set-password`** page
+  (`SetPasswordForm`, `auth.updateUser({ password })`, min 8 chars) and uses their password from then
+  on. Reworked `src/app/login/page.tsx` (default = password; "First time here, or forgot your
+  password?" → code, with link as a secondary option). Both verify paths now redirect to
+  `/set-password`: `/api/auth/otp-verify` returns `/set-password`; `/auth/confirm` POST redirects
+  there. Members set their own password (we never handle it). Note: relies on Supabase's email
+  password provider being enabled (default on). Scanner-proof for daily logins — no email involved.
 - **Disabled SendGrid click-tracking on auth emails (the actual root cause).** Rachel's link came
   through `url6427.gogosrealestate.com/ls/click?...` — SendGrid was rewriting every login link into a
   one-time tracking redirect. That added latency AND gave scanners/previews an extra hop to consume
