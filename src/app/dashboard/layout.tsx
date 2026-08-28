@@ -4,6 +4,7 @@ import { getViewAsCookie } from '@/lib/portalContext'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 import ChatBubble from '@/components/dashboard/ChatBubble'
+import SurveyGate from '@/components/dashboard/SurveyGate'
 
 const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
 
@@ -93,6 +94,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {children}
       </main>
       <ChatBubble />
+      {/* Blocking monthly progress survey — real, active members only (resolved
+          by email inside its own API; renders nothing when not due). */}
+      <SurveyGate />
     </div>
   )
 }

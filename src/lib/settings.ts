@@ -19,3 +19,24 @@ export async function getSetting(key: string): Promise<string | null> {
 export async function getTeamAgentCount(): Promise<string> {
   return (await getSetting('teamgogo_agent_count')) || DEFAULT_TEAM_AGENT_COUNT
 }
+
+// Monthly-survey rollout gate. `survey_allowlist` = comma-separated emails.
+// - unset / empty  → survey is live for EVERY active member (full launch)
+// - non-empty      → survey only activates for those emails (limited testing)
+// Return null to mean "no restriction" so callers can branch cleanly.
+export async function getSurveyAllowlist(): Promise<string[] | null> {
+  const raw = await getSetting('survey_allowlist')
+  if (!raw) return null
+  const emails = raw
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+  return emails.length ? emails : null
+}
+
+/** True if this member's email may see the survey right now (respects the allowlist). */
+export function isEmailInSurveyRollout(email: string | null | undefined, allowlist: string[] | null): boolean {
+  if (!allowlist) return true // full launch
+  if (!email) return false
+  return allowlist.includes(email.trim().toLowerCase())
+}

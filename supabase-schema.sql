@@ -395,3 +395,49 @@ create policy "members_own_messages" on chat_messages for all
 create policy "staff_own_messages" on chat_messages for all
   using (session_id in (select id from chat_sessions where staff_id = auth.uid()))
   with check (session_id in (select id from chat_sessions where staff_id = auth.uid()));
+
+-- ============================================
+-- MONTHLY PROGRESS SURVEYS ("Circle Progress Check")
+-- ============================================
+-- Sent on the first Monday of each month (cron /api/cron/surveys) and enforced
+-- as a blocking popup in the member portal until completed. Questions are fixed
+-- in code (src/lib/survey-questions.ts). One survey_periods row per month gives
+-- send/reminder idempotency; one survey_responses row per member per month holds
+-- the answers (draft -> complete). Admin view: /admin/progress.
+create table if not exists survey_periods (
+  id             uuid primary key default gen_random_uuid(),
+  period_month   date not null unique,              -- always the 1st of the month
+  opened_on      date not null,                     -- the first Monday (send date)
+  week_end       date not null,                     -- Sunday that ends the send week
+  sent_at        timestamptz,                       -- set when the send email went out
+  reminded_on    date[] not null default '{}',      -- reminder dates already sent
+  created_at     timestamptz not null default now()
+);
+
+create table if not exists survey_responses (
+  id             uuid primary key default gen_random_uuid(),
+  member_id      uuid not null references members(id) on delete cascade,
+  period_month   date not null,                     -- 1st of the month (matches survey_periods)
+  answers        jsonb not null default '{}'::jsonb,
+  status         text not null default 'draft' check (status in ('draft','complete')),
+  started_at     timestamptz not null default now(),
+  completed_at   timestamptz,
+  updated_at     timestamptz not null default now(),
+  unique (member_id, period_month)
+);
+create index if not exists survey_responses_member_id_idx on survey_responses(member_id);
+create index if not exists survey_responses_period_idx on survey_responses(period_month);
+
+alter table survey_periods enable row level security;
+alter table survey_responses enable row level security;
+
+-- Periods: any authenticated user may read (portal checks if a window is open);
+-- only staff / the service-role cron may write.
+create policy "authed_read_periods" on survey_periods for select using (auth.role() = 'authenticated');
+create policy "admins_write_periods" on survey_periods for all using (is_admin()) with check (is_admin());
+
+-- Responses: members read/write only their own (by email); admins manage all.
+create policy "members_own_survey_responses" on survey_responses for all
+  using ((select email from members where id = survey_responses.member_id) = (auth.jwt() ->> 'email'))
+  with check ((select email from members where id = survey_responses.member_id) = (auth.jwt() ->> 'email'));
+create policy "admins_all_survey_responses" on survey_responses for all using (is_admin());

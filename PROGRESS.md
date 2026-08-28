@@ -161,13 +161,47 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-08-28
+- **Monthly progress surveys ("Circle Progress Check") — new feature.** A 13-question monthly
+  check-in (income, income sources, closings, avg price range, debt, credit score, investments +
+  value, real-estate properties, LLCs, VAs, hours/week, biggest takeaway) that goes out the **first
+  Monday of every month**, is enforced as a **blocking, non-dismissible popup** in the member portal
+  until completed (answers **autosave** as a draft so they can resume), and feeds an admin tracking
+  view with progress indicators. Pieces:
+  - **Data:** migration `monthly_progress_surveys` (applied live + in `supabase-schema.sql`). Two
+    tables — `survey_periods` (one row per month = send/reminder idempotency) and `survey_responses`
+    (one row per member per month, `answers` jsonb, `draft`→`complete`, unique on member+month). RLS:
+    members read/write own (by email, matching `member_note_entries`), admins all, authed read on
+    periods. Questions themselves are fixed in code (`src/lib/survey-questions.ts`), not a table.
+  - **Logic:** `src/lib/survey.ts` — ET-based first-Monday math, the open-window check, and the
+    indicator/highlight engine (▲/▼ per numeric field, direction-aware good/bad; "content-worthy"
+    highlights for income jumps ≥25%, credit-score milestones/+20, debt paydown ≥10%, and business
+    growth in LLCs/VAs/income sources/properties/investments).
+  - **Member side:** blocking modal `SurveyGate` (wired into `dashboard/layout.tsx`, real active
+    members only), backed by `GET/PATCH /api/surveys/me` (fetch + autosave-draft + submit).
+  - **Admin side:** new **Progress** tab (`/admin/progress` + `SurveyProgress`), sidebar nav added.
+    Per-member pivot (rows = questions, a new column each month, ▲/▼ vs the prior column) plus a
+    **Highlights & content ideas** panel. Month-1 compares to **intake** where available — but note
+    the intake only stored `credit_score` + `has_investments` as structured fields (`blueprint_data`
+    is null for all; blueprints exist only as `blueprint_html` + `blueprint_transcript`), so the
+    other 11 metrics baseline from the first survey. (Follow-up option: AI-extract starting numbers
+    from each intake transcript to enrich month-1 baselines.)
+  - **Cron:** `/api/cron/surveys` (daily `0 15 * * *`, Bearer `CRON_SECRET`) — opens + emails on the
+    first Monday, re-nudges non-completers Wed/Fri/Sun that week (every 2 days through the send week),
+    idempotent via `survey_periods.sent_at`/`reminded_on`. Registered in `vercel.json`.
+  - **Limited rollout gate:** `app_settings.survey_allowlist` (comma-separated emails) via new
+    `getSurveyAllowlist()`/`isEmailInSurveyRollout()` in `settings.ts`. When set, the survey (popup +
+    emails) activates ONLY for those emails; when cleared, it's live for every active member.
+    **Currently seeded to `akinwandesammy02@gmail.com` (internal test account) only** for a live
+    feel-test before full launch — clear the key to launch for everyone. tsc + lint + build clean.
+
 ### 2026-08-27
 - **Admins can send a member a password reset link.** New "🔑 Send Password Reset" button on each
   member's admin detail page (`SendResetButton`, in the action-button row next to Copy Sign-In Link).
   New admin-gated endpoint `POST /api/auth/admin-reset` (owner/admin/manager) emails the member a
   branded "Reset your Circle password" email with a `ctx=reset` token link (auto-verifies via the
   `/auth/confirm` interstitial → `/set-password`; code is the fallback), click-tracking disabled.
-  NOT yet pushed — awaiting approval.
+  Shipped (commit `4c09bde`, pushed to `main` → live).
 
 ### 2026-08-26
 - **Auth reshaped: password-only login; links removed; invites = activation + set-password.**
@@ -186,7 +220,8 @@ Every code change is recorded here, newest first.
   code is only the FALLBACK (link expired/eaten → they land unauthenticated and the flow asks email
   → code). (4) **Removed** the magic-link login endpoint (`/api/auth/login-link`), old
   `SetPasswordForm`, and `generateSigninLinkIfExists`. Codes only for reset / failed-link fallback.
-  tsc + lint + build clean. NOT yet pushed — awaiting approval.
+  tsc + lint + build clean. Shipped (commit `9c02a4e`, pushed to `main` → live). **Password login is
+  now the portal's normal sign-in.**
 - **Password login (the permanent answer to the magic-link loops).** Recurring loops (Rachel, then
   Chrissi Pollizi — who only got in via the code) come from email link-scanners/prefetch that we
   can't control. Switched the portal to **email + password as the normal login** (`signInWithPassword`

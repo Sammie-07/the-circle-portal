@@ -15,6 +15,7 @@ interface SidebarProps {
 const adminNav = [
   { href: '/admin', label: 'Members', icon: '◉' },
   { href: '/admin/homework', label: 'Homework', icon: '◔' },
+  { href: '/admin/progress', label: 'Progress', icon: '▲' },
   { href: '/admin/reports', label: 'Reports', icon: '◈' },
   { href: '/admin/bulk-reports', label: 'Bulk Reports', icon: '◇' },
   { href: '/admin/log', label: 'Log This Week', icon: '◆' },
