@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import SurveyProgress from '@/components/admin/SurveyProgress'
+import SurveyPreviewButton from '@/components/admin/SurveyPreviewButton'
 import { baselineFromApplication } from '@/lib/survey'
 import { getSurveyAllowlist, isEmailInSurveyRollout } from '@/lib/settings'
 import type { SurveyAnswers } from '@/lib/survey-questions'
@@ -63,14 +64,17 @@ export default async function AdminProgressPage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl">
-      <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">Progress</h1>
-        <p className="text-[var(--text-3)] text-sm mt-1">
-          Monthly progress-check answers for every member, side by side over time.
-          Indicators compare each month to the one before; the first month compares
-          to intake where we have it.
-        </p>
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
+          <h1 className="text-[var(--text)] font-serif text-3xl">Progress</h1>
+          <p className="text-[var(--text-3)] text-sm mt-1">
+            Monthly progress-check answers for every member, side by side over time.
+            Indicators compare each month to the one before; the first month compares
+            to intake where we have it.
+          </p>
+        </div>
+        <SurveyPreviewButton />
       </div>
 
       <SurveyProgress members={shaped} />

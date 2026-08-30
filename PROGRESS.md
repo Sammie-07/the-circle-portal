@@ -162,6 +162,12 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-30
+- **Staff "Preview member survey" button.** So the team can see the exact member popup without a
+  member account or disturbing data, `SurveyGate` gained a `preview` mode (fetches nothing, persists
+  nothing, dismissible via ×/Esc/backdrop, header shows "· Preview", submit just toasts + closes).
+  New `SurveyPreviewButton` renders it on demand; added to the admin **Progress** page header. Lets
+  Sam stay fully complete (Aug→Sep growth view) while the popup is still demoable from any staff
+  account. tsc + lint + build clean.
 - **Survey sending is now MANUAL (auto-cron disabled, admin button added).** Per request, hold
   automated sends while the survey is reviewed. Changes: (1) the daily `/api/cron/surveys` cron is
   **removed from `vercel.json`** and the route itself guards on `SURVEYS_CRON_ENABLED==='true'`

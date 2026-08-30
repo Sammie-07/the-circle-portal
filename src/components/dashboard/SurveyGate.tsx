@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from '@/lib/toast'
+import { SURVEY_QUESTIONS } from '@/lib/survey-questions'
 import type { SurveyQuestion, SurveyAnswers } from '@/lib/survey-questions'
 
 interface SurveyPayload {
@@ -18,8 +19,17 @@ const GOLD = '#C9A227'
 // A blocking, non-dismissible monthly progress survey. When the current month's
 // survey is due (open + not yet completed) it covers the portal until the member
 // submits. Answers autosave as a draft, so they can leave and resume.
-export default function SurveyGate() {
-  const [payload, setPayload] = useState<SurveyPayload | null>(null)
+// In `preview` mode (staff "Preview member survey" button) it shows the exact
+// member popup but fetches nothing, persists nothing, and is dismissible — for
+// demos without touching any member data.
+export default function SurveyGate({ preview = false, onClose }: { preview?: boolean; onClose?: () => void } = {}) {
+  const previewPayload: SurveyPayload = {
+    due: true,
+    monthLabel: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    questions: SURVEY_QUESTIONS,
+    answers: {},
+  }
+  const [payload, setPayload] = useState<SurveyPayload | null>(preview ? previewPayload : null)
   const [answers, setAnswers] = useState<SurveyAnswers>({})
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -27,6 +37,7 @@ export default function SurveyGate() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
+    if (preview) return // preview never fetches or persists
     let alive = true
     fetch('/api/surveys/me')
       .then((r) => r.json())
@@ -39,7 +50,17 @@ export default function SurveyGate() {
     return () => {
       alive = false
     }
-  }, [])
+  }, [preview])
+
+  // Preview is dismissible with Escape.
+  useEffect(() => {
+    if (!preview || !onClose) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [preview, onClose])
 
   const persist = useCallback(async (next: SurveyAnswers, submit: boolean) => {
     const res = await fetch('/api/surveys/me', {
@@ -52,6 +73,7 @@ export default function SurveyGate() {
 
   const scheduleSave = useCallback(
     (next: SurveyAnswers) => {
+      if (preview) return // never persist in preview
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(async () => {
         setSaving(true)
@@ -64,7 +86,7 @@ export default function SurveyGate() {
         }
       }, 700)
     },
-    [persist]
+    [persist, preview]
   )
 
   const update = useCallback(
@@ -91,6 +113,11 @@ export default function SurveyGate() {
 
   async function handleSubmit() {
     if (!allDone || submitting) return
+    if (preview) {
+      toast('Preview only — nothing was saved.', 'success')
+      onClose?.()
+      return
+    }
     setSubmitting(true)
     setError(null)
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -117,6 +144,7 @@ export default function SurveyGate() {
       role="dialog"
       aria-modal="true"
       aria-label="Monthly progress check"
+      onClick={preview && onClose ? onClose : undefined}
       style={{
         position: 'fixed',
         inset: 0,
@@ -130,7 +158,9 @@ export default function SurveyGate() {
       }}
     >
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
+          position: 'relative',
           background: 'var(--surface, #141414)',
           border: '1px solid var(--border-color, #2a2a2a)',
           borderRadius: 14,
@@ -139,10 +169,32 @@ export default function SurveyGate() {
           margin: 'auto 0',
         }}
       >
+        {preview && onClose ? (
+          <button
+            onClick={onClose}
+            aria-label="Close preview"
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'var(--bg, #0d0d0d)',
+              border: '1px solid var(--border-color, #2a2a2a)',
+              color: 'var(--text-2, #888)',
+              fontSize: 18,
+              lineHeight: 1,
+              cursor: 'pointer',
+            }}
+          >
+            ×
+          </button>
+        ) : null}
         {/* Header */}
         <div style={{ padding: '28px 28px 16px', borderBottom: '1px solid var(--border-color, #2a2a2a)' }}>
           <div style={{ color: GOLD, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-            {payload.monthLabel} · Progress Check
+            {payload.monthLabel} · Progress Check{preview ? ' · Preview' : ''}
           </div>
           <h2 style={{ color: 'var(--text, #f5f5f5)', fontFamily: 'Georgia, serif', fontSize: 24, margin: '0 0 8px' }}>
             Your monthly check-in
@@ -202,7 +254,7 @@ export default function SurveyGate() {
             {submitting ? 'Submitting…' : allDone ? 'Submit my progress check' : `Answer all ${total} questions to submit`}
           </button>
           <p style={{ color: 'var(--text-2, #666)', fontSize: 12, textAlign: 'center', margin: '10px 0 0' }}>
-            {saving ? 'Saving…' : 'Progress saved automatically'}
+            {preview ? 'Preview mode — nothing is saved' : saving ? 'Saving…' : 'Progress saved automatically'}
           </p>
         </div>
       </div>
