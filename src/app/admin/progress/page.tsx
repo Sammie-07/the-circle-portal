@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import SurveyProgress from '@/components/admin/SurveyProgress'
 import { baselineFromApplication } from '@/lib/survey'
+import { getSurveyAllowlist, isEmailInSurveyRollout } from '@/lib/settings'
 import type { SurveyAnswers } from '@/lib/survey-questions'
 
 export const dynamic = 'force-dynamic'
@@ -32,8 +33,14 @@ export default async function AdminProgressPage() {
     ])
   )
 
+  // Normally hide internal/test accounts — but while a limited-rollout allowlist
+  // is active, show the allowlisted test accounts too (that's who we're testing
+  // with). Once the allowlist is cleared for full launch, internal accounts hide.
+  const allowlist = await getSurveyAllowlist()
+  const isAllowlistedInternal = (email: string) =>
+    allowlist !== null && isEmailInSurveyRollout(email, allowlist)
   const shaped = (members ?? [])
-    .filter((m) => !m.is_internal)
+    .filter((m) => !m.is_internal || isAllowlistedInternal(m.email as string))
     .map((m) => {
       const responses = ((m.survey_responses ?? []) as RawResponse[])
         .filter((r) => r.status === 'complete')
