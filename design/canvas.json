@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1120, "h": 1520, "title": "Recommended — dashboard" },
+    { "file": "TimelineView.dc.html", "x": 1240, "y": 0, "w": 1120, "h": 900, "title": "Alt A — growth timeline" },
+    { "file": "MonthSnapshots.dc.html", "x": 2480, "y": 0, "w": 1120, "h": 720, "title": "Alt B — month snapshots" }
+  ],
+  "annotations": [
+    { "id": "note-main", "x": 0, "y": -168, "w": 360, "text": "RECOMMENDED\nFull redesign of the Progress tab: KPI stat cards up top, a highlights / content-ideas panel, then the refined all-metrics table." },
+    { "id": "note-timeline", "x": 1240, "y": -168, "w": 340, "text": "ALTERNATE A\nGrowth timeline — each metric as an Aug→Sep track. Best when the point is showing progress / proof over time." },
+    { "id": "note-snapshots", "x": 2480, "y": -168, "w": 340, "text": "ALTERNATE B\nMonth snapshots — one card per check-in, side by side. Scales cleanly as more months are added." }
+  ],
+  "launch": { "view": "canvas" }
+}

@@ -161,6 +161,20 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-08-30
+- **Progress tab redesign (`SurveyProgress`).** Reworked the admin Progress view from a flat
+  table into a richer, theme-aware dashboard (works in light + dark via CSS vars): a member header
+  with status pill; a row of four **KPI stat cards** (monthly income, credit score, total debt,
+  closings) each showing the latest value, a delta chip vs the prior month, and an inline
+  **sparkline** of the full series; the **Highlights & content ideas** panel restyled with icon
+  chips; the **all-metrics table** refined (month-header chips, the latest month gold-tinted with a
+  "Latest" badge, zebra rows, per-cell ▲/▼ delta); and a dedicated **Monthly takeaways** block
+  (quote cards, latest emphasized) pulled out of the table. Fully data-driven off
+  `SURVEY_QUESTIONS` + `indicatorFor`/`highlightsBetween` (no hardcoded values). Also fixed the
+  Progress page to surface allowlisted internal/test accounts during rollout (so the
+  `akinwandesammy02` test profile appears). Visible to all staff incl. `tech@gogosrealestate.com`
+  (admin). tsc + lint + `next build` clean.
+
 ### 2026-08-28
 - **Monthly progress surveys ("Circle Progress Check") — new feature.** A 13-question monthly
   check-in (income, income sources, closings, avg price range, debt, credit score, investments +

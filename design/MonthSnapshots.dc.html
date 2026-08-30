@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #0D0D0D; }
+    .serif { font-family: Georgia, "Times New Roman", serif; }
+    a { color: #C9A227; } a:hover { color: #E0B94A; }
+  </style>
+</helmet>
+<div style="width: 1120px; box-sizing: border-box; background: #0D0D0D; color: #FFFFFF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 44px 48px 56px;">
+
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px;">
+    <div style="font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: #C9A227;">Progress &middot; month snapshots</div>
+    <h1 class="serif" style="margin: 0; font-size: 34px; font-weight: 400; color: #FFFFFF;">Samuel Akinwande</h1>
+    <div style="font-size: 14px; color: #888888;">Every check-in side by side &mdash; a new card each month</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start;">
+
+    <!-- Aug (baseline) -->
+    <div style="background: #1A1A1A; border: 1px solid #2A2A2A; border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 22px 16px; border-bottom: 1px solid #222;">
+        <div class="serif" style="font-size: 22px; color: #FFFFFF;">August 2026</div>
+        <div style="font-size: 12px; color: #666; margin-top: 4px;">Baseline &middot; first check-in</div>
+      </div>
+      <div style="padding: 8px 22px 18px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Income</span><span class="serif" style="font-size: 15px; color: #EEE;">$8,500</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Credit score</span><span class="serif" style="font-size: 15px; color: #EEE;">648</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Total debt</span><span class="serif" style="font-size: 15px; color: #EEE;">$42,000</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Closings</span><span class="serif" style="font-size: 15px; color: #EEE;">2</span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0;"><span style="font-size: 13px; color: #888;">VAs / LLCs</span><span class="serif" style="font-size: 15px; color: #EEE;">0 / 1</span></div>
+      </div>
+      <div style="padding: 14px 22px 20px;">
+        <div style="font-size: 12px; color: #DDD; font-style: italic; line-height: 1.5; border-left: 2px solid #333; padding-left: 12px;">&ldquo;Spending too much time on admin work I should be delegating.&rdquo;</div>
+      </div>
+    </div>
+
+    <!-- Sep (latest, emphasized) -->
+    <div style="background: #1A1A1A; border: 1px solid rgba(201,162,39,0.5); border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px rgba(201,162,39,0.15);">
+      <div style="padding: 20px 22px 16px; border-bottom: 1px solid #222; background: rgba(201,162,39,0.06);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div class="serif" style="font-size: 22px; color: #FFFFFF;">September 2026</div>
+          <span style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #0D0D0D; background: #C9A227; padding: 3px 8px; border-radius: 999px;">Latest</span>
+        </div>
+        <div style="font-size: 12px; color: #888; margin-top: 4px;">vs August</div>
+      </div>
+      <div style="padding: 8px 22px 18px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Income</span><span style="display: flex; align-items: baseline; gap: 8px;"><span class="serif" style="font-size: 15px; color: #FFF;">$12,300</span><span style="color: #5bbd68; font-size: 11px;">&#9650;45%</span></span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Credit score</span><span style="display: flex; align-items: baseline; gap: 8px;"><span class="serif" style="font-size: 15px; color: #FFF;">674</span><span style="color: #5bbd68; font-size: 11px;">&#9650;+26</span></span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Total debt</span><span style="display: flex; align-items: baseline; gap: 8px;"><span class="serif" style="font-size: 15px; color: #FFF;">$36,500</span><span style="color: #5bbd68; font-size: 11px;">&#9660;13%</span></span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #1D1D1D;"><span style="font-size: 13px; color: #888;">Closings</span><span style="display: flex; align-items: baseline; gap: 8px;"><span class="serif" style="font-size: 15px; color: #FFF;">3</span><span style="color: #5bbd68; font-size: 11px;">&#9650;+1</span></span></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 11px 0;"><span style="font-size: 13px; color: #888;">VAs / LLCs</span><span style="display: flex; align-items: baseline; gap: 8px;"><span class="serif" style="font-size: 15px; color: #FFF;">1 / 2</span><span style="color: #5bbd68; font-size: 11px;">&#9650;</span></span></div>
+      </div>
+      <div style="padding: 14px 22px 20px;">
+        <div style="font-size: 12px; color: #EEE; font-style: italic; line-height: 1.5; border-left: 2px solid #C9A227; padding-left: 12px;">&ldquo;Hired my first VA and freed up 7 hours a week. Closed my first $500k listing.&rdquo;</div>
+      </div>
+    </div>
+
+    <!-- Next month placeholder -->
+    <div style="border: 1px dashed #2E2E2E; border-radius: 16px; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #444;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3A3A3A" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      <div style="font-size: 13px; color: #555; text-align: center; max-width: 160px; line-height: 1.5;">October check-in lands here on the first Monday</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
