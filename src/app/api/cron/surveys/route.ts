@@ -19,6 +19,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Automated sending is intentionally OFF while the survey is under review.
+  // The monthly survey is sent manually from Admin → Settings ("Send this
+  // month's survey"), via /api/surveys/send. To re-enable automation later,
+  // set SURVEYS_CRON_ENABLED=true and re-add the cron to vercel.json.
+  if (process.env.SURVEYS_CRON_ENABLED !== 'true') {
+    return NextResponse.json({ ok: true, action: 'disabled', reason: 'manual send only' })
+  }
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

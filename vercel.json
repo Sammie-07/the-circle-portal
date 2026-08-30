@@ -19,10 +19,6 @@
     {
       "path": "/api/cron/payment-reminders",
       "schedule": "30 13 * * *"
-    },
-    {
-      "path": "/api/cron/surveys",
-      "schedule": "0 15 * * *"
     }
   ]
 }

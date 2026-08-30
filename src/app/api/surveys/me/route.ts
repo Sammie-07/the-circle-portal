@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { SURVEY_QUESTIONS, isSurveyComplete, type SurveyAnswers } from '@/lib/survey-questions'
-import { windowForMonth, isWindowOpen } from '@/lib/survey'
+import { windowForMonth } from '@/lib/survey'
 import { getSurveyAllowlist, isEmailInSurveyRollout } from '@/lib/settings'
 
 export const runtime = 'nodejs'
@@ -35,7 +35,15 @@ export async function GET() {
 
   const now = new Date()
   const win = windowForMonth(now)
-  const open = isWindowOpen(now)
+
+  // The survey only activates once an admin has sent it for this month (manual
+  // send from Admin → Settings). Auto-sending is off pending review.
+  const { data: period } = await supabase
+    .from('survey_periods')
+    .select('sent_at')
+    .eq('period_month', win.periodMonth)
+    .maybeSingle()
+  const open = !!period?.sent_at
 
   const { data: response } = await supabase
     .from('survey_responses')

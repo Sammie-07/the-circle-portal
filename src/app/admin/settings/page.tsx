@@ -1,12 +1,15 @@
 import AppSettingsForm from '@/components/admin/AppSettingsForm'
 import OfficeHoursSettings from '@/components/admin/OfficeHoursSettings'
 import WeeklyDigestCard from '@/components/admin/WeeklyDigestCard'
+import SurveySendCard from '@/components/admin/SurveySendCard'
 import { getTeamAgentCount } from '@/lib/settings'
 import { getOfficeHoursStatus } from '@/lib/office-hours'
+import { getCurrentPeriodStatus } from '@/lib/survey-send'
 
 export default async function AdminSettingsPage() {
   const agentCount = await getTeamAgentCount()
   const oh = await getOfficeHoursStatus()
+  const surveyPeriod = await getCurrentPeriodStatus()
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl">
@@ -27,6 +30,7 @@ export default async function AdminSettingsPage() {
           initialIsSet={oh.isSet}
         />
         <AppSettingsForm initialAgentCount={agentCount} />
+        <SurveySendCard monthName={surveyPeriod.monthName} sentAt={surveyPeriod.sentAt} />
         <WeeklyDigestCard />
       </div>
     </div>

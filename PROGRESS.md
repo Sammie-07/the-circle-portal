@@ -162,6 +162,18 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-30
+- **Survey sending is now MANUAL (auto-cron disabled, admin button added).** Per request, hold
+  automated sends while the survey is reviewed. Changes: (1) the daily `/api/cron/surveys` cron is
+  **removed from `vercel.json`** and the route itself guards on `SURVEYS_CRON_ENABLED==='true'`
+  (returns `action:'disabled'` otherwise), so nothing auto-sends or auto-reminds. (2) The in-portal
+  popup no longer keys off the calendar (`isWindowOpen`) — `/api/surveys/me` now activates the
+  survey only when the current month's `survey_periods.sent_at` is set, i.e. after an admin sends.
+  (3) New shared `src/lib/survey-send.ts` `sendMonthlySurvey()` (stamps the period + emails eligible
+  members, allowlist-respected, idempotent unless `force`) and `getCurrentPeriodStatus()`. (4) New
+  admin-gated `POST /api/surveys/send` (owner/admin/manager). (5) New **Settings** card
+  `SurveySendCard` — "Send {Month} survey now" (confirm dialog; emails members + makes the portal
+  popup go live), showing sent status + a Resend option. To re-automate later: set
+  `SURVEYS_CRON_ENABLED=true` and restore the cron entry. tsc + lint + `next build` clean.
 - **Progress tab redesign (`SurveyProgress`).** Reworked the admin Progress view from a flat
   table into a richer, theme-aware dashboard (works in light + dark via CSS vars): a member header
   with status pill; a row of four **KPI stat cards** (monthly income, credit score, total debt,
