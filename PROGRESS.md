@@ -162,6 +162,12 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-30
+- **Full launch prep: allowlist removed; Progress shows test data without it.** Decoupled the admin
+  Progress tab from the rollout allowlist — internal/test accounts now appear only when they have
+  real survey responses (so Samuel stays visible for review). Removed the `survey_allowlist`
+  app_setting and cleared `survey_periods` so the survey now targets EVERY active member and only
+  goes live when an admin clicks Send. Admin Progress + preview are visible to all staff. tsc + lint
+  + build clean.
 - **Staff "Preview member survey" button.** So the team can see the exact member popup without a
   member account or disturbing data, `SurveyGate` gained a `preview` mode (fetches nothing, persists
   nothing, dismissible via ×/Esc/backdrop, header shows "· Preview", submit just toasts + closes).
