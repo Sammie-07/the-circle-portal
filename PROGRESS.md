@@ -162,6 +162,17 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Fixed report refine: regenerating now EDITS the report instead of rewriting it.** Admin report
+  reported "it fixes one thing and changes back another" after an hour of refining. Root cause: the
+  "Apply & Regenerate" flow appended the feedback to the ORIGINAL generation prompt and never passed
+  the existing report to the model, so every round wrote a brand-new report from scratch, re-rolling
+  every sentence and silently undoing earlier accepted fixes. `/api/reports/generate` now has a
+  REVISION MODE: when refining an existing unsent report it sends the live `content_html` plus the
+  requested change and demands a targeted edit (everything untouched must return byte-identical), so
+  the document itself carries accumulated state and prior fixes persist. Also raised `max_tokens`
+  2500 → 8000 (a revision must return the COMPLETE document; the old cap risked truncating longer
+  reports mid-save) and added a guard that refuses to overwrite when a revision returns <60% of the
+  original length. tsc + lint + build clean.
 - **Standardized CTA + chat-bubble overlap fix.** All captions now always close with the same
   mechanic (polished wording only): "Comment CIRCLE" to join the coaching (only CTA; no DM/link-in-bio);
   carousel final slide is the CTA slide; image footer CTA reads Comment "CIRCLE". Regenerated all 13

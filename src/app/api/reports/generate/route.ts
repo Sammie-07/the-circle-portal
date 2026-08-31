@@ -186,11 +186,56 @@ PUNCTUATION AND VOICE (strict):
 
 OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags). Do NOT wrap the output in markdown code fences. Never start the response with \`\`\`html or \`\`\` and never end it with \`\`\`. Output must begin directly with an HTML tag. Inline styles only. The Circle brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nThis is a regeneration of a previous report. Address every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
 
-    console.log('[Report] Generating for', member.name, '—', period_type)
+    // ─── REVISION MODE ───────────────────────────────────────────────────────
+    // When refining an existing unsent report, we must EDIT THE CURRENT DOCUMENT
+    // rather than generate a fresh one. Regenerating from scratch re-rolls every
+    // sentence, so each round of feedback silently undid the previous rounds
+    // ("it fixes one thing and changes back another"). Passing the live HTML and
+    // demanding a targeted edit is what makes earlier fixes stick: the document
+    // itself carries the accumulated state.
+    let existingReport: { id: string; sent_at: string | null; content_html: string | null } | null = null
+    if (report_id) {
+      const { data } = await supabase
+        .from('reports')
+        .select('id, sent_at, content_html')
+        .eq('id', report_id)
+        .single()
+      existingReport = data ?? null
+    }
+
+    const isRevision = Boolean(
+      feedback && existingReport && !existingReport.sent_at && existingReport.content_html?.trim()
+    )
+
+    const revisionPrompt = `You are revising an existing progress report for ${member.name}. The document below has already been reviewed and refined by an admin over previous rounds.
+
+CURRENT REPORT (the live document):
+${existingReport?.content_html ?? ''}
+
+THE ADMIN'S REQUESTED CHANGES:
+${feedback}
+
+RULES FOR THIS REVISION (critical, this is an EDIT and not a rewrite):
+- Apply ONLY the changes requested above.
+- Return every other part of the document EXACTLY as it is: same sections, same order, same sentences, same numbers, same wording, same inline styles. Do not reword, reorder, re-summarize, shorten, or "improve" anything the request does not explicitly ask you to change.
+- Earlier rounds of feedback are already baked into this document. Leaving untouched text byte-identical is how those earlier fixes survive. Rewriting an untouched section is a bug, not an improvement.
+- If a request affects one sentence, change that one sentence and nothing else.
+- Keep the same HTML structure, inline styles, and brand colors.
+- NEVER use em dashes or en dashes. Use commas or rewrite the sentence.
+
+REFERENCE DATA (use ONLY if the admin's request asks you to correct a fact or number):
+Attendance ${attendanceRate}% (${attended} of ${totalWeeks}) · Homework ${homeworkRate}% (${homeworkDone} of ${totalWeeks}) · Questions asked ${questionsAsked} · Week ${weeksIn} · Q${currentQuarter}
+
+OUTPUT: Return the COMPLETE revised report as raw HTML body content. No markdown code fences, no commentary, no diff. Begin directly with an HTML tag.`
+
+    console.log('[Report]', isRevision ? 'Revising' : 'Generating', 'for', member.name, '—', period_type)
     const message = await anthropic.messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 2500,
-      messages: [{ role: 'user', content: prompt }],
+      // A revision must return the COMPLETE document, so the cap has to clear the
+      // full report comfortably. (Capped output is billed by what's produced, so a
+      // generous ceiling costs nothing extra and prevents a truncated overwrite.)
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: isRevision ? revisionPrompt : prompt }],
     })
     console.log('[Report] Done, tokens:', message.usage?.output_tokens)
 
@@ -200,14 +245,22 @@ OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags). Do NOT wr
       return NextResponse.json({ error: 'Claude returned an empty response. Please try again.' }, { status: 500 })
     }
 
+    // Safety net: never let a truncated or collapsed revision destroy a report the
+    // admin has already refined. If an edit comes back dramatically shorter than
+    // the document it was editing, the model dropped content, so refuse the save.
+    if (isRevision && existingReport?.content_html) {
+      const before = existingReport.content_html.length
+      if (contentHtml.length < before * 0.6) {
+        return NextResponse.json(
+          { error: 'The revision came back incomplete, so your current report was left untouched. Please try again, ideally asking for one change at a time.' },
+          { status: 502 }
+        )
+      }
+    }
+
     // If regenerating an unsent report, update it in place — keep the same ID and share_token
     if (report_id) {
-      const { data: existing } = await supabase
-        .from('reports')
-        .select('id, sent_at')
-        .eq('id', report_id)
-        .single()
-
+      const existing = existingReport
       if (existing && !existing.sent_at) {
         const { data: report, error } = await supabase
           .from('reports')
