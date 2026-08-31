@@ -161,6 +161,31 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-08-31
+- **Content Machine — new admin "Content" tab (Phase 1).** Turns real member activity into
+  on-brand IG/FB posts, grounded in Gogo's Brain. Pieces:
+  - **Data:** migration `content_posts` (recorded in `supabase-schema.sql`) — one row per generated
+    post (source_type member_win/community/takeaway/educational, signal jsonb, caption, hashtags,
+    slides jsonb `[{headline,body,imageDirection}]`, art_direction, format single/carousel, status
+    draft→approved→posted/rejected, dedupe_key unique). Admin-only RLS.
+  - **Signals** (`src/lib/content/signals.ts`): scans active members → survey highlights (reusing
+    `highlightsBetween`), homework milestones (every 5 completed), latest takeaways, a community
+    aggregate, and one educational signal per active theme. `dedupeKey` stops regeneration.
+  - **Generator** (`src/lib/content/generate.ts`): **the Brain is the core** — per signal it does a
+    signal-aware semantic search over the live `BRAIN_SUPABASE` wiki (same `searchBrain`/
+    `match_brain_chunks` path as Ask Gogo/blueprints; **12 chunks**), and the prompt uses the Brain
+    as the LENS to interpret the activity and supply the lesson/framing/voice (member numbers are
+    the proof). Claude (`claude-opus-4-5`) returns JSON {caption, hashtags, slides[], artDirection};
+    brand rules enforced (no em/en dashes). One-line `NAME_MODE` privacy switch (named ↔ anonymized).
+  - **Visuals:** branded 1080×1080 PNG per slide via `next/og` (`/api/content/[id]/image?i=N`) —
+    deep-black + gold, "THE CIRCLE · #teamgogo", slide counter, CTA. No external image API. Per-slide
+    download; art-direction "Canva brief" shown for hand-building. (Phase 2: Canva Connect editable
+    designs + auto-triggers/scheduling.)
+  - **API:** `POST /api/content/generate` (staff; scan→dedupe→generate up to 6/run, concurrency 2),
+    `GET /api/content`, `PATCH/DELETE /api/content/[id]`. **Tab:** `/admin/content` + `ContentQueue`
+    (filter draft/approved/posted/rejected, edit caption+hashtags, copy, approve→mark-posted, reject,
+    delete, download). Sidebar "Content" nav after Progress. tsc + lint + `next build` clean.
+
 ### 2026-08-30
 - **Full launch prep: allowlist removed; Progress shows test data without it.** Decoupled the admin
   Progress tab from the rollout allowlist — internal/test accounts now appear only when they have

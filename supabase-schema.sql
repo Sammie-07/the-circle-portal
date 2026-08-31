@@ -441,3 +441,34 @@ create policy "members_own_survey_responses" on survey_responses for all
   using ((select email from members where id = survey_responses.member_id) = (auth.jwt() ->> 'email'))
   with check ((select email from members where id = survey_responses.member_id) = (auth.jwt() ->> 'email'));
 create policy "admins_all_survey_responses" on survey_responses for all using (is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Content Machine (migration content_posts): AI-generated, Brain-grounded social
+-- posts from member activity. Admin-only (/admin/content). Definitions & prompt
+-- live in code (src/lib/content/*). Visuals render via next/og at
+-- /api/content/[id]/image. Question set + highlight engine feed the signals.
+create table if not exists content_posts (
+  id              uuid primary key default gen_random_uuid(),
+  source_type     text not null check (source_type in ('member_win','community','takeaway','educational')),
+  member_id       uuid references members(id) on delete set null,   -- null for community/aggregate
+  signal          jsonb not null default '{}'::jsonb,                -- raw trigger data (metrics, deltas)
+  trigger_summary text not null default '',                          -- e.g. "Sean · income +45% in Sep"
+  dedupe_key      text,                                              -- prevents regenerating the same signal
+  format          text not null default 'carousel' check (format in ('single','carousel')),
+  platform        text not null default 'both' check (platform in ('instagram','facebook','both')),
+  caption         text not null default '',
+  hashtags        text not null default '',
+  slides          jsonb not null default '[]'::jsonb,                -- [{ headline, body, imageDirection }]
+  art_direction   text not null default '',
+  status          text not null default 'draft' check (status in ('draft','approved','rejected','posted')),
+  edited          boolean not null default false,
+  approved_by     uuid references profiles(id) on delete set null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  posted_at       timestamptz
+);
+create index if not exists content_posts_status_idx on content_posts(status);
+create index if not exists content_posts_created_idx on content_posts(created_at desc);
+create unique index if not exists content_posts_dedupe_idx on content_posts(dedupe_key) where dedupe_key is not null;
+alter table content_posts enable row level security;
+create policy "admins_manage_content" on content_posts for all using (is_admin()) with check (is_admin());
