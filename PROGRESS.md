@@ -162,6 +162,11 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Auth reconciliation complete (0 orphans).** Second pass deleted the last 3 orphan logins:
+  `seanbatesrealestate@gmail.com` (member record intentionally removed), `support@teamgogo.team`, and
+  `assistant@gogosrealestate.com`. Final audit: every auth account is now either a member or staff,
+  every member has a login, and no data rows (homework/reports/weekly_logs/billing/payments/surveys/
+  content) reference a deleted member. 11 orphan logins removed in total.
 - **Orphan-login cleanup + the dead-end page is now actionable.** Deleted 8 orphan auth accounts
   (no member row, no staff role): the Tammy/Chrissi duplicates, two `kn?waker` typo variants, a
   Samuel alt, `admin@sdrsells.com` (alt of gina.tran@), `epichawaiihomes@`, and a stale test login.
