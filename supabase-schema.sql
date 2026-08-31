@@ -469,6 +469,8 @@ create table if not exists content_posts (
 );
 create index if not exists content_posts_status_idx on content_posts(status);
 create index if not exists content_posts_created_idx on content_posts(created_at desc);
-create unique index if not exists content_posts_dedupe_idx on content_posts(dedupe_key) where dedupe_key is not null;
+-- Plain (non-partial) unique index so upsert ON CONFLICT (dedupe_key) works;
+-- NULLs stay distinct, so aggregate rows without a dedupe_key are unaffected.
+create unique index if not exists content_posts_dedupe_key_uk on content_posts(dedupe_key);
 alter table content_posts enable row level security;
 create policy "admins_manage_content" on content_posts for all using (is_admin()) with check (is_admin());
