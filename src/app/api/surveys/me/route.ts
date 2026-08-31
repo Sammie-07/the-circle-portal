@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 import { SURVEY_QUESTIONS, isSurveyComplete, type SurveyAnswers } from '@/lib/survey-questions'
 import { windowForMonth } from '@/lib/survey'
 import { getSurveyAllowlist, isEmailInSurveyRollout } from '@/lib/settings'
+import { generateBatch } from '@/lib/content/generate-batch'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60
 
 function monthLabel(iso: string): string {
   return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', {
@@ -121,6 +123,14 @@ export async function PATCH(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // A completed survey is fresh member activity — auto-generate content from it
+  // in the background (never blocks the member's submit).
+  if (submit && data.status === 'complete') {
+    after(async () => {
+      await generateBatch({ cap: 3, memberId: member.id, force: true }).catch(() => {})
+    })
+  }
 
   return NextResponse.json({ ok: true, status: data.status, answers: data.answers })
 }

@@ -104,7 +104,7 @@ function banDashes(s: string): string {
 }
 
 /** Generate one finished post from a signal, grounded in Gogo's Brain. */
-export async function generatePost(rawSignal: ContentSignal): Promise<GeneratedContent> {
+export async function generatePost(rawSignal: ContentSignal, feedbackGuidance = ''): Promise<GeneratedContent> {
   const signal = anonymizeSignal(rawSignal)
   const anthropic = getAnthropic()
 
@@ -116,7 +116,7 @@ export async function generatePost(rawSignal: ContentSignal): Promise<GeneratedC
 
 GOGO'S KNOWLEDGE BASE (the Brain) — this is your lens. Use it to INTERPRET and CONTEXTUALIZE what the member did, and to supply the lesson, framing, beliefs, and voice for the post:
 ${brainContext || '(No specific excerpts retrieved for this topic. Stay strictly within Gogo\'s known principles; do not invent specifics.)'}
-
+${feedbackGuidance ? `\nWHAT THE ADMIN HAS ASKED YOU TO IMPROVE (apply these preferences to this post):\n${feedbackGuidance}\n` : ''}
 ---
 WHAT THE SYSTEM OBSERVED (the raw member activity to turn into a post):
 ${taskFor(signal)}

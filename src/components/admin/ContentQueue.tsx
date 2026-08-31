@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from '@/lib/toast'
 
 export interface ContentSlide {
@@ -19,6 +20,7 @@ export interface ContentPost {
   slides: ContentSlide[]
   art_direction: string
   status: 'draft' | 'approved' | 'rejected' | 'posted'
+  feedback: string | null
   created_at: string
 }
 
@@ -38,9 +40,10 @@ const FILTERS: Array<{ key: string; label: string }> = [
 ]
 
 export default function ContentQueue({ initialPosts }: { initialPosts: ContentPost[] }) {
+  const router = useRouter()
   const [posts, setPosts] = useState<ContentPost[]>(initialPosts)
   const [filter, setFilter] = useState<string>('draft')
-  const [generating, setGenerating] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: posts.length }
@@ -50,28 +53,16 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
 
   const visible = filter === 'all' ? posts : posts.filter((p) => p.status === filter)
 
-  async function generate() {
-    setGenerating(true)
+  async function refresh() {
+    setRefreshing(true)
     try {
-      const res = await fetch('/api/content/generate', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) {
-        toast(data.error ?? 'Could not generate', 'error')
-        return
-      }
-      if (data.generated === 0) {
-        toast(data.reason === 'no activity to post about yet' ? 'No new activity to post about yet.' : 'Nothing new to generate right now.')
-      } else {
-        toast(`Generated ${data.generated} new post${data.generated === 1 ? '' : 's'}${data.remaining ? ` (${data.remaining} more queued — click again)` : ''}.`)
-        // Reload to pull the fresh drafts.
-        const listed = await fetch('/api/content').then((r) => r.json())
-        if (Array.isArray(listed.posts)) setPosts(listed.posts)
-        setFilter('draft')
-      }
+      const listed = await fetch('/api/content').then((r) => r.json())
+      if (Array.isArray(listed.posts)) setPosts(listed.posts)
+      router.refresh() // also re-triggers the background auto-generation
     } catch {
-      toast('Network error — please try again', 'error')
+      /* ignore */
     } finally {
-      setGenerating(false)
+      setRefreshing(false)
     }
   }
 
@@ -121,20 +112,25 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
             )
           })}
         </div>
-        <button
-          onClick={generate}
-          disabled={generating}
-          className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
-        >
-          {generating ? 'Generating…' : '✦ Generate from activity'}
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-[var(--text-3)] text-xs hidden sm:inline">
+            ✦ Posts generate automatically from member activity
+          </span>
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded-lg hover:bg-[var(--surface-2)] transition-colors disabled:opacity-40"
+          >
+            {refreshing ? 'Refreshing…' : '↻ Refresh'}
+          </button>
+        </div>
       </div>
 
       {visible.length === 0 ? (
         <div className="border border-[var(--border-color)] rounded-xl p-10 text-center">
           <p className="text-[var(--text-2)] text-sm">
             {filter === 'draft'
-              ? 'No drafts yet. Click “Generate from activity” to turn recent member wins into posts.'
+              ? 'No drafts yet. Posts generate automatically as members log progress (surveys, homework). Check back shortly, or hit Refresh.'
               : `No ${filter} posts.`}
           </p>
         </div>
@@ -178,8 +174,28 @@ function PostCard({
   const [hashtags, setHashtags] = useState(post.hashtags)
   const [showBrief, setShowBrief] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [feedback, setFeedback] = useState(post.feedback ?? '')
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [savingFb, setSavingFb] = useState(false)
   const dirty = caption !== post.caption || hashtags !== post.hashtags
   const slideCount = Math.max(1, post.slides?.length ?? 1)
+
+  async function saveFeedback() {
+    setSavingFb(true)
+    try {
+      const res = await fetch(`/api/content/${post.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedback }),
+      })
+      if (!res.ok) { toast('Could not save feedback', 'error'); return }
+      onEdit(post.id, { feedback })
+      toast('Feedback saved — future posts will use it')
+      setShowFeedback(false)
+    } finally {
+      setSavingFb(false)
+    }
+  }
 
   async function save() {
     setSaving(true)
@@ -296,13 +312,38 @@ function PostCard({
             ) : null}
             {post.status !== 'rejected' ? (
               <button onClick={() => onStatus(post.id, 'rejected')} className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-3.5 py-1.5 rounded-lg hover:bg-[var(--surface-2)]">
-                Reject
+                Discard
               </button>
             ) : null}
+            <button
+              onClick={() => setShowFeedback((v) => !v)}
+              className={`border text-sm px-3.5 py-1.5 rounded-lg hover:bg-[var(--surface-2)] ${post.feedback ? 'border-[#C9A227] text-[#C9A227]' : 'border-[var(--border-color)] text-[var(--text-2)]'}`}
+            >
+              ✎ Feedback
+            </button>
             <button onClick={() => onRemove(post.id)} className="text-[var(--text-3)] text-sm px-2 py-1.5 rounded-lg hover:text-[#ff8080] ml-auto">
               Delete
             </button>
           </div>
+
+          {showFeedback ? (
+            <div className="mt-3 border border-[var(--border-color)] rounded-lg p-3 bg-[var(--surface-2)]">
+              <p className="text-[var(--text-3)] text-xs mb-2">
+                Tell the system how to make posts better (tone, length, what to emphasize, what to avoid).
+                This guides all future generations.
+              </p>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={2}
+                placeholder="e.g. Punchier hooks, less salesy, always lead with the number…"
+                className="w-full bg-[var(--bg)] border border-[var(--border-color)] rounded-lg p-2.5 text-sm text-[var(--text)]"
+              />
+              <button onClick={saveFeedback} disabled={savingFb} className="mt-2 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-3.5 py-1.5 rounded-lg disabled:opacity-40">
+                {savingFb ? 'Saving…' : 'Save feedback'}
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ interface Body {
   art_direction?: string
   platform?: string
   status?: string
+  feedback?: string
 }
 
 // PATCH /api/content/[id] — edit copy and/or change status (approve/reject/posted).
@@ -42,6 +43,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (typeof body.hashtags === 'string') { patch.hashtags = body.hashtags; patch.edited = true }
   if (Array.isArray(body.slides)) { patch.slides = body.slides; patch.edited = true }
   if (typeof body.art_direction === 'string') { patch.art_direction = body.art_direction; patch.edited = true }
+  if (typeof body.feedback === 'string') patch.feedback = body.feedback.trim() || null
   if (body.platform && ['instagram', 'facebook', 'both'].includes(body.platform)) patch.platform = body.platform
   if (body.status && ['draft', 'approved', 'rejected', 'posted'].includes(body.status)) {
     patch.status = body.status

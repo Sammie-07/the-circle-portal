@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
+import { generateBatch } from '@/lib/content/generate-batch'
 import ContentQueue, { type ContentPost } from '@/components/admin/ContentQueue'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const STAFF = ['owner', 'admin', 'manager', 'support', 'tech']
 
@@ -19,6 +22,13 @@ export default async function AdminContentPage() {
     .from('content_posts')
     .select('*')
     .order('created_at', { ascending: false })
+
+  // Auto-generate in the background from any new member activity (rate-limited
+  // inside generateBatch). Runs AFTER the response is sent, so the page never
+  // waits on the model. New posts appear on the next refresh.
+  after(async () => {
+    await generateBatch({ cap: 2 }).catch(() => {})
+  })
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl">

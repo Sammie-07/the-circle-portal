@@ -162,6 +162,19 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Content Machine: automatic background generation + feedback loop (fixes the "network error").**
+  The manual "Generate" button ran up to 6 Opus calls synchronously and blew past Vercel Hobby's
+  function limit → 504 → client "network error". Reworked so generation NEVER runs in a request the
+  user awaits: new `src/lib/content/generate-batch.ts` `generateBatch({cap,memberId,force})` (scans
+  signals, dedupes, generates a small cap, inserts each post incrementally so partials survive a
+  timeout; rate-limited to once/75s for untargeted runs). Triggers, all via `after()`: (1) the
+  Content tab load auto-generates (cap 2) in the background; (2) a member submitting their survey
+  auto-generates for that member (cap 3, forced); (3) new daily cron `/api/cron/content`
+  (`0 16 * * *`, cap 4) as a safety net. Deleted the synchronous `/api/content/generate` route and
+  the button — the tab now shows an "auto" note + a Refresh. **Feedback loop:** added
+  `content_posts.feedback` (migration `content_posts_add_feedback`); each post has a Feedback box
+  (saved via PATCH) and the last 8 feedback notes are injected into every future generation as
+  guidance. "Reject" relabeled **Discard**. tsc + lint + `next build` clean.
 - **Content Machine — new admin "Content" tab (Phase 1).** Turns real member activity into
   on-brand IG/FB posts, grounded in Gogo's Brain. Pieces:
   - **Data:** migration `content_posts` (recorded in `supabase-schema.sql`) — one row per generated
