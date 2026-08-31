@@ -28,7 +28,10 @@ export async function POST(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
   let link: string
   try {
-    link = await generateSigninLink(email, appUrl, member?.name, 'reset')
+    // A reset must never CREATE a login. If no account exists for this address it
+    // is the wrong address, and minting one would strand them on a portal with no
+    // member record attached.
+    link = await generateSigninLink(email, appUrl, member?.name, 'reset', { allowCreate: false })
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not generate reset link' }, { status: 500 })
   }

@@ -162,6 +162,17 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Fixed: admin actions could silently create logins at addresses no member owned.** Tammy and
+  Chrissi both hit "Your member profile is being set up" because each had a SECOND auth account at
+  an address with no `members` row (member↔login is matched by email). Root cause: `generateSigninLink`
+  creates an account when none exists, and two callers passed an arbitrary admin-typed email with no
+  member check, so "Send Password Reset" / "Copy Sign-In Link" at a wrong-or-alternate address minted
+  a brand-new working login that matched no member record. Fixes: (1) `generateSigninLink` takes
+  `{allowCreate}`; `/api/auth/admin-reset` passes `false` so a RESET can never create an account and
+  errors clearly instead; (2) `/api/invite/signin-link` now requires an existing member row (404 with
+  a clear message), matching `/api/invite` which already did. Data fix: repointed Tammy's member email
+  to tammy@alwaysyourrealtor.com and Christine's to chrissi.polizzi@exprealty.com (the accounts they
+  actually use); both verified matching, blueprints + homework intact. tsc + lint + build clean.
 - **Fixed report refine: regenerating now EDITS the report instead of rewriting it.** Admin report
   reported "it fixes one thing and changes back another" after an hour of refining. Root cause: the
   "Apply & Regenerate" flow appended the feedback to the ORIGINAL generation prompt and never passed

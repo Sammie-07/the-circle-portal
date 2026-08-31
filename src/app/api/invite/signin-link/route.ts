@@ -20,11 +20,26 @@ export async function POST(request: Request) {
   const { email } = await request.json()
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
+  // The address MUST belong to a member. Generating a link for an arbitrary email
+  // used to create a login that matched no member record, so the person could sign
+  // in but only ever saw "your member profile is being set up".
+  const { data: member } = await supabase
+    .from('members')
+    .select('id, name')
+    .eq('email', email)
+    .maybeSingle()
+  if (!member) {
+    return NextResponse.json(
+      { error: 'No member found with this email. The address must match the one on their profile.' },
+      { status: 404 }
+    )
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
 
   let link: string
   try {
-    link = await generateSigninLink(email, appUrl, undefined, 'activate')
+    link = await generateSigninLink(email, appUrl, member.name, 'activate')
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Could not generate the link' }, { status: 500 })
   }

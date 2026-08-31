@@ -13,7 +13,14 @@ function confirmUrl(appUrl: string, tokenHash: string, ctx?: string): string {
 // don't have an account yet, so invites work for brand-new members. Clicking it
 // (through the /auth/confirm interstitial) verifies them and drops them on
 // /set-password already signed in — no code needed. `ctx` steers the copy there.
-export async function generateSigninLink(email: string, appUrl: string, fullName?: string, ctx?: string): Promise<string> {
+export async function generateSigninLink(
+  email: string,
+  appUrl: string,
+  fullName?: string,
+  ctx?: string,
+  opts: { allowCreate?: boolean } = {}
+): Promise<string> {
+  const { allowCreate = true } = opts
   const admin = createAdminClient()
   const redirectTo = `${appUrl.replace(/\/$/, '')}/auth/callback`
 
@@ -22,6 +29,14 @@ export async function generateSigninLink(email: string, appUrl: string, fullName
   }
 
   let { data, error } = await gen()
+
+  // Callers that must NOT mint a new account (password resets) stop here. Without
+  // this, a mistyped or alternate address silently created a brand-new login that
+  // matched no member record, and the person landed on "your profile is being set
+  // up" forever. Fail loudly instead so the admin sees the wrong address.
+  if ((error || !data?.properties?.hashed_token) && !allowCreate) {
+    throw new Error(`No account exists for ${email}. Check the address, it must match the one on their profile.`)
+  }
 
   // No account yet → create one (confirmed, so no separate confirmation email)
   // and retry. Tolerate "already registered" in case of a race.
