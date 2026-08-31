@@ -162,6 +162,12 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Standardized CTA + chat-bubble overlap fix.** All captions now always close with the same
+  mechanic (polished wording only): "Comment CIRCLE" to join the coaching (only CTA; no DM/link-in-bio);
+  carousel final slide is the CTA slide; image footer CTA reads Comment "CIRCLE". Regenerated all 13
+  drafts against the new rule (verified: 13/13 carry it). Also fixed the fixed Ask-Gogo chat bubble
+  overlapping the last members-table row actions (added pb-28 to the scrollable main in admin +
+  member layouts). Backfill cap lowered 3→2 to stay under the 60s function limit.
 - **Content bank seeded (13 real posts across 7 member profiles) + dedupe-index bug fixed.** Content
   upserts were silently failing: `ON CONFLICT (dedupe_key)` needs a NON-partial unique index, but
   the table had a partial one (`where dedupe_key is not null`) — every insert threw "no unique or

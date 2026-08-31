@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const signals = await scanRecentSignals(admin)
   const { data: existing } = await admin.from('content_posts').select('dedupe_key')
   const seen = new Set((existing ?? []).map((r) => r.dedupe_key).filter(Boolean))
-  const fresh = signals.filter((s) => !seen.has(s.dedupeKey)).slice(0, 3)
+  const fresh = signals.filter((s) => !seen.has(s.dedupeKey)).slice(0, 2) // 2/run stays under the 60s function limit
 
   let made = 0
   let firstError: string | null = null
