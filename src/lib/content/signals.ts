@@ -44,6 +44,7 @@ interface MemberRow {
   name: string
   is_internal: boolean
   status: string
+  blueprint_generated_at: string | null
   survey_responses: RawResponse[] | null
   homework: { completed: boolean }[] | null
 }
@@ -55,7 +56,7 @@ interface MemberRow {
 export async function scanRecentSignals(admin: SupabaseClient): Promise<ContentSignal[]> {
   const { data: members } = await admin
     .from('members')
-    .select('id, name, is_internal, status, survey_responses ( period_month, answers, status ), homework ( completed )')
+    .select('id, name, is_internal, status, blueprint_generated_at, survey_responses ( period_month, answers, status ), homework ( completed )')
     .eq('status', 'active')
 
   const rows = (members ?? []) as MemberRow[]
@@ -69,6 +70,7 @@ export async function scanRecentSignals(admin: SupabaseClient): Promise<ContentS
   const themesPresent = new Set<string>()
 
   for (const m of rows) {
+    if (m.is_internal) continue // never feature internal/test accounts publicly
     const name = m.name ?? 'A Circle member'
     const responses = (m.survey_responses ?? [])
       .filter((r) => r.status === 'complete')
@@ -139,6 +141,24 @@ export async function scanRecentSignals(admin: SupabaseClient): Promise<ContentS
         dedupeKey: `hw:${m.id}:${bucket}`,
         summary: `${name} · ${bucket}+ homeworks completed`,
         data: { member: name, completed: bucket, note: 'consistent execution / doing the work' },
+      })
+    }
+
+    // --- Blueprint: they have a personalized 12-month plan (journey/proof post) ---
+    if (m.blueprint_generated_at) {
+      themesPresent.add('planning')
+      signals.push({
+        sourceType: 'member_win',
+        memberId: m.id,
+        memberName: name,
+        theme: 'blueprint',
+        dedupeKey: `blueprint:${m.id}`,
+        summary: `${name} · has a custom 12-month blueprint`,
+        data: {
+          member: name,
+          milestone: 'has a personalized 12-month blueprint mapping their next year',
+          note: 'committed to The Circle, has a clear roadmap and is executing on it',
+        },
       })
     }
   }

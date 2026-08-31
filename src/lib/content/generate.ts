@@ -88,6 +88,8 @@ function brainQueryFor(signal: ContentSignal): string {
     takeaway: 'lessons mindset growth belief self worth',
     community: 'team #teamgogo culture accountability community support',
     growth: 'growth results transformation belief in yourself',
+    blueprint: 'having a plan roadmap goal setting 12 month blueprint commitment vision',
+    planning: 'goal setting planning roadmap vision quarterly goals clarity',
   }
   // Make the query signal-aware so we pull the most relevant teaching, and for
   // takeaways use the member's own words to find the matching principle.

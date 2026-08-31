@@ -162,6 +162,13 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Content signals now span all real members (blueprints + homework); exclude internal.** Added a
+  blueprint signal (any member with a generated 12-month blueprint → a journey/proof post, deduped
+  once per member) and a `planning` educational theme; the scanner now skips `is_internal` accounts
+  so test profiles are never featured. Combined with homework-completion milestones, every active
+  real member with activity now produces posts (Krystal/Yvonne/Gina/Allison via homework+blueprint,
+  Christine/Rachel/Tammy via blueprint). Added a token-gated `/api/content/backfill` (inert unless
+  `app_settings.content_backfill_token` is set) to seed the bank from existing activity on demand.
 - **Content Machine: automatic background generation + feedback loop (fixes the "network error").**
   The manual "Generate" button ran up to 6 Opus calls synchronously and blew past Vercel Hobby's
   function limit → 504 → client "network error". Reworked so generation NEVER runs in a request the
