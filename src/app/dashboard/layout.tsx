@@ -48,7 +48,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <div className="flex flex-col md:flex-row flex-1 min-h-0">
             <Sidebar role="member" memberName={target.name} />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto pb-28">{children}</main>
             {/* Bubble shown for portal fidelity. In preview it runs an ephemeral
                 chat under the viewer's own staff session: answers live from Gogo's
                 Brain but persists nothing and never touches the member's history. */}
@@ -90,7 +90,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar role="member" memberName={member?.name ?? profile?.full_name ?? user.email} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-28">
         {children}
       </main>
       <ChatBubble />

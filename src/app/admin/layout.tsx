@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar role="admin" memberName={profile?.full_name ?? user.email} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-28">
         {children}
       </main>
       {/* Staff get their own persisted Ask Gogo chat (staff-keyed sessions). */}
