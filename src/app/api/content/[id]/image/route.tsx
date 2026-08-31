@@ -89,7 +89,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', color: '#FFFFFF', fontSize: '30px', fontWeight: 700 }}>Gogo Bethke</div>
           <div style={{ display: 'flex', color: GOLD, fontSize: '30px', fontWeight: 700 }}>
-            {i === total - 1 && total > 1 ? 'DM me “CIRCLE”' : '@gogorealestate'}
+            {i === total - 1 ? 'Comment “CIRCLE”' : 'The Circle'}
           </div>
         </div>
       </div>
