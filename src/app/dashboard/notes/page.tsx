@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import MyNotes from '@/components/dashboard/MyNotes'
 import { resolvePortalContext } from '@/lib/portalContext'
+import UnrecognizedAccount from '@/components/shared/UnrecognizedAccount'
 
 export default async function NotesPage() {
   const ctx = await resolvePortalContext()
@@ -8,9 +9,7 @@ export default async function NotesPage() {
 
   if (!ctx.member) {
     return (
-      <div className="p-4 sm:p-8 text-center">
-        <p className="text-[var(--text-2)]">Your member profile is being set up. Check back soon.</p>
-      </div>
+      <UnrecognizedAccount email={ctx.user.email} />
     )
   }
   const member = ctx.member as { id: string; name: string }

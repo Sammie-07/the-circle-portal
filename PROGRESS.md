@@ -162,6 +162,15 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Orphan-login cleanup + the dead-end page is now actionable.** Deleted 8 orphan auth accounts
+  (no member row, no staff role): the Tammy/Chrissi duplicates, two `kn?waker` typo variants, a
+  Samuel alt, `admin@sdrsells.com` (alt of gina.tran@), `epichawaiihomes@`, and a stale test login.
+  **Deliberately kept all 4 staff logins** (owner `gogosrealestate@gmail.com`, `tech@`, `kristy@`,
+  `admin@gogosrealestate.com`) which legitimately have no member row. Also replaced the dead-end
+  "Your member profile is being set up. Check back soon." on the 3 member pages with a new shared
+  `UnrecognizedAccount` card: it names the signed-in address, explains it matches no member profile,
+  and offers a **Sign out and try another email** button. The old copy never resolved on its own and
+  had no escape, which is why affected members just sat and waited. tsc + lint + build clean.
 - **Fixed: admin actions could silently create logins at addresses no member owned.** Tammy and
   Chrissi both hit "Your member profile is being set up" because each had a SECOND auth account at
   an address with no `members` row (member↔login is matched by email). Root cause: `generateSigninLink`

@@ -4,6 +4,7 @@ import AttendanceCard from '@/components/dashboard/AttendanceCard'
 import OfficeHoursCard from '@/components/dashboard/OfficeHoursCard'
 import { resolvePortalContext } from '@/lib/portalContext'
 import { getOfficeHoursStatus } from '@/lib/office-hours'
+import UnrecognizedAccount from '@/components/shared/UnrecognizedAccount'
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ oh?: string }> }) {
   const sp = await searchParams
@@ -25,10 +26,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   if (!member) {
     return (
-      <div className="p-4 sm:p-8 text-center space-y-2">
-        <p className="text-[var(--text-2)]">Your member profile is being set up. Check back soon.</p>
-        <p className="text-[var(--text-3)] text-xs">Logged in as: {ctx.user.email}</p>
-      </div>
+      <UnrecognizedAccount email={ctx.user.email} />
     )
   }
 
