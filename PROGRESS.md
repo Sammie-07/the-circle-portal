@@ -162,6 +162,13 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Content bank seeded (13 real posts across 7 member profiles) + dedupe-index bug fixed.** Content
+  upserts were silently failing: `ON CONFLICT (dedupe_key)` needs a NON-partial unique index, but
+  the table had a partial one (`where dedupe_key is not null`) — every insert threw "no unique or
+  exclusion constraint matching the ON CONFLICT specification". Migration `content_posts_dedupe_full_unique`
+  drops it for a plain unique index (NULLs still distinct). Backfilled the bank from existing activity
+  via the token-gated `/api/cron/content-backfill` (Yvonne/Krystal/Gina/Allison: homework+blueprint;
+  Christine/Rachel/Tammy: blueprint; + 2 educational). Backfill token cleared (endpoint now inert).
 - **Content signals now span all real members (blueprints + homework); exclude internal.** Added a
   blueprint signal (any member with a generated 12-month blueprint → a journey/proof post, deduped
   once per member) and a `planning` educational theme; the scanner now skips `is_internal` accounts
