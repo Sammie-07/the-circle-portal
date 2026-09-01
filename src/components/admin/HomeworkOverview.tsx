@@ -166,10 +166,14 @@ function TaskRow({
           </div>
         )}
       </div>
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-        <button onClick={openEdit} className="text-[var(--text-4)] hover:text-[var(--text-2)] text-xs px-1.5 py-1 rounded transition-colors">Edit</button>
-        <button onClick={() => onDelete(task.id)} className="text-[var(--text-4)] hover:text-[#CC1F1F] text-xs px-1.5 py-1 rounded transition-colors">✕</button>
+      {/* Actions — always visible */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <button onClick={openEdit}
+          className="text-[#C9A227] hover:bg-[#C9A227]/10 text-xs font-medium px-2 py-1 rounded border border-[#C9A227]/40 transition-colors">
+          Edit
+        </button>
+        <button onClick={() => onDelete(task.id)}
+          className="text-[var(--text-4)] hover:text-[#CC1F1F] text-xs px-1.5 py-1 rounded transition-colors">✕</button>
       </div>
     </div>
   )
