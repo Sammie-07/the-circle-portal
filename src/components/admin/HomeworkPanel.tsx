@@ -25,6 +25,14 @@ interface Props {
 
 const EMPTY_FORM = { title: '', description: '', due_date: '', type: 'homework' as 'homework' | 'task' }
 
+// Format a date for the Added/Due/Completed line. `dateOnly` for plain date
+// columns (due_date) so they aren't shifted by timezone; timestamps parse as-is.
+function fmtDate(d: string | null | undefined, dateOnly = false): string {
+  if (!d) return '—'
+  const dt = dateOnly ? new Date(d + 'T00:00:00') : new Date(d)
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 function dueBadge(due: string | null) {
   if (!due) return null
   const days = Math.ceil((new Date(due).getTime() - Date.now()) / 86400000)
@@ -284,6 +292,10 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
 }) {
   const badge = dueBadge(item.due_date)
   const isEditing = editId === item.id
+  // Tasks the AI pulled from a call come in with no due date. Flag them so the
+  // admin notices and sets one; the flag clears the moment a due date is added.
+  const needsDueDate = item.source === 'call' && !item.due_date && !item.completed
+  const openEdit = () => { setEditId(item.id); setEditForm({ title: item.title, description: item.description ?? '', due_date: item.due_date ?? '', type: item.type }) }
 
   if (isEditing) {
     return (
@@ -317,7 +329,9 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
   }
 
   return (
-    <div className="flex items-start gap-3 px-5 py-3 hover:bg-[var(--surface-2)] transition-colors group">
+    <div className={`flex items-start gap-3 px-5 py-3 hover:bg-[var(--surface-2)] transition-colors group ${
+      needsDueDate ? 'bg-[#C9A227]/[0.07] shadow-[inset_3px_0_0_#C9A227]' : ''
+    }`}>
       {/* Checkbox */}
       <button onClick={() => onToggle(item)}
         className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -334,15 +348,27 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
           {badge && !item.completed && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded border ${badge.cls}`}>{badge.label}</span>
           )}
+          {needsDueDate && (
+            <button
+              onClick={openEdit}
+              title="This task came from a call and has no due date yet. Click to add one."
+              className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C9A227]/50 text-[#C9A227] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 transition-colors"
+            >
+              ⚠ No due date, add one
+            </button>
+          )}
         </div>
         {item.description && (
           <p className="text-[var(--text-3)] text-xs mt-0.5 truncate">{item.description}</p>
         )}
-        {item.completed_at && (
-          <p className="text-[var(--text-4)] text-[10px] mt-0.5">
-            Done {new Date(item.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </p>
-        )}
+        {/* All three dates, always shown */}
+        <div className="flex items-center gap-1.5 mt-1 text-[var(--text-4)] text-[10px] flex-wrap">
+          <span>Added {fmtDate(item.created_at)}</span>
+          <span>·</span>
+          <span className={needsDueDate ? 'text-[#C9A227]' : ''}>Due {item.due_date ? fmtDate(item.due_date, true) : 'not set'}</span>
+          <span>·</span>
+          <span>Completed {item.completed_at ? fmtDate(item.completed_at) : '—'}</span>
+        </div>
         {item.notes && (
           <div className="mt-2 bg-[var(--surface-2)] border-l-2 border-[#C9A227]/40 rounded-r px-2.5 py-1.5">
             <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">Member note</p>
@@ -350,13 +376,6 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
           </div>
         )}
       </div>
-
-      {/* Auto-captured date the task was added (system-recorded on creation). */}
-      {item.created_at && (
-        <span className="text-[var(--text-4)] text-[10px] whitespace-nowrap flex-shrink-0 mt-0.5" title="Date this task was added">
-          Added {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </span>
-      )}
 
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">

@@ -50,8 +50,11 @@ function fmtDate(d: string | null) {
 
 function TaskRow({ task }: { task: Task }) {
   const done = task.completed
+  const needsDueDate = task.source === 'call' && !task.due_date && !done
   return (
-    <div className="flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0">
+    <div className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0 ${
+      needsDueDate ? 'bg-[#C9A227]/[0.07] shadow-[inset_3px_0_0_#C9A227]' : ''
+    }`}>
       <span
         className={`mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold ${
           done ? 'bg-[#C9A227] text-[#0D0D0D]' : 'border border-[var(--text-4)] text-transparent'
@@ -63,13 +66,21 @@ function TaskRow({ task }: { task: Task }) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm ${done ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>{task.title}</span>
           <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${taskSourceBadgeClass(task.source)}`}>{taskSourceLabel(task.source)}</span>
+          {needsDueDate && (
+            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C9A227]/50 text-[#C9A227] bg-[#C9A227]/10" title="Came from a call, no due date yet. Add one on the member's page.">
+              ⚠ No due date
+            </span>
+          )}
         </div>
         {task.description && <p className="text-[var(--text-3)] text-xs mt-0.5">{task.description}</p>}
-        <p className="text-[var(--text-4)] text-[10px] mt-0.5">
-          {done
-            ? task.completed_at ? `Completed ${fmtDate(task.completed_at)}` : 'Completed'
-            : task.due_date ? `Due ${fmtDate(task.due_date)}` : 'No due date'}
-        </p>
+        {/* Added · Due · Completed */}
+        <div className="flex items-center gap-1.5 mt-0.5 text-[var(--text-4)] text-[10px] flex-wrap">
+          <span>Added {fmtDate(task.created_at)}</span>
+          <span>·</span>
+          <span className={needsDueDate ? 'text-[#C9A227]' : ''}>Due {task.due_date ? fmtDate(task.due_date) : 'not set'}</span>
+          <span>·</span>
+          <span>Completed {task.completed_at ? fmtDate(task.completed_at) : '—'}</span>
+        </div>
         {task.notes && (
           <div className="mt-2 bg-[var(--surface-2)] border-l-2 border-[#C9A227]/40 rounded-r px-2.5 py-1.5">
             <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">Member note</p>
@@ -77,12 +88,6 @@ function TaskRow({ task }: { task: Task }) {
           </div>
         )}
       </div>
-      {/* Auto-captured date the task was added (system-recorded on creation). */}
-      {task.created_at && (
-        <span className="text-[var(--text-4)] text-[10px] whitespace-nowrap flex-shrink-0 mt-0.5" title="Date this task was added">
-          Added {fmtDate(task.created_at)}
-        </span>
-      )}
     </div>
   )
 }

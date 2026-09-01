@@ -10,6 +10,7 @@ interface HomeworkItem {
   type: 'homework' | 'task'
   completed: boolean
   completed_at: string | null
+  created_at?: string | null
   notes: string | null
   auto_suggested?: boolean
   source_note_homework_id?: string | null
@@ -18,6 +19,12 @@ interface HomeworkItem {
 interface Props {
   memberId: string
   initialItems: HomeworkItem[]
+}
+
+function hwFmtDate(d: string | null | undefined, dateOnly = false): string {
+  if (!d) return '—'
+  const dt = dateOnly ? new Date(d + 'T00:00:00') : new Date(d)
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function dueBadge(due: string | null) {
@@ -265,11 +272,13 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, onCreateFollowUp, fol
         {item.description && (
           <p className={`text-xs mt-0.5 ${item.completed ? 'text-[var(--text-4)]' : 'text-[var(--text-3)]'}`}>{item.description}</p>
         )}
-        {item.completed && item.completed_at && (
-          <p className="text-[10px] text-[var(--text-4)] mt-0.5">
-            Completed {new Date(item.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </p>
-        )}
+        {/* Added · Due · Completed */}
+        <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[var(--text-4)] flex-wrap">
+          {item.created_at && <><span>Added {hwFmtDate(item.created_at)}</span><span>·</span></>}
+          <span>Due {item.due_date ? hwFmtDate(item.due_date, true) : 'not set'}</span>
+          <span>·</span>
+          <span>Completed {item.completed_at ? hwFmtDate(item.completed_at) : '—'}</span>
+        </div>
 
         {/* Saved note — comment bubble */}
         {item.notes && !editing && (

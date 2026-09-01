@@ -16,7 +16,7 @@ export default async function MyHomeworkPage() {
 
   const { data: homeworkData } = await db
     .from('homework')
-    .select('id, title, description, due_date, type, completed, completed_at, notes, auto_suggested, source_note_homework_id')
+    .select('id, title, description, due_date, type, completed, completed_at, created_at, notes, auto_suggested, source_note_homework_id')
     .eq('member_id', ctx.member.id as string)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
