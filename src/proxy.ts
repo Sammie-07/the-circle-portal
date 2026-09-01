@@ -41,6 +41,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/api/checkin/') ||
     pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/reports/generate') || // TEMP: token-gated report preview (route enforces token/session itself)
     // Self-contained password setup/reset — must be reachable whether or not the
     // visitor is signed in (new members activate here before they have a session;
     // verified users finish choosing a password without being bounced away).
