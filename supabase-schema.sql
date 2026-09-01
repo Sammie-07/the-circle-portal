@@ -265,6 +265,7 @@ create policy "admins_all_applications" on applications for all using (is_admin(
 -- (homework base table created via earlier migration, not in this file)
 -- ============================================
 alter table homework add column if not exists notes text;
+alter table homework add column if not exists notes_at timestamptz; -- when the member note was last written
 alter table homework add column if not exists auto_suggested boolean not null default false;
 -- How each task entered the system (drives the admin label so AI/auto-added tasks
 -- are distinguishable from admin-assigned "Homework"):

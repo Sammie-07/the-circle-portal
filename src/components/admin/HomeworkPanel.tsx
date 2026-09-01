@@ -17,6 +17,7 @@ interface HomeworkItem {
   completed_at: string | null
   created_at: string
   notes: string | null
+  notes_at: string | null
 }
 
 interface Props {
@@ -371,7 +372,9 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
         </div>
         {item.notes && (
           <div className="mt-2 bg-[var(--surface-2)] border-l-2 border-[#C9A227]/40 rounded-r px-2.5 py-1.5">
-            <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">Member note</p>
+            <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">
+              Member note{item.notes_at ? <span className="text-[var(--text-4)] normal-case"> · {fmtDate(item.notes_at)}</span> : null}
+            </p>
             <p className="text-[var(--text-2)] text-xs whitespace-pre-wrap">{item.notes}</p>
           </div>
         )}

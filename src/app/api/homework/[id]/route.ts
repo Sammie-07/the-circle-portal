@@ -29,7 +29,11 @@ export async function PATCH(request: Request, { params }: Params) {
     if ('due_date' in body) patch.due_date = body.due_date || null
     if ('type' in body) patch.type = body.type
     if ('sort_order' in body) patch.sort_order = body.sort_order
-    if ('notes' in body) patch.notes = typeof body.notes === 'string' ? body.notes : null
+    if ('notes' in body) {
+      const n = typeof body.notes === 'string' ? body.notes : null
+      patch.notes = n
+      patch.notes_at = n && n.trim() ? new Date().toISOString() : null
+    }
   } else {
     // Members can toggle completed and set notes on their own item (RLS restricts to own rows)
     if (!('completed' in body) && !('notes' in body)) {
@@ -40,7 +44,11 @@ export async function PATCH(request: Request, { params }: Params) {
       patch.completed = body.completed
       patch.completed_at = body.completed ? new Date().toISOString() : null
     }
-    if ('notes' in body) patch.notes = typeof body.notes === 'string' ? body.notes : null
+    if ('notes' in body) {
+      const n = typeof body.notes === 'string' ? body.notes : null
+      patch.notes = n
+      patch.notes_at = n && n.trim() ? new Date().toISOString() : null
+    }
   }
 
   const { data, error } = await supabase

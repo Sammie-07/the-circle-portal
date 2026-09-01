@@ -19,6 +19,7 @@ interface Task {
   completed_at: string | null
   created_at: string
   notes: string | null
+  notes_at: string | null
 }
 
 // Filter by ORIGIN: admin-assigned homework vs anything AI/automation added.
@@ -161,7 +162,9 @@ function TaskRow({
         </div>
         {task.notes && (
           <div className="mt-2 bg-[var(--surface-2)] border-l-2 border-[#C9A227]/40 rounded-r px-2.5 py-1.5">
-            <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">Member note</p>
+            <p className="text-[#C9A227] text-[9px] uppercase tracking-wider mb-0.5">
+              Member note{task.notes_at ? <span className="text-[var(--text-4)] normal-case"> · {fmtDate(task.notes_at)}</span> : null}
+            </p>
             <p className="text-[var(--text-2)] text-xs whitespace-pre-wrap">{task.notes}</p>
           </div>
         )}

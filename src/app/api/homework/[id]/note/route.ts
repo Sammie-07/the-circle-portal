@@ -45,10 +45,11 @@ export async function POST(request: Request, { params }: Params) {
   }
   if (!hasAccess) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  // Save the note (empty string allowed to clear)
+  // Save the note (empty string allowed to clear). Stamp when it was written so
+  // the admin views can show the note's date; clear the stamp when the note is cleared.
   const { error: saveErr } = await admin
     .from('homework')
-    .update({ notes: note })
+    .update({ notes: note, notes_at: note ? new Date().toISOString() : null })
     .eq('id', id)
   if (saveErr) return NextResponse.json({ error: saveErr.message }, { status: 500 })
 
