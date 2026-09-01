@@ -47,6 +47,19 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
   const [error, setError] = useState('')
   const [fathomUrl, setFathomUrl] = useState('')
   const [importing, setImporting] = useState(false)
+  // Member IDs whose row was just pre-filled from a Fathom import. Used to make
+  // those rows visibly "light up" so the admin notices what to review. A row's
+  // glow clears once the admin edits it (reviewed) or on save.
+  const [imported, setImported] = useState<Set<string>>(new Set())
+
+  function clearImported(memberId: string) {
+    setImported(prev => {
+      if (!prev.has(memberId)) return prev
+      const n = new Set(prev)
+      n.delete(memberId)
+      return n
+    })
+  }
 
   // Pull the call transcript from a Fathom share link and pre-fill each member's
   // Showed Up, Questions (count of problems/asks raised) and Notes (the record of
@@ -72,9 +85,13 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
         }
         return next
       })
+      const appliedIds = ((data.rows ?? []) as { member_id: string }[])
+        .map(r => r.member_id)
+        .filter(id => members.some(m => m.id === id))
+      setImported(new Set(appliedIds))
       setSaved(false)
       const hw = data.suggestedHomework ?? 0
-      toast(`Imported "${data.title}": ${data.attended} present${hw ? `, ${hw} suggested task${hw === 1 ? '' : 's'} added to member backends` : ''}. Review and save.`)
+      toast(`Imported "${data.title}": ${data.attended} present${hw ? `, ${hw} suggested task${hw === 1 ? '' : 's'} added to member backends` : ''}. Review the highlighted rows and save.`)
     } catch {
       toast('Network error, please try again', 'error')
     } finally {
@@ -118,6 +135,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       ...prev,
       [memberId]: { ...prev[memberId], [field]: !prev[memberId][field] },
     }))
+    clearImported(memberId)
     setSaved(false)
   }
 
@@ -126,6 +144,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       ...prev,
       [memberId]: { ...prev[memberId], questions_asked: Math.max(0, value) },
     }))
+    clearImported(memberId)
     setSaved(false)
   }
 
@@ -134,6 +153,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       ...prev,
       [memberId]: { ...prev[memberId], notes: value },
     }))
+    clearImported(memberId)
     setSaved(false)
   }
 
@@ -171,6 +191,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       toast(err.message ?? 'Could not save', 'error')
     } else {
       setSaved(true)
+      setImported(new Set())
       toast(`Logged ${members.length} member${members.length === 1 ? '' : 's'} for the week`)
     }
     setSaving(false)
@@ -265,23 +286,33 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
           {/* Member rows */}
           {members.map((member, i) => {
             const log = logs[member.id]
+            const isImported = imported.has(member.id)
             return (
               <div
                 key={member.id}
-                className={`grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-4 items-center ${
+                className={`grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-4 items-start transition-colors ${
                   i < members.length - 1 ? 'border-b border-[#2A2A2A]' : ''
-                } ${log.showed_up ? '' : 'opacity-60'}`}
+                } ${!log.showed_up && !isImported ? 'opacity-60' : ''} ${
+                  isImported ? 'bg-[#C9A227]/[0.08] shadow-[inset_3px_0_0_#C9A227]' : ''
+                }`}
               >
                 {/* Name */}
-                <div>
-                  <p className="text-white text-sm font-medium">{member.name}</p>
+                <div className="pt-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-white text-sm font-medium">{member.name}</p>
+                    {isImported && (
+                      <span className="text-[9px] uppercase tracking-wider text-[#C9A227] bg-[#C9A227]/10 border border-[#C9A227]/40 rounded px-1.5 py-0.5">
+                        ✨ From call
+                      </span>
+                    )}
+                  </div>
                   {member.cohort && (
                     <p className="text-[#555] text-xs">{member.cohort}</p>
                   )}
                 </div>
 
                 {/* Showed up toggle */}
-                <div className="flex justify-center">
+                <div className="flex justify-center pt-0.5">
                   <button
                     onClick={() => toggle(member.id, 'showed_up')}
                     className={`w-9 h-9 rounded border-2 flex items-center justify-center transition-all ${
@@ -296,7 +327,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
                 </div>
 
                 {/* Questions counter */}
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2 pt-1.5">
                   <button
                     onClick={() => setQuestions(member.id, log.questions_asked - 1)}
                     className="w-6 h-6 rounded bg-[#2A2A2A] text-[#888] hover:text-white flex items-center justify-center text-xs transition-colors"
@@ -308,13 +339,21 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
                   >+</button>
                 </div>
 
-                {/* Notes */}
-                <input
-                  type="text"
+                {/* Notes — one line at rest, grows to show the whole note on click */}
+                <textarea
                   value={log.notes}
                   onChange={e => setNotes(member.id, e.target.value)}
+                  onFocus={e => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = Math.min(e.currentTarget.scrollHeight, 320) + 'px' }}
+                  onInput={e => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = Math.min(e.currentTarget.scrollHeight, 320) + 'px' }}
+                  onBlur={e => { e.currentTarget.style.height = '' }}
+                  rows={1}
                   placeholder="Optional note…"
-                  className="bg-[#111] border border-[#2A2A2A] text-[#888] placeholder-[#333] rounded px-3 py-2 text-xs w-full focus:outline-none focus:border-[#C9A227]/40 focus:text-white transition-colors"
+                  title="Click to expand and read the full note"
+                  className={`bg-[#111] border rounded px-3 py-2 text-xs w-full resize-none leading-relaxed overflow-y-auto focus:outline-none focus:text-white transition-colors ${
+                    isImported
+                      ? 'border-[#C9A227]/50 text-white'
+                      : 'border-[#2A2A2A] text-[#888] placeholder-[#333] focus:border-[#C9A227]/40'
+                  }`}
                 />
               </div>
             )
