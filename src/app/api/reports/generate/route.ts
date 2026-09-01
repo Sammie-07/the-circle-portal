@@ -250,8 +250,8 @@ WHAT COUNTS AS AN ACCOMPLISHMENT WORTH WRITING ABOUT (critical):
 REPORT STRUCTURE:
 1. WHERE YOU ARE: open warmly and place them in their journey (Q${currentQuarter}, week ${weeksIn + 1}), what this stage is about.
 2. THE NUMBERS: present the figures above plainly and kindly, as a check-in, not a verdict. Include homework completed this period and the percentage, attendance, and blueprint progress.
-3. WHAT'S WORKING: lead with genuine, specific wins. Pull the meaningful accomplishments (blueprint AND live) from the data above and name them.
-4. WHERE THERE'S ROOM (include ONLY if the data shows a real gap, such as low attendance or stalled blueprint progress): name it honestly and with care. Acknowledge effort and life. Connect input to output gently. One honest, compassionate paragraph, never a lecture.
+3. ACHIEVEMENTS: the heart of the report. A clear, celebratory section titled "Achievements" showing what they actually GOT DONE, drawn ONLY from their completed homework above (that is how we know what they accomplished). Pull the meaningful, milestone-level wins (blueprint AND live/call work) and present them as distinct, concrete callouts or a clean bulleted list so each win is unmissable. State each one specifically and in their words where possible (for example "Finalized your partnership dissolution with an attorney" or "Set up cost segregation on your duplex"). EXCLUDE small tactical tasks (they belong to the count, not this list). Then add one or two warm sentences on what these achievements say about their momentum. If nothing meaningful was completed this period, say so honestly and kindly rather than padding the list.
+4. WHERE THERE'S ROOM (include ONLY if the data shows a real gap, such as low attendance or genuinely stalled progress): name it honestly and with care. Acknowledge effort and life. Connect input to output gently. One honest, compassionate paragraph, never a lecture.
 5. THE ONE MOVE: one clear, encouraging next step, tied to their Q${currentQuarter} focus or their real current direction.
 6. CLOSING: warm, Gogo's voice, leaving them feeling seen, believed in, and motivated.
 
