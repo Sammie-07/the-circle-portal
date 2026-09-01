@@ -174,6 +174,15 @@ export async function POST(request: Request) {
     const blueprintTotal = blueprintHw.length
     const blueprintDone = blueprintHw.filter((h) => h.completed).length
     const blueprintPct = blueprintTotal > 0 ? Math.round((blueprintDone / blueprintTotal) * 100) : 0
+    // Members who joined before homework carried a `source` tag have NO tasks
+    // tagged 'blueprint' (their blueprint work is tagged 'admin'). For them a
+    // blueprint % is meaningless and "0%" is a false "you're off-plan" signal, so
+    // suppress the number and tell the model to judge alignment narratively.
+    const hasBlueprintTasks = blueprintTotal > 0
+    const blueprintNumberLine = hasBlueprintTasks
+      ? `- Blueprint progress overall: ${blueprintDone} of ${blueprintTotal} blueprint items done (${blueprintPct}%)`
+      : `- Blueprint progress: NOT individually tracked for this member (their blueprint tasks were never tagged as blueprint items). Do NOT cite any blueprint percentage, do NOT say 0%, and do NOT imply they are behind on or ignoring the blueprint. Judge blueprint alignment from the blueprint document and their real completed work instead.`
+    const blueprintRef = hasBlueprintTasks ? `${blueprintDone}/${blueprintTotal} (${blueprintPct}%)` : 'not individually tracked'
 
     // Task-based completion numbers (real, not the old per-week boolean).
     const completedThisPeriod = hw.filter((h) => h.completed && inWindow(h.completed_at))
@@ -218,7 +227,7 @@ ${currentQuarterData?.focus ? `Q${currentQuarter} FOCUS: ${currentQuarterData.fo
 THE NUMBERS (use these EXACT figures, never invent or estimate others):
 - Tuesday calls attended: ${attended} of ${totalWeeks} weeks (${attendanceRate}%)
 - Homework completed this period: ${hwCompletedCount} task${hwCompletedCount === 1 ? '' : 's'}
-- Blueprint progress overall: ${blueprintDone} of ${blueprintTotal} blueprint items done (${blueprintPct}%)
+${blueprintNumberLine}
 - Overall homework completion: ${totalCompletedHw} of ${totalActiveHw} (${overallHwPct}%)
 - Questions asked on calls: ${questionsAsked}
 
@@ -296,7 +305,7 @@ RULES FOR THIS REVISION (critical, this is an EDIT and not a rewrite):
 - NEVER use em dashes or en dashes. Use commas or rewrite the sentence.
 
 REFERENCE DATA (use ONLY if the admin's request asks you to correct a fact or number):
-Attendance ${attendanceRate}% (${attended} of ${totalWeeks}) · Homework completed this period ${hwCompletedCount} · Blueprint progress ${blueprintDone}/${blueprintTotal} (${blueprintPct}%) · Overall homework ${totalCompletedHw}/${totalActiveHw} (${overallHwPct}%) · Questions asked ${questionsAsked} · Week ${weeksIn} · Q${currentQuarter}
+Attendance ${attendanceRate}% (${attended} of ${totalWeeks}) · Homework completed this period ${hwCompletedCount} · Blueprint progress ${blueprintRef} · Overall homework ${totalCompletedHw}/${totalActiveHw} (${overallHwPct}%) · Questions asked ${questionsAsked} · Week ${weeksIn} · Q${currentQuarter}
 
 OUTPUT: Return the COMPLETE revised report as raw HTML body content. No markdown code fences, no commentary, no diff. Begin directly with an HTML tag.`
 
