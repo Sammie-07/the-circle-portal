@@ -1,6 +1,6 @@
 // How a homework/task row entered the system. Drives the admin-facing label so
 // admins can tell their own assignments apart from AI/automation-added tasks.
-export type TaskSource = 'admin' | 'blueprint' | 'financial' | 'ai_followup' | 'followup'
+export type TaskSource = 'admin' | 'blueprint' | 'financial' | 'ai_followup' | 'followup' | 'call'
 
 // Display label for the admin task surfaces.
 export function taskSourceLabel(source: string | null | undefined): string {
@@ -11,6 +11,8 @@ export function taskSourceLabel(source: string | null | undefined): string {
       return 'AI · Finance'
     case 'ai_followup':
       return 'AI · Note'
+    case 'call':
+      return 'AI · Call'
     case 'followup':
       return 'Follow-up'
     case 'admin':

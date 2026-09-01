@@ -45,6 +45,42 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [fathomUrl, setFathomUrl] = useState('')
+  const [importing, setImporting] = useState(false)
+
+  // Pull the call transcript from a Fathom share link and pre-fill each member's
+  // Showed Up, Questions (count of problems/asks raised) and Notes (the record of
+  // what they raised). Everything stays editable, nothing saves until the admin
+  // clicks Save.
+  async function importFromFathom() {
+    if (!fathomUrl.trim()) { toast('Paste a Fathom share link first', 'error'); return }
+    setImporting(true)
+    setError('')
+    try {
+      const res = await fetch('/api/logs/from-fathom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: fathomUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast(data.error ?? 'Could not process the call', 'error'); return }
+      setLogs(prev => {
+        const next = { ...prev }
+        for (const r of (data.rows ?? []) as { member_id: string; showed_up: boolean; questions_asked: number; notes: string }[]) {
+          if (!next[r.member_id]) continue
+          next[r.member_id] = { ...next[r.member_id], showed_up: r.showed_up, questions_asked: r.questions_asked, notes: r.notes }
+        }
+        return next
+      })
+      setSaved(false)
+      const hw = data.suggestedHomework ?? 0
+      toast(`Imported "${data.title}": ${data.attended} present${hw ? `, ${hw} suggested task${hw === 1 ? '' : 's'} added to member backends` : ''}. Review and save.`)
+    } catch {
+      toast('Network error, please try again', 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
 
   // When the admin switches to a different week, load that week's existing logs
   // so they're editing real data, not blindly overwriting it. The initial week's
@@ -169,6 +205,31 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
             className="text-xs border border-[#2A2A2A] text-[#888] hover:text-white hover:border-[#CC1F1F]/40 px-3 py-2 rounded transition-all"
           >
             Clear all
+          </button>
+        </div>
+      </div>
+
+      {/* Import from Fathom */}
+      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4 mb-6">
+        <p className="text-[#C9A227] text-xs uppercase tracking-wider mb-2">Import from Fathom</p>
+        <p className="text-[#666] text-xs mb-3 leading-relaxed">
+          Paste the call recording link. It reads the transcript and pre-fills Showed Up, Questions,
+          and Notes for each member. Everything stays editable, nothing saves until you click Save below.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={fathomUrl}
+            onChange={e => setFathomUrl(e.target.value)}
+            placeholder="https://fathom.video/share/..."
+            className="flex-1 bg-[#0D0D0D] border border-[#2A2A2A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
+          />
+          <button
+            onClick={importFromFathom}
+            disabled={importing}
+            className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 whitespace-nowrap"
+          >
+            {importing ? 'Processing…' : 'Process call'}
           </button>
         </div>
       </div>

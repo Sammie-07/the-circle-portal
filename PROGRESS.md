@@ -162,6 +162,20 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-08-31
+- **Import call activity from a Fathom link (Log This Week) + auto-suggested homework.** New "Import
+  from Fathom" panel on the Log This Week tab: paste a Fathom share link and it reads the call
+  transcript and pre-fills every member's row. `src/lib/fathom.ts` fetches the transcript from a
+  public share link with no login/API key (the share page embeds a `copy_transcript?token=` URL that
+  returns speaker-attributed HTML; we flatten it to "Speaker: text"). `POST /api/logs/from-fathom`
+  (admin) runs it through claude-sonnet-5 to, per active non-internal member: set Showed Up (spoke on
+  the call), Questions (COUNT of distinct problems/questions/help raised, broadened beyond literal
+  questions), and Notes (a judged record of what is worth noting for the monthly report, not a full
+  transcript). Fuzzy-matches transcript names (with suffixes/nicknames) to the roster; staff/coach
+  speakers are ignored. Everything lands editable in the existing rows, nothing saves until the admin
+  clicks Save. It ALSO auto-suggests homework in each member's backend from action items Gogo
+  assigned or the member committed to on the call (new source `call`, `auto_suggested=true`, deduped
+  against existing call tasks; migration `homework_source_add_call` + taskSource "AI · Call" label).
+  Never invents tasks. tsc + lint + build clean.
 - **Reports overhaul: real homework, accomplishments beyond the blueprint, real numbers, softer tone + per-member quarterly notifications.** Three changes to `/api/reports/generate`: (1) the report now READS the `homework` table (it previously only saw a per-week `homework_done` boolean, so real milestones and any work assigned live on calls were invisible). Blueprint-source homework is scored as the north-star blueprint %; non-blueprint (live/call-assigned) work is celebrated as "accomplishments beyond the plan" but NOT scored, so members who pivot mid-program are honored, not penalised. The prompt gives an explicit big-vs-small rubric (CPA/taxes/debt payoff/real estate/hiring/team/income streams = narrative; tactical tasks like "capitalize headers" = never in the narrative). (2) Real task-based NUMBERS: homework completed this period, blueprint progress %, overall completion %, attendance %, questions. (3) TONE softened: kinder, more sensitive and human, still honest about gaps without pampering. Also: quarterly reports now labelled by the member's program quarter (journey-based, not calendar), and owner/manager (not just admin) can generate. (4) NEW per-member quarterly notification: quarters run in 13-week blocks from each member's `join_date`; daily cron `/api/cron/quarter-reports` emails admins when a member finishes a quarter so they can generate+send that member's quarterly report, deduped once per member per quarter via new `quarter_report_notifications` table. tsc + lint + build clean.
 - **Auth reconciliation complete (0 orphans).** Second pass deleted the last 3 orphan logins:
   `seanbatesrealestate@gmail.com` (member record intentionally removed), `support@teamgogo.team`, and

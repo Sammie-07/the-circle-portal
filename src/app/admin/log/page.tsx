@@ -45,7 +45,7 @@ export default async function AdminLogPage() {
         <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
         <h1 className="text-[var(--text)] font-serif text-3xl">Log This Week</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
-          Mark attendance and homework for all active members in one go.
+          Drop the Fathom call link to auto-fill everyone, or log attendance, questions, and notes by hand.
         </p>
       </div>
 

@@ -272,7 +272,7 @@ alter table homework add column if not exists auto_suggested boolean not null de
 alter table homework add column if not exists source text not null default 'admin';
 do $$ begin
   alter table homework add constraint homework_source_chk
-    check (source in ('admin','blueprint','financial','ai_followup','followup'));
+    check (source in ('admin','blueprint','financial','ai_followup','followup','call'));
 exception when duplicate_object then null; end $$;
 
 -- ============================================
