@@ -94,7 +94,9 @@ ${transcript.text}`
       max_tokens: 4000,
       messages: [{ role: 'user', content: prompt }],
     })
-    const raw = message.content[0].type === 'text' ? message.content[0].text : ''
+    // Read ALL text blocks (the model may emit a thinking block first, so
+    // content[0] can be non-text and empty).
+    const raw = message.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
     const jsonText = raw.replace(/^\s*```[a-zA-Z]*\s*/, '').replace(/\s*```\s*$/, '').trim()
 
     let parsed: { members?: ExtractedRow[] }

@@ -44,7 +44,8 @@ ${tr.text}`
       messages: [{ role: 'user', content: prompt }],
     })
     dbg.aiMs = Date.now() - t1
-    const raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    dbg.blockTypes = msg.content.map((b) => b.type)
+    const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
     const jsonText = raw.replace(/^\s*```[a-zA-Z]*\s*/, '').replace(/\s*```\s*$/, '').trim()
     try {
       const parsed = JSON.parse(jsonText)
