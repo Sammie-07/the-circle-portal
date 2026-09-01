@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getAnthropic } from '@/lib/ai'
 import { fetchFathomTranscript } from '@/lib/fathom'
 import { NextResponse } from 'next/server'
@@ -24,14 +25,29 @@ export async function POST(request: Request) {
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not set on the server' }, { status: 500 })
     }
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (!['owner', 'admin', 'manager'].includes(profile?.role ?? '')) {
-      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    // TEMP diagnostic bypass: ?token= matching app_settings.fathom_test_token runs
+    // the exact production path on a service-role client (no homework insert),
+    // returning timings so we can see whether the full POST completes on Vercel.
+    const diagToken = new URL(request.url).searchParams.get('token')
+    let supabase
+    let userId: string | null = null
+    if (diagToken) {
+      const adminDb = createAdminClient()
+      const { data: tk } = await adminDb.from('app_settings').select('value').eq('key', 'fathom_test_token').maybeSingle()
+      if (!tk?.value || diagToken !== tk.value) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      supabase = adminDb
+    } else {
+      supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      if (!['owner', 'admin', 'manager'].includes(profile?.role ?? '')) {
+        return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+      }
+      userId = user.id
     }
 
+    const t0 = Date.now()
     let body: { url?: string } = {}
     try { body = await request.json() } catch { /* handled below */ }
     if (!body.url) return NextResponse.json({ error: 'Paste a Fathom share link first.' }, { status: 400 })
@@ -115,7 +131,7 @@ ${transcript.text}`
     }
 
     let suggestedHomework = 0
-    if (suggestions.length) {
+    if (userId && suggestions.length) {
       // Dedupe against call-sourced tasks already suggested for these members
       // (so re-processing the same call does not pile up duplicates).
       const memberIds = [...new Set(suggestions.map((s) => s.member_id))]
@@ -135,7 +151,7 @@ ${transcript.text}`
           source: 'call' as const,
           auto_suggested: true,
           completed: false,
-          created_by: user.id,
+          created_by: userId,
         }))
       if (toInsert.length) {
         const { error } = await supabase.from('homework').insert(toInsert)
@@ -144,7 +160,7 @@ ${transcript.text}`
     }
 
     const attended = rows.filter((r) => r.showed_up).length
-    return NextResponse.json({ title: transcript.title, speakers: transcript.speakers, attended, rows, suggestedHomework })
+    return NextResponse.json({ title: transcript.title, speakers: transcript.speakers, attended, rows, suggestedHomework, elapsedMs: Date.now() - t0 })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Something went wrong processing the call.'
     return NextResponse.json({ error: msg }, { status: 500 })
