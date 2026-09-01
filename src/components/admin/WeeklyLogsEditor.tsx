@@ -103,19 +103,6 @@ export default function WeeklyLogsEditor({ memberId, logs: initialLogs }: { memb
                 {log.showed_up ? '✓ Showed up' : '✗ Missed'}
               </button>
 
-              {/* Homework */}
-              <button
-                onClick={() => change(log.id, { homework_done: !log.homework_done })}
-                className={`text-xs px-2.5 py-1 rounded border transition-all ${
-                  log.homework_done
-                    ? 'border-[#C9A227]/40 bg-[#C9A227]/10 text-[#C9A227]'
-                    : 'border-[var(--border-color)] text-[var(--text-3)] hover:border-[var(--border-hover)]'
-                }`}
-                title="Toggle homework"
-              >
-                {log.homework_done ? '✓ HW done' : '— No HW'}
-              </button>
-
               {/* Questions */}
               <div className="flex items-center gap-1.5 border border-[var(--border-color)] rounded px-1.5 py-0.5">
                 <button

@@ -36,7 +36,6 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
 
   const [weekOf, setWeekOf] = useState(defaultWeek)
   const [showedUp, setShowedUp] = useState<boolean | null>(null)
-  const [homeworkDone, setHomeworkDone] = useState<boolean | null>(null)
   const [questions, setQuestions] = useState(0)
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
@@ -56,7 +55,7 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
         member_id: memberId,
         week_of: weekOf,
         showed_up: showedUp,
-        homework_done: homeworkDone ?? false,
+        homework_done: false,
         questions_asked: questions,
         notes: notes || null,
       }, { onConflict: 'member_id,week_of' })
@@ -89,14 +88,6 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
         <div className="flex gap-2">
           <ToggleButton value={true} active={showedUp} onClick={setShowedUp} yes="✓ Yes" no="" />
           <ToggleButton value={false} active={showedUp} onClick={setShowedUp} yes="" no="✗ No" />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Homework submitted?</label>
-        <div className="flex gap-2">
-          <ToggleButton value={true} active={homeworkDone} onClick={setHomeworkDone} yes="✓ Done" no="" />
-          <ToggleButton value={false} active={homeworkDone} onClick={setHomeworkDone} yes="" no="✗ Not done" />
         </div>
       </div>
 

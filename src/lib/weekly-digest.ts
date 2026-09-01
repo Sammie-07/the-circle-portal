@@ -30,7 +30,7 @@ interface MemberDigest {
   dueSoon: DueTask[] // open, due within the next 5 days
   overdueWeek: DueTask[] // open, overdue by a week or more
   notes: { title: string; note: string }[]
-  attendance: { showedUp: boolean; homeworkDone: boolean; questions: number; note: string | null } | null
+  attendance: { showedUp: boolean; questions: number; note: string | null } | null
 }
 
 function isoDay(d: Date) {
@@ -71,7 +71,6 @@ async function generateNarratives(members: MemberDigest[]): Promise<Record<strin
       name: m.name,
       completed_this_week: m.completedThisWeek.map((t) => t.title),
       attended_call: m.attendance ? m.attendance.showedUp : null,
-      homework_done_flag: m.attendance ? m.attendance.homeworkDone : null,
       questions_asked: m.attendance ? m.attendance.questions : null,
       portal_notes: m.notes.map((n) => `${n.title}: ${n.note}`),
       tasks_outstanding: m.outstanding,
@@ -178,7 +177,7 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
       dueSoon,
       overdueWeek,
       notes,
-      attendance: log ? { showedUp: log.showed_up, homeworkDone: log.homework_done, questions: log.questions_asked ?? 0, note: log.notes } : null,
+      attendance: log ? { showedUp: log.showed_up, questions: log.questions_asked ?? 0, note: log.notes } : null,
     }
   })
 

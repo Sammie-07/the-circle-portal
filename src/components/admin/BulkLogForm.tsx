@@ -77,7 +77,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekOf])
 
-  function toggle(memberId: string, field: 'showed_up' | 'homework_done') {
+  function toggle(memberId: string, field: 'showed_up') {
     setLogs(prev => ({
       ...prev,
       [memberId]: { ...prev[memberId], [field]: !prev[memberId][field] },
@@ -141,7 +141,6 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
   }
 
   const attendanceCount = Object.values(logs).filter(l => l.showed_up).length
-  const homeworkCount = Object.values(logs).filter(l => l.homework_done).length
   const total = members.length
 
   return (
@@ -175,22 +174,13 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       </div>
 
       {/* Summary bar */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="mb-6">
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-3 flex items-center justify-between">
           <span className="text-[#555] text-xs uppercase tracking-wider">Attendance</span>
           <span className="text-white font-serif text-lg">
             {attendanceCount}/{total}
             <span className="text-[#555] text-sm ml-1">
               ({total > 0 ? Math.round((attendanceCount / total) * 100) : 0}%)
-            </span>
-          </span>
-        </div>
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-3 flex items-center justify-between">
-          <span className="text-[#555] text-xs uppercase tracking-wider">Homework Done</span>
-          <span className="text-white font-serif text-lg">
-            {homeworkCount}/{total}
-            <span className="text-[#555] text-sm ml-1">
-              ({total > 0 ? Math.round((homeworkCount / total) * 100) : 0}%)
             </span>
           </span>
         </div>
@@ -204,10 +194,9 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       ) : (
         <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-hidden mb-6">
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_120px_120px_90px_1fr] gap-4 px-5 py-3 border-b border-[#2A2A2A]">
+          <div className="grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-3 border-b border-[#2A2A2A]">
             <span className="text-[#555] text-xs uppercase tracking-wider">Member</span>
             <span className="text-[#555] text-xs uppercase tracking-wider text-center">Showed Up</span>
-            <span className="text-[#555] text-xs uppercase tracking-wider text-center">Homework</span>
             <span className="text-[#555] text-xs uppercase tracking-wider text-center">Questions</span>
             <span className="text-[#555] text-xs uppercase tracking-wider">Notes</span>
           </div>
@@ -218,7 +207,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
             return (
               <div
                 key={member.id}
-                className={`grid grid-cols-[1fr_120px_120px_90px_1fr] gap-4 px-5 py-4 items-center ${
+                className={`grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-4 items-center ${
                   i < members.length - 1 ? 'border-b border-[#2A2A2A]' : ''
                 } ${log.showed_up ? '' : 'opacity-60'}`}
               >
@@ -240,21 +229,6 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
                         : 'border-[#2A2A2A] text-transparent hover:border-[#444]'
                     }`}
                     title={log.showed_up ? 'Present — click to mark absent' : 'Absent — click to mark present'}
-                  >
-                    ✓
-                  </button>
-                </div>
-
-                {/* Homework toggle */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => toggle(member.id, 'homework_done')}
-                    className={`w-9 h-9 rounded border-2 flex items-center justify-center transition-all ${
-                      log.homework_done
-                        ? 'border-[#C9A227] bg-[#C9A227]/20 text-[#C9A227]'
-                        : 'border-[#2A2A2A] text-transparent hover:border-[#444]'
-                    }`}
-                    title={log.homework_done ? 'Done — click to unmark' : 'Not done — click to mark done'}
                   >
                     ✓
                   </button>
