@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { toast } from '@/lib/toast'
 import { SURVEY_QUESTIONS } from '@/lib/survey-questions'
 import type { SurveyQuestion, SurveyAnswers } from '@/lib/survey-questions'
 
@@ -33,6 +32,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
   const [answers, setAnswers] = useState<SurveyAnswers>({})
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -117,8 +117,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
   async function handleSubmit() {
     if (!allDone || submitting) return
     if (preview) {
-      toast('Preview only — nothing was saved.', 'success')
-      onClose?.()
+      // Preview shows the celebration too, but saves nothing.
+      setSubmitted(true)
       return
     }
     setSubmitting(true)
@@ -131,13 +131,51 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         setError(body.error ?? 'Something went wrong. Please try again.')
         return
       }
-      toast('Thank you — your progress check is in!', 'success')
-      setPayload((p) => (p ? { ...p, due: false } : p))
+      setSubmitted(true)
     } catch {
       setError('Network error. Please try again.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Dismiss the celebration: close the preview, or lift the blocking gate.
+  function finish() {
+    if (preview) { onClose?.(); return }
+    setSubmitted(false)
+    setPayload((p) => (p ? { ...p, due: false } : p))
+  }
+
+  if (submitted) {
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Progress check complete"
+        style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(8,8,8,0.94)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '24px 16px' }}
+      >
+        <Confetti />
+        <div style={{ position: 'relative', maxWidth: 520, width: '100%', textAlign: 'center', padding: '8px 20px' }}>
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🎉</div>
+          <div style={{ color: GOLD, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+            {payload?.monthLabel} · Complete
+          </div>
+          <h2 style={{ color: 'var(--text, #f5f5f5)', fontFamily: 'Georgia, serif', fontSize: 30, margin: '0 0 14px', lineHeight: 1.2 }}>
+            Congratulations, you made it to the end.
+          </h2>
+          <p style={{ color: 'var(--text-2, #AAAAAA)', fontSize: 15, lineHeight: 1.7, margin: '0 auto 28px', maxWidth: 420 }}>
+            We track this every month so you can see exactly how far you have come. Most people never
+            measure their growth. You just did, and future you will thank you for it.
+          </p>
+          <button
+            onClick={finish}
+            style={{ padding: '14px 28px', background: GOLD, color: '#0D0D0D', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+          >
+            {preview ? 'Close preview' : 'Continue to my portal'}
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!payload?.due) return null
@@ -269,6 +307,48 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Deterministic scatter (pure Math.sin hash) so render stays pure — no Math.random,
+// no state, no effect. Computed once at module load; the spread still looks random.
+const CONFETTI = Array.from({ length: 70 }, (_, i) => {
+  const rnd = (seed: number) => {
+    const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453
+    return x - Math.floor(x)
+  }
+  return {
+    left: rnd(1) * 100,
+    delay: rnd(2) * 0.5,
+    dur: 1.9 + rnd(3) * 1.6,
+    w: 6 + rnd(4) * 7,
+    h: 8 + rnd(5) * 8,
+    rot: rnd(6) * 360,
+    color: ['#C9A227', '#E0B94A', '#F5F5F5', '#5bbd68', '#ffffff'][i % 5],
+  }
+})
+
+function Confetti() {
+  const pieces = CONFETTI
+  return (
+    <div aria-hidden="true" style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          style={{
+            position: 'absolute',
+            top: -24,
+            left: `${p.left}%`,
+            width: p.w,
+            height: p.h,
+            background: p.color,
+            borderRadius: 2,
+            transform: `rotate(${p.rot}deg)`,
+            animation: `confetti-fall ${p.dur}s ${p.delay}s ease-in forwards`,
+          }}
+        />
+      ))}
     </div>
   )
 }

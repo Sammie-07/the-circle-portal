@@ -176,3 +176,9 @@
 .health-green { color: #22c55e; }
 .health-yellow { color: #eab308; }
 .health-red { color: #ef4444; }
+
+/* Survey completion confetti */
+@keyframes confetti-fall {
+  0% { transform: translateY(-24px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(560px) rotate(720deg); opacity: 0; }
+}

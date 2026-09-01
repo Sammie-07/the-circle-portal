@@ -78,7 +78,7 @@ export const SURVEY_QUESTIONS: SurveyQuestion[] = [
   { key: 'biggest_achievement', label: 'What was your biggest achievement this past month?', type: 'longtext', direction: 'neutral' },
   { key: 'biggest_disappointment', label: 'What was your biggest disappointment or failure this past month?', type: 'longtext', direction: 'neutral', hint: 'Be honest, this is where the real coaching happens.' },
   { key: 'takeaway', label: 'What is your biggest takeaway or key lesson from this past month?', type: 'longtext', direction: 'neutral' },
-  { key: 'catch_all', label: 'What else are you working on that we are not asking about?', type: 'longtext', direction: 'neutral', optional: true, hint: 'Optional.' },
+  { key: 'catch_all', label: 'What else are you working on that we are not asking about?', type: 'longtext', direction: 'neutral', hint: 'If nothing comes to mind, write "nothing right now."' },
 ]
 
 export const SURVEY_QUESTION_BY_KEY: Record<string, SurveyQuestion> =
