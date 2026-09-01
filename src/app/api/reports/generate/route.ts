@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { sanitizeBrainText } from '@/lib/brain-search'
 import { NextResponse } from 'next/server'
@@ -84,30 +83,12 @@ export async function POST(request: Request) {
     if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not set on the server' }, { status: 500 })
     const anthropic = getAnthropic()
 
-    // TEST/PREVIEW MODE: a valid app_settings.report_test_token in ?token= runs the
-    // exact same generation on a service-role client and returns the HTML WITHOUT
-    // persisting, so a report can be previewed without an admin session. The token
-    // is a temporary secret and is removed after use.
-    const previewToken = new URL(request.url).searchParams.get('token')
-    let previewMode = false
-    let supabase
-    if (previewToken) {
-      const adminDb = createAdminClient()
-      const { data: tok } = await adminDb.from('app_settings').select('value').eq('key', 'report_test_token').maybeSingle()
-      if (tok?.value && previewToken === (tok.value as string)) {
-        previewMode = true
-        supabase = adminDb
-      } else {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      }
-    } else {
-      supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (!['owner', 'admin', 'manager'].includes(profile?.role ?? '')) {
-        return NextResponse.json({ error: 'Admin only' }, { status: 403 })
-      }
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (!['owner', 'admin', 'manager'].includes(profile?.role ?? '')) {
+      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
     let body: { member_id?: string; period_type?: string; feedback?: string; report_id?: string }
@@ -324,11 +305,6 @@ OUTPUT: Return the COMPLETE revised report as raw HTML body content. No markdown
     const contentHtml = cleanReportHtml(rawContent)
     if (!contentHtml.trim()) {
       return NextResponse.json({ error: 'Claude returned an empty response. Please try again.' }, { status: 500 })
-    }
-
-    // Preview mode: return the generated HTML without touching the database.
-    if (previewMode) {
-      return NextResponse.json({ preview: true, periodLabel, contentHtml })
     }
 
     // Safety net: never let a truncated or collapsed revision destroy a report the
