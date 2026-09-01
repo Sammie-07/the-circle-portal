@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import DateField from '@/components/shared/DateField'
+import AutoGrowTextarea from '@/components/shared/AutoGrowTextarea'
+import { toast } from '@/lib/toast'
 import { taskSourceLabel, taskSourceBadgeClass, isAdminAssigned } from '@/lib/taskSource'
 
 interface Task {
@@ -48,28 +51,103 @@ function fmtDate(d: string | null) {
   return new Date(d.length <= 10 ? d + 'T00:00:00' : d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function TaskRow({ task }: { task: Task }) {
+function TaskRow({
+  task,
+  onSave,
+  onDelete,
+}: {
+  task: Task
+  onSave: (id: string, patch: Record<string, unknown>) => Promise<boolean>
+  onDelete: (id: string) => void
+}) {
   const done = task.completed
   const needsDueDate = task.source === 'call' && !task.due_date && !done
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({
+    title: task.title,
+    description: task.description ?? '',
+    due_date: task.due_date ?? '',
+    type: task.type,
+  })
+
+  const openEdit = () => {
+    setForm({ title: task.title, description: task.description ?? '', due_date: task.due_date ?? '', type: task.type })
+    setEditing(true)
+  }
+
+  async function save() {
+    if (!form.title.trim()) return
+    setSaving(true)
+    const ok = await onSave(task.id, {
+      title: form.title,
+      description: form.description,
+      due_date: form.due_date || null,
+      type: form.type,
+    })
+    setSaving(false)
+    if (ok) setEditing(false)
+  }
+
+  async function toggle() {
+    setSaving(true)
+    await onSave(task.id, { completed: !task.completed })
+    setSaving(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="px-4 py-3 border-b border-[var(--border-color)] last:border-b-0 bg-[var(--bg)] space-y-2">
+        <div className="flex gap-2 items-start">
+          <AutoGrowTextarea value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+            className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] text-sm rounded px-3 py-1.5 leading-relaxed focus:outline-none focus:border-[#C9A227]" />
+          <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as 'homework' | 'task' })}
+            className="bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none">
+            <option value="homework">Homework</option>
+            <option value="task">Task</option>
+          </select>
+        </div>
+        <AutoGrowTextarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+          placeholder="Description"
+          className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] text-sm rounded px-3 py-1.5 leading-relaxed focus:outline-none focus:border-[#C9A227]" />
+        <div className="flex items-center gap-3">
+          <div className="w-44">
+            <DateField value={form.due_date} onChange={v => setForm({ ...form, due_date: v })}
+              placeholder="No due date"
+              className="w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text-2)] text-xs rounded px-2 py-1.5 focus:outline-none" />
+          </div>
+          <button onClick={() => setEditing(false)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] ml-auto">Cancel</button>
+          <button onClick={save} disabled={saving}
+            className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={`flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0 ${
+    <div className={`group flex items-start gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0 hover:bg-[var(--surface-2)] transition-colors ${
       needsDueDate ? 'bg-[#C9A227]/[0.07] shadow-[inset_3px_0_0_#C9A227]' : ''
     }`}>
-      <span
-        className={`mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold ${
-          done ? 'bg-[#C9A227] text-[#0D0D0D]' : 'border border-[var(--text-4)] text-transparent'
+      <button
+        onClick={toggle}
+        title={done ? 'Mark not done' : 'Mark done'}
+        className={`mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold transition-colors ${
+          done ? 'bg-[#C9A227] text-[#0D0D0D]' : 'border border-[var(--text-4)] text-transparent hover:border-[#C9A227]/60'
         }`}
       >
         ✓
-      </span>
+      </button>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm ${done ? 'line-through text-[var(--text-4)]' : 'text-[var(--text)]'}`}>{task.title}</span>
           <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${taskSourceBadgeClass(task.source)}`}>{taskSourceLabel(task.source)}</span>
           {needsDueDate && (
-            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C9A227]/50 text-[#C9A227] bg-[#C9A227]/10" title="Came from a call, no due date yet. Add one on the member's page.">
-              ⚠ No due date
-            </span>
+            <button onClick={openEdit} title="Came from a call, no due date yet. Click to add one."
+              className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-[#C9A227]/50 text-[#C9A227] bg-[#C9A227]/10 hover:bg-[#C9A227]/20 transition-colors">
+              ⚠ No due date, add one
+            </button>
           )}
         </div>
         {task.description && <p className="text-[var(--text-3)] text-xs mt-0.5">{task.description}</p>}
@@ -88,6 +166,11 @@ function TaskRow({ task }: { task: Task }) {
           </div>
         )}
       </div>
+      {/* Actions */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <button onClick={openEdit} className="text-[var(--text-4)] hover:text-[var(--text-2)] text-xs px-1.5 py-1 rounded transition-colors">Edit</button>
+        <button onClick={() => onDelete(task.id)} className="text-[var(--text-4)] hover:text-[#CC1F1F] text-xs px-1.5 py-1 rounded transition-colors">✕</button>
+      </div>
     </div>
   )
 }
@@ -97,6 +180,36 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [sentFrom, setSentFrom] = useState('')
   const [sentTo, setSentTo] = useState('')
+  const router = useRouter()
+
+  // Edit / delete tasks inline, reusing the same admin homework API as the member
+  // panel, then refresh server data so the change (and the glow) reflects at once.
+  async function saveTask(id: string, patch: Record<string, unknown>): Promise<boolean> {
+    const res = await fetch(`/api/homework/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      toast(d.error ?? 'Could not save the task', 'error')
+      return false
+    }
+    toast('Saved')
+    router.refresh()
+    return true
+  }
+
+  async function deleteTask(id: string) {
+    if (!window.confirm('Delete this task? This cannot be undone.')) return
+    const res = await fetch(`/api/homework/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      toast('Could not delete the task', 'error')
+      return
+    }
+    toast('Task deleted')
+    router.refresh()
+  }
 
   if (members.length === 0) {
     return (
@@ -252,7 +365,7 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
             <p className="text-[var(--text-3)] text-sm bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-3">All caught up 🎉</p>
           ) : (
             <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded">
-              {todo.map((t) => <TaskRow key={t.id} task={t} />)}
+              {todo.map((t) => <TaskRow key={t.id} task={t} onSave={saveTask} onDelete={deleteTask} />)}
             </div>
           )}
         </div>
@@ -264,7 +377,7 @@ export default function HomeworkOverview({ members }: { members: MemberHW[] }) {
             <p className="text-[var(--text-3)] text-sm bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-3">Nothing completed yet.</p>
           ) : (
             <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded opacity-80">
-              {completed.map((t) => <TaskRow key={t.id} task={t} />)}
+              {completed.map((t) => <TaskRow key={t.id} task={t} onSave={saveTask} onDelete={deleteTask} />)}
             </div>
           )}
         </div>
