@@ -102,13 +102,16 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
   )
 
   const questions = payload?.questions ?? []
-  const answered = questions.filter((q) => {
+  const isAnswered = (q: SurveyQuestion) => {
     const v = answers[q.key]
     if (q.type === 'boolean') return v === true || v === false
     if (typeof v === 'string') return v.trim().length > 0
     return v !== null && v !== undefined
-  }).length
-  const total = questions.length
+  }
+  // Optional questions (e.g. the catch-all) never count toward completion.
+  const requiredQuestions = questions.filter((q) => !q.optional)
+  const answered = requiredQuestions.filter(isAnswered).length
+  const total = requiredQuestions.length
   const allDone = total > 0 && answered === total
 
   async function handleSubmit() {
@@ -217,15 +220,23 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         {/* Questions */}
         <div style={{ padding: '20px 28px' }}>
           {questions.map((q, i) => (
-            <div key={q.key} style={{ marginBottom: 22 }}>
-              <label style={{ display: 'block', color: 'var(--text, #f5f5f5)', fontSize: 14, lineHeight: 1.5, marginBottom: 8 }}>
-                <span style={{ color: GOLD, marginRight: 6 }}>{i + 1}.</span>
-                {q.label}
-              </label>
-              <QuestionInput q={q} value={answers[q.key] ?? null} onChange={(v) => update(q.key, v)} />
-              {q.hint ? (
-                <p style={{ color: 'var(--text-2, #888)', fontSize: 12, margin: '6px 0 0' }}>{q.hint}</p>
+            <div key={q.key}>
+              {q.section ? (
+                <div style={{ margin: i === 0 ? '0 0 16px' : '30px 0 16px', paddingBottom: 8, borderBottom: '1px solid var(--border-color, #2a2a2a)' }}>
+                  <span style={{ color: GOLD, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{q.section}</span>
+                </div>
               ) : null}
+              <div style={{ marginBottom: 22 }}>
+                <label style={{ display: 'block', color: 'var(--text, #f5f5f5)', fontSize: 14, lineHeight: 1.5, marginBottom: 8 }}>
+                  <span style={{ color: GOLD, marginRight: 6 }}>{i + 1}.</span>
+                  {q.label}
+                  {q.optional ? <span style={{ color: 'var(--text-3, #666)', fontWeight: 400 }}> (optional)</span> : null}
+                </label>
+                <QuestionInput q={q} value={answers[q.key] ?? null} onChange={(v) => update(q.key, v)} />
+                {q.hint ? (
+                  <p style={{ color: 'var(--text-2, #888)', fontSize: 12, margin: '6px 0 0' }}>{q.hint}</p>
+                ) : null}
+              </div>
             </div>
           ))}
         </div>
