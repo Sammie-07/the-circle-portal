@@ -73,6 +73,21 @@ create table if not exists reports (
   sent_by uuid references auth.users on delete set null
 );
 
+-- Per-member quarterly report reminders. Quarters run in 13-week blocks from the
+-- member's own join_date, so a daily cron (/api/cron/quarter-reports) emails
+-- admins when a member finishes a quarter. One row per member per completed
+-- quarter guarantees the nudge fires exactly once.
+create table if not exists quarter_report_notifications (
+  id                uuid primary key default gen_random_uuid(),
+  member_id         uuid not null references members(id) on delete cascade,
+  completed_quarter int  not null,
+  notified_at       timestamptz not null default now(),
+  unique (member_id, completed_quarter)
+);
+alter table quarter_report_notifications enable row level security;
+create policy "admins_all_qrn" on quarter_report_notifications
+  for all using (is_admin()) with check (is_admin());
+
 -- ============================================
 -- Row Level Security
 -- ============================================

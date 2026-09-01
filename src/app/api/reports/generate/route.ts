@@ -89,7 +89,9 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    if (!['owner', 'admin', 'manager'].includes(profile?.role ?? '')) {
+      return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+    }
 
     let body: { member_id?: string; period_type?: string; feedback?: string; report_id?: string }
     try {
@@ -120,10 +122,8 @@ export async function POST(request: Request) {
     const allLogs = logs ?? []
     const totalWeeks = allLogs.length
     const attended = allLogs.filter(l => l.showed_up).length
-    const homeworkDone = allLogs.filter(l => l.homework_done).length
     const questionsAsked = allLogs.reduce((sum: number, l: { questions_asked: number }) => sum + (l.questions_asked ?? 0), 0)
     const attendanceRate = totalWeeks > 0 ? Math.round((attended / totalWeeks) * 100) : 0
-    const homeworkRate = totalWeeks > 0 ? Math.round((homeworkDone / totalWeeks) * 100) : 0
 
     const joinDate = new Date(member.join_date)
     const weeksIn = Math.floor((new Date().getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 7))
@@ -138,53 +138,108 @@ export async function POST(request: Request) {
       .map((l: { week_of: string; notes: string }) => `Week of ${l.week_of}: ${l.notes}`)
       .join('\n')
 
+    // ── Homework accomplishments (the real work, from the homework table) ──
+    // The report used to see only a per-week "homework_done" boolean and never the
+    // actual tasks, so real milestones (hired a CPA, paid off debt, bought a
+    // property, built a team) were invisible, and work assigned live on calls that
+    // was never in the blueprint was silently ignored. Pull the tasks so the
+    // narrative reflects what actually happened.
+    const { data: homeworkRows } = await supabase
+      .from('homework')
+      .select('title, description, source, completed, completed_at, created_at')
+      .eq('member_id', member_id)
+
+    const hw = homeworkRows ?? []
+    const inWindow = (ts: string | null) => Boolean(ts && new Date(ts) >= cutoff)
+
+    // Blueprint items are the north star and the ONLY thing scored for blueprint %.
+    const blueprintHw = hw.filter((h) => h.source === 'blueprint')
+    const blueprintTotal = blueprintHw.length
+    const blueprintDone = blueprintHw.filter((h) => h.completed).length
+    const blueprintPct = blueprintTotal > 0 ? Math.round((blueprintDone / blueprintTotal) * 100) : 0
+
+    // Task-based completion numbers (real, not the old per-week boolean).
+    const completedThisPeriod = hw.filter((h) => h.completed && inWindow(h.completed_at))
+    const hwCompletedCount = completedThisPeriod.length
+    const totalActiveHw = hw.length
+    const totalCompletedHw = hw.filter((h) => h.completed).length
+    const overallHwPct = totalActiveHw > 0 ? Math.round((totalCompletedHw / totalActiveHw) * 100) : 0
+
+    const fmtTask = (h: { title: string; description: string | null; source: string }) =>
+      `- ${h.title}${h.description ? `: ${h.description.replace(/\s+/g, ' ').slice(0, 200)}` : ''} [${h.source === 'blueprint' ? 'BLUEPRINT' : 'LIVE, assigned on a call'}]`
+
+    const completedThisPeriodList = completedThisPeriod.length
+      ? completedThisPeriod.map(fmtTask).join('\n')
+      : '(no homework marked complete in this specific period)'
+    // Everything completed to date, so big milestones from earlier in the quarter
+    // are not lost, especially in quarterly reports.
+    const allCompletedList = hw.filter((h) => h.completed).map(fmtTask).join('\n') || '(none yet)'
+
+    // Quarters are per-member (their own journey from join_date), so quarterly
+    // reports are labelled by program quarter, not the calendar quarter.
+    const periodLabel = period_type === 'quarterly' ? `Q${currentQuarter} Review` : getPeriodLabel(period_type)
+
     const brainQuery = `Circle coaching ${period_type} progress accountability ${currentQuarterData?.focus ?? 'results business growth'}`
     const brainContext = await fetchBrainContext(brainQuery)
 
-    const prompt = `You are generating a ${period_type} progress report for a Circle member in Gogo Bethke's 12-month high-ticket coaching program.
+    const prompt = `You are writing a ${period_type} progress report for ${member.name}, a member of Gogo Bethke's 12-month high-ticket coaching program, The Circle. Write it as Gogo would, speaking directly to the member ("you").
 
-The BLUEPRINT is the member's 12-month map — the plan Gogo made for them. This report measures their ACTUAL RESULTS against that plan. The blueprint is not a bonus reference — it IS the standard. The report exists to close the gap between the plan and reality, or celebrate when they're nailing it.
+Two things anchor this report:
+1. THE BLUEPRINT is the member's 12-month map, the plan Gogo built for them. It is the north star, and blueprint progress is measured against it.
+2. REAL LIFE happens outside the plan. Members get work assigned live on coaching calls, and their goals genuinely evolve mid-program. That real work counts and must be honored, even though it is NOT scored against the blueprint.
 
 ---
 
 MEMBER: ${member.name}
-PERIOD: ${getPeriodLabel(period_type)}
+PERIOD: ${periodLabel}
 COHORT: ${member.cohort ?? 'The Circle'}
-WEEK ${weeksIn + 1} OF THEIR PROGRAM
-CURRENT QUARTER: Q${currentQuarter}${currentQuarterData?.title ? ` — ${currentQuarterData.title}` : ''}
+WEEK ${weeksIn + 1} OF THEIR PROGRAM, CURRENT QUARTER Q${currentQuarter}${currentQuarterData?.title ? ` (${currentQuarterData.title})` : ''}
 ${currentQuarterData?.focus ? `Q${currentQuarter} FOCUS: ${currentQuarterData.focus}` : ''}
 
 ---
 
-ACTIVITY DATA THIS PERIOD:
-- Weeks tracked: ${totalWeeks}
-- Tuesday calls attended: ${attended} of ${totalWeeks} (${attendanceRate}%)
-- Homework completed: ${homeworkDone} of ${totalWeeks} (${homeworkRate}%)
+THE NUMBERS (use these EXACT figures, never invent or estimate others):
+- Tuesday calls attended: ${attended} of ${totalWeeks} weeks (${attendanceRate}%)
+- Homework completed this period: ${hwCompletedCount} task${hwCompletedCount === 1 ? '' : 's'}
+- Blueprint progress overall: ${blueprintDone} of ${blueprintTotal} blueprint items done (${blueprintPct}%)
+- Overall homework completion: ${totalCompletedHw} of ${totalActiveHw} (${overallHwPct}%)
 - Questions asked on calls: ${questionsAsked}
-${weeklyNotes ? `\nWEEKLY NOTES FROM ADRIANA:\n${weeklyNotes}` : ''}
 
----
+HOMEWORK COMPLETED THIS PERIOD (each tagged BLUEPRINT or LIVE):
+${completedThisPeriodList}
 
-${blueprintText ? `THEIR BLUEPRINT (what Gogo mapped out for them, this is the baseline):\n${blueprintText}\n\n---\n` : 'NOTE: No blueprint generated yet for this member, so generate the report based on general Circle coaching principles.\n\n---\n'}
+ALL COMPLETED WORK TO DATE (context, so big milestones from earlier this quarter are not missed):
+${allCompletedList}
 
-${brainContext ? `GOGO'S COACHING PRINCIPLES (from The Brain):\n${brainContext}\n\n---\n` : ''}
+${weeklyNotes ? `NOTES FROM THE TEAM:\n${weeklyNotes}\n\n---\n` : ''}
+${blueprintText ? `THEIR BLUEPRINT (the plan, the baseline to measure blueprint progress against):\n${blueprintText}\n\n---\n` : 'NOTE: No blueprint on file yet, so write from their real activity and general Circle coaching principles.\n\n---\n'}
+${brainContext ? `GOGO'S COACHING PRINCIPLES (from The Brain, use for framing and voice):\n${brainContext}\n\n---\n` : ''}
+
+WHAT COUNTS AS AN ACCOMPLISHMENT WORTH WRITING ABOUT (critical):
+- Write about MEANINGFUL progress: hiring a CPA, sorting taxes, paying down debt, buying real estate, hiring an assistant, building a team or downline, opening new income streams, building systems, and real business or mindset milestones.
+- Include big work whether it came from the BLUEPRINT or was assigned LIVE on a call. If the member has intentionally pivoted away from an original blueprint goal (for example, deciding not to build a big local team after all) and is doing meaningful work in a new direction, HONOR that real work. Do not scold them for drifting from the original plan when the drift is a deliberate, healthy choice.
+- Do NOT put small tactical tasks in the narrative (for example "capitalize the headers on your website", "update your link in bio", minor admin). They can be reflected in the homework count, but they are never story-worthy and must never headline a section.
+- Only BLUEPRINT items count toward the blueprint progress percentage. Live and call-assigned work is celebrated but never scored against the blueprint.
 
 REPORT STRUCTURE:
-1. Open with WHERE THEY ARE in their blueprint right now: Q${currentQuarter}, what the plan called for, framed as "the map said X."
-2. THE NUMBERS: attendance % and homework % shown plainly, compared to the blueprint standard (75%+ attendance, 100% homework is the expectation).
-3. WHAT'S WORKING: specific wins, even small ones. Lead with what's good.
-4. THE GAP (if any): if attendance is under 75% or homework under 50%, be direct. Name what the blueprint called for, what the data actually shows, and the cost of that gap, written as flowing sentences rather than clipped fragments. Tie lack of input to lack of output. Never shame, but never soften the truth.
-5. THE ONE MOVE: one specific action for next month, tied directly to their Q${currentQuarter} blueprint focus.
-6. CLOSING LINE: Gogo's voice, direct, warm, and demanding, landing on a confident note that tells them they have the map and it's time to move.
+1. WHERE YOU ARE: open warmly and place them in their journey (Q${currentQuarter}, week ${weeksIn + 1}), what this stage is about.
+2. THE NUMBERS: present the figures above plainly and kindly, as a check-in, not a verdict. Include homework completed this period and the percentage, attendance, and blueprint progress.
+3. WHAT'S WORKING: lead with genuine, specific wins. Pull the meaningful accomplishments (blueprint AND live) from the data above and name them.
+4. WHERE THERE'S ROOM (include ONLY if the data shows a real gap, such as low attendance or stalled blueprint progress): name it honestly and with care. Acknowledge effort and life. Connect input to output gently. One honest, compassionate paragraph, never a lecture.
+5. THE ONE MOVE: one clear, encouraging next step, tied to their Q${currentQuarter} focus or their real current direction.
+6. CLOSING: warm, Gogo's voice, leaving them feeling seen, believed in, and motivated.
 
-TONE: Gogo Bethke, direct, warm, no-BS. The report feels like Gogo wrote it personally after looking at their data and their blueprint side by side. It is not a form letter. It knows this specific person's plan.
+TONE (this matters, and it has been softened on purpose):
+- Gogo Bethke's voice: warm, direct, real, and personal. Lean noticeably kinder and more human than a scorecard. This is a real person doing hard things, and life happens.
+- Be encouraging and sensitive. Acknowledge effort and context. Celebrate progress generously.
+- Still be honest: do NOT pamper, and do NOT paper over a real gap or pretend weak numbers are fine. Name what is true, kindly. Honest and warm at the same time.
+- Never shame, never guilt-trip, never use fear or pressure as motivation.
 
 PUNCTUATION AND VOICE (strict):
-- NEVER use em dashes (—) or en dashes (–). Not once. Use commas, periods, or rewrite the sentence instead.
-- Write in natural, flowing prose. Connect related ideas into complete sentences. Do NOT chop thoughts into a string of two or three word fragments. Short sentences are fine for emphasis, but they should be the exception, not the rhythm of the whole report.
-- Read it back in your head: it should sound like a person talking warmly and plainly, not a list of punches.
+- NEVER use em dashes or en dashes. Use commas, periods, or rewrite the sentence.
+- Write natural, flowing prose in complete sentences. Short sentences for emphasis only, never a string of clipped fragments.
 
-OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags). Do NOT wrap the output in markdown code fences. Never start the response with \`\`\`html or \`\`\` and never end it with \`\`\`. Output must begin directly with an HTML tag. Inline styles only. The Circle brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nThis is a regeneration of a previous report. Address every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
+OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags, no markdown code fences, never start with \`\`\`). Begin directly with an HTML tag. Inline styles only. Brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nAddress every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
 
     // ─── REVISION MODE ───────────────────────────────────────────────────────
     // When refining an existing unsent report, we must EDIT THE CURRENT DOCUMENT
@@ -224,7 +279,7 @@ RULES FOR THIS REVISION (critical, this is an EDIT and not a rewrite):
 - NEVER use em dashes or en dashes. Use commas or rewrite the sentence.
 
 REFERENCE DATA (use ONLY if the admin's request asks you to correct a fact or number):
-Attendance ${attendanceRate}% (${attended} of ${totalWeeks}) · Homework ${homeworkRate}% (${homeworkDone} of ${totalWeeks}) · Questions asked ${questionsAsked} · Week ${weeksIn} · Q${currentQuarter}
+Attendance ${attendanceRate}% (${attended} of ${totalWeeks}) · Homework completed this period ${hwCompletedCount} · Blueprint progress ${blueprintDone}/${blueprintTotal} (${blueprintPct}%) · Overall homework ${totalCompletedHw}/${totalActiveHw} (${overallHwPct}%) · Questions asked ${questionsAsked} · Week ${weeksIn} · Q${currentQuarter}
 
 OUTPUT: Return the COMPLETE revised report as raw HTML body content. No markdown code fences, no commentary, no diff. Begin directly with an HTML tag.`
 
@@ -279,7 +334,7 @@ OUTPUT: Return the COMPLETE revised report as raw HTML body content. No markdown
       .insert({
         member_id,
         period_type,
-        period_label: getPeriodLabel(period_type),
+        period_label: periodLabel,
         content_html: contentHtml,
       })
       .select()
