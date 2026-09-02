@@ -27,6 +27,17 @@ function isImage(doc: MemberDocument): boolean {
   return (doc.mime_type ?? '').startsWith('image/')
 }
 
+// Short file-kind label for the icon box (PDF / IMG / DOC / etc.).
+function kindLabel(doc: MemberDocument): string {
+  const mime = doc.mime_type ?? ''
+  if (isImage(doc)) return 'IMG'
+  if (mime.includes('pdf')) return 'PDF'
+  if (mime.includes('word') || mime.includes('document')) return 'DOC'
+  if (mime.includes('sheet') || mime.includes('excel') || mime.includes('csv')) return 'XLS'
+  const ext = (doc.file_name ?? '').split('.').pop() ?? ''
+  return ext ? ext.slice(0, 4).toUpperCase() : 'FILE'
+}
+
 export default async function MemberDocumentsPage() {
   const ctx = await resolvePortalContext()
   if (!ctx.user) redirect('/login')
@@ -59,8 +70,6 @@ export default async function MemberDocumentsPage() {
         <MemberDocumentUpload memberId={member.id} />
       </div>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
-
       {documents.length === 0 ? (
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-10 text-center">
           <div
@@ -75,48 +84,40 @@ export default async function MemberDocumentsPage() {
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <div className="border border-[var(--border-color)] rounded-[18px] bg-[var(--surface)] overflow-hidden">
           {documents.map((doc) => (
-            <li
+            <a
               key={doc.id}
-              className="flex items-start justify-between gap-4 bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] px-5 py-4"
+              href={`/api/member-documents/${doc.id}/download`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-[18px] px-[26px] py-[18px] border-b border-[var(--border-color)] last:border-b-0 hover:bg-[var(--gold-soft)] transition-colors"
             >
-              <div className="flex items-start gap-3 min-w-0">
-                {isImage(doc) && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={`/api/member-documents/${doc.id}/download`}
-                    alt={doc.title}
-                    className="w-12 h-12 rounded-[10px] object-cover border border-[var(--border-color)] flex-shrink-0"
-                  />
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-[10px] uppercase tracking-wider rounded-full px-2 py-0.5"
-                      style={{ color: 'var(--gold-text)', border: '1px solid var(--gold-line)', background: 'var(--gold-soft)' }}
-                    >
-                      {TYPE_LABEL[doc.doc_type] ?? doc.doc_type}
-                    </span>
-                    <p className="text-[var(--text)] font-medium text-sm truncate">{doc.title}</p>
-                  </div>
-                  {doc.file_name && (
-                    <p className="text-[var(--text-3)] text-xs mt-1 truncate">{doc.file_name}</p>
-                  )}
-                  <p className="text-[var(--text-3)] text-xs mt-0.5">Uploaded {fmtDate(doc.uploaded_at)}</p>
+              {isImage(doc) ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={`/api/member-documents/${doc.id}/download`}
+                  alt={doc.title}
+                  className="w-[34px] h-[42px] rounded-[5px] object-cover border border-[var(--border-2)] flex-none"
+                />
+              ) : (
+                <div
+                  className="w-[34px] h-[42px] rounded-[5px] border flex items-end justify-center pb-[5px] flex-none"
+                  style={{ borderColor: 'var(--border-2)', background: 'var(--surface-2)' }}
+                >
+                  <span className="text-[8px] tracking-[0.06em] text-[var(--text-3)]">{kindLabel(doc)}</span>
                 </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] text-[var(--text)] truncate">{doc.title}</p>
+                <p className="text-[12px] text-[var(--text-3)] mt-[3px] truncate">
+                  {TYPE_LABEL[doc.doc_type] ?? doc.doc_type} · Uploaded {fmtDate(doc.uploaded_at)}
+                </p>
               </div>
-              <a
-                href={`/api/member-documents/${doc.id}/download`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border border-[var(--border-color)] text-[var(--text-2)] text-xs px-4 py-1.5 rounded-full hover:border-[var(--gold-line)] hover:text-[var(--text)] transition-colors flex-shrink-0"
-              >
-                Download
-              </a>
-            </li>
+              <span className="text-[12px] text-[var(--gold-text)] flex-none group-hover:text-[var(--gold)] transition-colors">Download ↓</span>
+            </a>
           ))}
-        </ul>
+        </div>
       )}
 
       <div className="mt-10">
