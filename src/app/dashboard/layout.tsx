@@ -101,7 +101,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar role="member" memberName={member?.name ?? profile?.full_name ?? user.email} />
       <main className="flex-1 overflow-auto pb-28">
-        <PortalTopBar topline={topline} zoomLink={oh.zoomLink} />
+        {/* Join button only on the actual meeting day — never a permanent link to the Zoom. */}
+        <PortalTopBar topline={topline} zoomLink={oh.isMeetingDayET ? oh.zoomLink : null} />
         {children}
       </main>
       <ChatBubble />

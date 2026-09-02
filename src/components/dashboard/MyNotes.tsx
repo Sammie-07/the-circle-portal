@@ -111,11 +111,11 @@ export default function MyNotes({ initialEntries }: Props) {
       {/* List */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase">All Notes</p>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase">All Notes</p>
           <button
             onClick={createNote}
             disabled={busy}
-            className="text-xs text-[var(--text-2)] border border-[var(--border-color)] rounded px-2.5 py-1 hover:border-[#C9A227] hover:text-[var(--text)] transition-colors disabled:opacity-50"
+            className="text-xs text-[var(--text-2)] border border-[var(--border-color)] rounded-full px-3 py-1 hover:border-[var(--gold-line)] hover:text-[var(--text)] transition-colors disabled:opacity-50"
           >
             ＋ New note
           </button>
@@ -133,11 +133,12 @@ export default function MyNotes({ initialEntries }: Props) {
                 <li key={entry.id}>
                   <button
                     onClick={() => openEntry(entry)}
-                    className={`w-full text-left bg-[var(--surface)] border rounded px-3 py-2.5 transition-colors ${
+                    className="w-full text-left border rounded-[14px] px-3.5 py-2.5 transition-colors"
+                    style={
                       active
-                        ? 'border-[#C9A227]/60'
-                        : 'border-[var(--border-color)] hover:border-[#C9A227]/30'
-                    }`}
+                        ? { background: 'var(--gold-soft)', borderColor: 'var(--gold-line)' }
+                        : { background: 'var(--surface)', borderColor: 'var(--border-color)' }
+                    }
                   >
                     <p className="text-[var(--text)] text-sm font-medium truncate">{entry.title}</p>
                     <p className="text-[var(--text-3)] text-xs mt-0.5 truncate">{preview(entry.content)}</p>
@@ -153,7 +154,7 @@ export default function MyNotes({ initialEntries }: Props) {
       {/* Editor */}
       <div>
         {selected ? (
-          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded overflow-hidden focus-within:border-[#C9A227]/30 transition-colors">
+          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] overflow-hidden focus-within:border-[var(--gold-line)] transition-colors">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -177,7 +178,7 @@ export default function MyNotes({ initialEntries }: Props) {
                 <button
                   onClick={save}
                   disabled={busy}
-                  className="bg-[#C9A227] text-black text-xs font-medium px-3.5 py-1.5 rounded hover:bg-[#C9A227]/90 transition-colors disabled:opacity-50"
+                  className="bg-[var(--gold)] text-black text-xs font-medium px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   Save
                 </button>
@@ -187,16 +188,19 @@ export default function MyNotes({ initialEntries }: Props) {
               <button
                 onClick={remove}
                 disabled={busy}
-                className="text-[#CC1F1F] text-xs px-2.5 py-1.5 rounded hover:bg-[#CC1F1F]/10 transition-colors disabled:opacity-50"
+                className="text-[var(--red-text)] text-xs px-3 py-1.5 rounded-full hover:bg-[var(--red-soft)] transition-colors disabled:opacity-50"
               >
                 Delete
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-10 text-center h-full flex flex-col items-center justify-center">
-            <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
-              <span className="text-[#C9A227] text-2xl">◈</span>
+          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-10 text-center h-full flex flex-col items-center justify-center">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+              style={{ border: '1px solid var(--gold-line)', background: 'var(--gold-soft)' }}
+            >
+              <span className="text-[var(--gold)] text-2xl">◈</span>
             </div>
             <h2 className="text-[var(--text)] font-serif text-xl mb-3">No notes yet</h2>
             <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">

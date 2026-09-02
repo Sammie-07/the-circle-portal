@@ -47,7 +47,7 @@ export default async function MemberDocumentsPage() {
     new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl tc-rise">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Your Files</p>
@@ -62,9 +62,12 @@ export default async function MemberDocumentsPage() {
       <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
 
       {documents.length === 0 ? (
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-10 text-center">
-          <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
-            <span className="text-[#C9A227] text-2xl">◈</span>
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-10 text-center">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+            style={{ border: '1px solid var(--gold-line)', background: 'var(--gold-soft)' }}
+          >
+            <span className="text-[var(--gold)] text-2xl">◈</span>
           </div>
           <h2 className="text-[var(--text)] font-serif text-xl mb-3">No Documents Yet</h2>
           <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">
@@ -76,7 +79,7 @@ export default async function MemberDocumentsPage() {
           {documents.map((doc) => (
             <li
               key={doc.id}
-              className="flex items-start justify-between gap-4 bg-[var(--surface)] border border-[var(--border-color)] rounded px-4 py-3"
+              className="flex items-start justify-between gap-4 bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] px-5 py-4"
             >
               <div className="flex items-start gap-3 min-w-0">
                 {isImage(doc) && (
@@ -84,12 +87,15 @@ export default async function MemberDocumentsPage() {
                   <img
                     src={`/api/member-documents/${doc.id}/download`}
                     alt={doc.title}
-                    className="w-12 h-12 rounded object-cover border border-[var(--border-color)] flex-shrink-0"
+                    className="w-12 h-12 rounded-[10px] object-cover border border-[var(--border-color)] flex-shrink-0"
                   />
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-wider text-[#C9A227] border border-[#C9A227]/30 rounded px-1.5 py-0.5">
+                    <span
+                      className="text-[10px] uppercase tracking-wider rounded-full px-2 py-0.5"
+                      style={{ color: 'var(--gold-text)', border: '1px solid var(--gold-line)', background: 'var(--gold-soft)' }}
+                    >
                       {TYPE_LABEL[doc.doc_type] ?? doc.doc_type}
                     </span>
                     <p className="text-[var(--text)] font-medium text-sm truncate">{doc.title}</p>
@@ -104,7 +110,7 @@ export default async function MemberDocumentsPage() {
                 href={`/api/member-documents/${doc.id}/download`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="border border-[var(--border-color)] text-[var(--text-2)] text-xs px-3 py-1.5 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors flex-shrink-0"
+                className="border border-[var(--border-color)] text-[var(--text-2)] text-xs px-4 py-1.5 rounded-full hover:border-[var(--gold-line)] hover:text-[var(--text)] transition-colors flex-shrink-0"
               >
                 Download
               </a>
