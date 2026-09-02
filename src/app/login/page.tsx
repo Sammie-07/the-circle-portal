@@ -5,9 +5,36 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+// The Circle — new design tokens (scoped to login; the global roll-out follows).
+const C = {
+  bg: '#090909', surface: '#0E0E0E', border: '#1A1A1A', border2: '#262421',
+  text: '#F2F0EC', text2: '#9A958D', text3: '#6E6A64',
+  gold: '#C9A227', goldText: '#E8CF7A', goldSoft: 'rgba(201,162,39,0.13)', goldLine: 'rgba(201,162,39,0.35)',
+  red: '#CC1F1F',
+}
+const serif = "'Playfair Display', Georgia, serif"
+const sans = "'DM Sans', system-ui, sans-serif"
+
+// The Circle network mark — a ring with four connection nodes.
+function CircleMark({ size = 30 }: { size?: number }) {
+  const dot = Math.round(size * 0.13)
+  const off = Math.round(size * 0.1)
+  const mid = size / 2 - dot / 2
+  const d = (pos: React.CSSProperties): React.CSSProperties => ({ width: dot, height: dot, borderRadius: '50%', background: C.red, position: 'absolute', ...pos })
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', border: `1px solid ${C.red}`, position: 'relative', flex: 'none' }}>
+      <div style={d({ top: off, left: mid })} />
+      <div style={d({ bottom: off, left: mid })} />
+      <div style={d({ left: off, top: mid })} />
+      <div style={d({ right: off, top: mid })} />
+    </div>
+  )
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -37,62 +64,98 @@ export default function LoginPage() {
   }
 
   const emailQ = email ? `&email=${encodeURIComponent(email)}` : ''
-  const inputClass =
-    'w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors'
-  const labelClass = 'block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2'
+
+  const fieldWrap: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '13px 15px', borderRadius: 10, border: `1px solid ${C.border2}`,
+    background: C.surface,
+  }
+  const input: React.CSSProperties = {
+    flex: 1, background: 'transparent', border: 'none', outline: 'none',
+    color: C.text, fontSize: 14, fontFamily: sans,
+  }
+  const eyebrow: React.CSSProperties = {
+    margin: '0 0 8px', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.text2,
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-full border-2 border-[#CC1F1F] flex items-center justify-center mb-4 relative">
-            <div className="w-2 h-2 rounded-full bg-[#CC1F1F] absolute top-2 left-1/2 -translate-x-1/2" />
-            <div className="w-2 h-2 rounded-full bg-[#CC1F1F] absolute bottom-2 left-1/2 -translate-x-1/2" />
-            <div className="w-2 h-2 rounded-full bg-[#CC1F1F] absolute left-2 top-1/2 -translate-y-1/2" />
-            <div className="w-2 h-2 rounded-full bg-[#CC1F1F] absolute right-2 top-1/2 -translate-y-1/2" />
-          </div>
-          <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase font-medium mb-2">
-            The Circle · Coaching Program
-          </p>
-          <h1 className="text-[var(--text)] text-2xl font-serif text-center">Member Portal</h1>
+    <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: sans }} className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr]">
+
+      {/* Left brand panel (desktop only) */}
+      <div
+        className="hidden md:flex"
+        style={{
+          position: 'relative', overflow: 'hidden', padding: 64,
+          flexDirection: 'column', justifyContent: 'space-between',
+          background: `radial-gradient(90% 80% at 15% 0%, rgba(204,31,31,0.16) 0%, rgba(0,0,0,0) 60%), ${C.surface}`,
+          borderRight: `1px solid ${C.border}`,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <CircleMark />
+          <span style={{ fontFamily: serif, fontSize: 19 }}>The Circle</span>
         </div>
+        <div style={{ maxWidth: '30ch' }}>
+          <p style={{ margin: '0 0 18px', fontSize: 10, letterSpacing: '0.32em', textTransform: 'uppercase', color: C.goldText }}>Coaching Program</p>
+          <h1 style={{ margin: 0, fontFamily: serif, fontSize: 56, fontWeight: 400, lineHeight: 1.08, letterSpacing: '-0.02em' }}>A room built for the ones who show up.</h1>
+          <p style={{ margin: '22px 0 0', fontSize: 14.5, lineHeight: 1.7, color: C.text2 }}>Your blueprint, your homework, your call replays and Gogo&apos;s brain — all in one place.</p>
+        </div>
+        <p style={{ margin: 0, fontSize: 11.5, color: C.text3 }}>Access is by invitation only.</p>
+      </div>
 
-        <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227] to-transparent mb-6" />
-
-        {/* Transition banner — the portal now uses passwords; existing members who
-            haven't set one yet start here. (Safe to remove once everyone's migrated.) */}
-        <a
-          href={`/set-password?ctx=transition${emailQ}`}
-          className="block mb-6 rounded-lg border border-[#C9A227]/40 bg-[#C9A227]/10 px-4 py-3 hover:bg-[#C9A227]/15 transition-colors"
-        >
-          <p className="text-[var(--text)] text-sm font-medium">🔒 New: the portal now uses passwords</p>
-          <p className="text-[var(--text-2)] text-xs mt-0.5">
-            Signing in for the first time since the change? <span className="text-[#C9A227] font-medium">Set your password →</span>
-          </p>
-        </a>
-
-        <form onSubmit={handlePassword} className="space-y-4">
-          <div>
-            <label className={labelClass}>Email address</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="username" className={inputClass} />
+      {/* Right sign-in panel */}
+      <div className="flex items-center justify-center" style={{ padding: '48px 24px' }}>
+        <div style={{ width: '100%', maxWidth: 352 }}>
+          {/* Mobile brand mark (left panel is hidden) */}
+          <div className="md:hidden" style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 26 }}>
+            <CircleMark />
+            <span style={{ fontFamily: serif, fontSize: 18 }}>The Circle</span>
           </div>
-          <div>
-            <label className={labelClass}>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Your password" autoComplete="current-password" className={inputClass} />
-          </div>
-          {error && (
-            <div className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5">{error}</div>
-          )}
-          <button type="submit" disabled={loading || !email || !password} className="w-full bg-[#C9A227] text-[#0D0D0D] font-medium text-sm py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
-          <p className="text-center">
-            <a href={`/set-password?ctx=reset${emailQ}`} className="text-[#C9A227] text-xs font-medium hover:underline underline-offset-2 transition-colors">
-              Forgot your password? Reset it →
-            </a>
-          </p>
-          <p className="text-center text-[var(--text-3)] text-xs">Access is by invitation only.</p>
-        </form>
+
+          <h2 style={{ margin: '0 0 6px', fontFamily: serif, fontSize: 28, fontWeight: 400 }}>Member sign in</h2>
+          <p style={{ margin: '0 0 22px', fontSize: 13.5, color: C.text2 }}>Welcome back to The Circle.</p>
+
+          {/* Passwords notice → first-time / transition set-password */}
+          <a
+            href={`/set-password?ctx=transition${emailQ}`}
+            style={{ display: 'block', marginBottom: 26, padding: '16px 18px', borderRadius: 12, border: `1px solid ${C.goldLine}`, background: C.goldSoft }}
+          >
+            <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: 500, color: C.text }}>The portal now uses passwords</p>
+            <p style={{ margin: 0, fontSize: 12, color: C.text2 }}>First time since the change? <span style={{ color: C.goldText }}>Set your password →</span></p>
+          </a>
+
+          <form onSubmit={handlePassword} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <p style={eyebrow}>Email address</p>
+              <div style={fieldWrap}>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" autoComplete="username" style={input} />
+              </div>
+            </div>
+            <div>
+              <p style={eyebrow}>Password</p>
+              <div style={{ ...fieldWrap, borderColor: C.goldLine }}>
+                <input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Your password" autoComplete="current-password" style={input} />
+                <button type="button" onClick={() => setShowPw((s) => !s)} style={{ background: 'none', border: 'none', color: C.text3, fontSize: 11, cursor: 'pointer', fontFamily: sans }}>
+                  {showPw ? 'hide' : 'show'}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div style={{ fontSize: 12, lineHeight: 1.55, color: C.text2, background: C.goldSoft, border: `1px solid ${C.goldLine}`, borderRadius: 10, padding: '11px 13px' }}>{error}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !email || !password}
+              style={{ marginTop: 4, padding: '13px 0', borderRadius: 10, background: C.gold, color: '#0B0B0B', fontSize: 14, fontWeight: 500, fontFamily: sans, border: 'none', cursor: loading || !email || !password ? 'not-allowed' : 'pointer', opacity: loading || !email || !password ? 0.45 : 1 }}
+            >
+              {loading ? 'Signing in…' : 'Sign in'}
+            </button>
+
+            <a href={`/set-password?ctx=reset${emailQ}`} style={{ textAlign: 'center', fontSize: 12, color: C.goldText }}>Forgot your password? Reset it →</a>
+          </form>
+        </div>
       </div>
     </div>
   )
