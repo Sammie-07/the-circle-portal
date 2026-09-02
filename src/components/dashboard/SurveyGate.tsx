@@ -193,9 +193,9 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         zIndex: 1000,
         background: 'rgba(8,8,8,0.92)',
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'center',
-        overflowY: 'auto',
+        overflow: 'hidden',
         padding: '24px 16px',
       }}
     >
@@ -208,7 +208,10 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           borderRadius: 14,
           maxWidth: 640,
           width: '100%',
-          margin: 'auto 0',
+          maxHeight: 'calc(100vh - 48px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
         {preview && onClose ? (
@@ -233,8 +236,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             ×
           </button>
         ) : null}
-        {/* Header */}
-        <div style={{ padding: '28px 28px 16px', borderBottom: '1px solid var(--border-color, #2a2a2a)' }}>
+        {/* Header — fixed, so the progress bar stays visible while scrolling */}
+        <div style={{ flexShrink: 0, padding: '28px 28px 16px', borderBottom: '1px solid var(--border-color, #2a2a2a)' }}>
           <div style={{ color: GOLD, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             {payload.monthLabel} · Progress Check{preview ? ' · Preview' : ''}
           </div>
@@ -255,8 +258,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           </div>
         </div>
 
-        {/* Questions */}
-        <div style={{ padding: '20px 28px' }}>
+        {/* Questions — the only scrolling region */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 28px' }}>
           {questions.map((q, i) => (
             <div key={q.key}>
               {q.section ? (
@@ -277,18 +280,19 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Footer */}
-        <div style={{ padding: '16px 28px 28px', borderTop: '1px solid var(--border-color, #2a2a2a)' }}>
-          <div style={{ textAlign: 'center', margin: '0 0 18px' }}>
-            <p style={{ color: GOLD, fontFamily: 'Georgia, serif', fontSize: 16, margin: '0 0 4px' }}>
+          {/* Closing line — sits at the true end of the form, seen when they reach it */}
+          <div style={{ textAlign: 'center', margin: '8px 0 4px', paddingTop: 20, borderTop: '1px solid var(--border-color, #2a2a2a)' }}>
+            <p style={{ color: GOLD, fontFamily: 'Georgia, serif', fontSize: 18, margin: '0 0 6px' }}>
               Congratulations, you made it to the end.
             </p>
             <p style={{ color: 'var(--text-2, #AAAAAA)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               We track this every month so you can see exactly how far you have come.
             </p>
           </div>
+        </div>
+
+        {/* Footer — fixed, so submit stays in view */}
+        <div style={{ flexShrink: 0, padding: '16px 28px 28px', borderTop: '1px solid var(--border-color, #2a2a2a)' }}>
           {error ? (
             <p style={{ color: '#ff8080', fontSize: 13, margin: '0 0 12px' }}>{error}</p>
           ) : null}

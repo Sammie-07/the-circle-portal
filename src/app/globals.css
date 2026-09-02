@@ -177,6 +177,11 @@
 .health-yellow { color: #eab308; }
 .health-red { color: #ef4444; }
 
+/* Hide the native number-input spinner arrows everywhere (confusing, unneeded) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+
 /* Survey completion confetti */
 @keyframes confetti-fall {
   0% { transform: translateY(-24px) rotate(0deg); opacity: 1; }
