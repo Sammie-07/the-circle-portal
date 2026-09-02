@@ -377,7 +377,7 @@ export default function BulkReportPanel({ members }: Props) {
     <div className="space-y-6">
 
       {/* ─── Step 1: Choose period ─────────────────────────────────────────── */}
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-5">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[18px] p-5">
         <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-1">Step 1</p>
         <p className="text-white text-sm font-medium mb-4">Choose report period</p>
         <div className="flex gap-2">

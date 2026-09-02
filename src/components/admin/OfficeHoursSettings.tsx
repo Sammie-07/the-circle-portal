@@ -123,7 +123,7 @@ export default function OfficeHoursSettings({ initialZoomLink, weekOf, initialSt
     `flex-1 text-sm rounded border px-3 py-2 transition-all ${active ? activeCls : 'border-[var(--border-color)] text-[var(--text-3)] hover:border-[var(--border-hover)]'}`
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 max-w-md">
+    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 max-w-md">
       <h2 className="text-[var(--text)] font-serif text-lg mb-1">Tuesday Office Hours</h2>
       <p className="text-[var(--text-3)] text-xs mb-5">The join link members use, and whether there&apos;s a call this week.</p>
 

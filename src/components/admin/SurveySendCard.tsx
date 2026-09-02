@@ -51,7 +51,7 @@ export default function SurveySendCard({
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 max-w-md">
+    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 max-w-md">
       <h2 className="text-[var(--text)] font-serif text-lg mb-1">Monthly Progress Survey</h2>
       <p className="text-[var(--text-3)] text-xs leading-relaxed mb-4">
         Automatic sending is <strong className="text-[var(--text-2)]">off</strong> while we review the survey.

@@ -66,7 +66,7 @@ export default function MemberProfileCard({
             />
           ) : (
             <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl flex items-center justify-center bg-[#C9A227]/10 ring-2 ring-[#C9A227]/40">
-              <span className="text-[#C9A227] font-serif text-3xl">{getInitials(name)}</span>
+              <span className="text-[#C9A227] font-serif text-[38px]">{getInitials(name)}</span>
             </div>
           )}
         </div>
@@ -74,9 +74,9 @@ export default function MemberProfileCard({
         {/* Main */}
         <div className="min-w-0 flex-1">
           {cohort && (
-            <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-1.5">{cohort}</p>
+            <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-1.5">{cohort}</p>
           )}
-          <h1 className="text-[var(--text)] font-serif text-3xl leading-tight">{name}</h1>
+          <h1 className="text-[var(--text)] font-serif text-[38px] leading-tight">{name}</h1>
           {email && <p className="text-[var(--text-3)] text-sm mt-1">{email}</p>}
 
           {/* Key info chips */}

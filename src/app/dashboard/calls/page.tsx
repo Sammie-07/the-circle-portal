@@ -29,8 +29,8 @@ export default async function MemberCallsPage() {
   return (
     <div className="p-4 sm:p-8 max-w-5xl">
       <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your Recorded Sessions</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">Call Replays</h1>
+        <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Your Recorded Sessions</p>
+        <h1 className="text-[var(--text)] font-serif text-[38px]">Call Replays</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
           Rewatch your coaching call and office hours recordings anytime.
         </p>

@@ -50,8 +50,8 @@ export default async function MemberDocumentsPage() {
     <div className="p-4 sm:p-8 max-w-5xl">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your Files</p>
-          <h1 className="text-[var(--text)] font-serif text-3xl">My Documents</h1>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Your Files</p>
+          <h1 className="text-[var(--text)] font-serif text-[38px]">My Documents</h1>
           <p className="text-[var(--text-3)] text-sm mt-1">
             Your contract, DISC, application and onboarding files. Upload your own or download what your team adds.
           </p>

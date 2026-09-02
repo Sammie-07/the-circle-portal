@@ -215,7 +215,7 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
     <div className="space-y-4">
 
       {/* ─── Generate card ─── */}
-      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
+      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5">
         <div className="mb-4">
           <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-1">Generate Report</p>
           <p className="text-[var(--text-3)] text-xs">Uses The Brain + activity data to write a progress report in Gogo&apos;s voice.</p>

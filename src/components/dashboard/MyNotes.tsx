@@ -122,7 +122,7 @@ export default function MyNotes({ initialEntries }: Props) {
         </div>
 
         {entries.length === 0 ? (
-          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 text-center">
+          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 text-center">
             <p className="text-[var(--text-3)] text-sm">No notes yet — create your first.</p>
           </div>
         ) : (

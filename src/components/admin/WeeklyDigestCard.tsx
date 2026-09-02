@@ -21,7 +21,7 @@ export default function WeeklyDigestCard() {
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 max-w-md">
+    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 max-w-md">
       <h2 className="text-[var(--text)] font-serif text-lg mb-1">Weekly Member Digest</h2>
       <p className="text-[var(--text-3)] text-xs leading-relaxed mb-4">
         Every <strong className="text-[var(--text-2)]">Tuesday at 9am ET</strong>, the team (you and the admins)

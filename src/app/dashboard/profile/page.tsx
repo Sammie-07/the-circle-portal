@@ -32,8 +32,8 @@ export default async function ProfilePage() {
   return (
     <div className="p-4 sm:p-8 max-w-3xl">
       <div className="mb-6">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Account</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">My Profile</h1>
+        <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Account</p>
+        <h1 className="text-[var(--text)] font-serif text-[38px]">My Profile</h1>
       </div>
 
       <MemberProfileCard

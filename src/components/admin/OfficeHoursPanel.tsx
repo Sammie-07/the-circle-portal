@@ -116,7 +116,7 @@ export default function OfficeHoursPanel() {
     d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-6">
+    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>

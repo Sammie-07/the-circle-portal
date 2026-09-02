@@ -30,7 +30,7 @@ export default function AppSettingsForm({ initialAgentCount }: { initialAgentCou
   }
 
   return (
-    <form onSubmit={save} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 max-w-md">
+    <form onSubmit={save} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 max-w-md">
       <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">
         #teamgogo agent count
       </label>

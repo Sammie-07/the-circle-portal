@@ -73,8 +73,8 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
           <div className="w-14 h-14 rounded-full border-2 border-[#C9A227] flex items-center justify-center mx-auto mb-6">
             <span className="text-[#C9A227] text-2xl">✓</span>
           </div>
-          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-3">Submitted</p>
-          <h1 className="text-white font-serif text-3xl mb-3">You&apos;re done.</h1>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-3">Submitted</p>
+          <h1 className="text-white font-serif text-[38px] mb-3">You&apos;re done.</h1>
           <p className="text-[#888] text-sm leading-relaxed">
             Your check-in for the week of <span className="text-white">{weekLabel}</span> is in. See you Tuesday.
           </p>
@@ -106,8 +106,8 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
 
         {/* Title */}
         <div className="mb-8">
-          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Weekly Check-In</p>
-          <h1 className="text-white font-serif text-3xl mb-1">{memberName.split(' ')[0]}&rsquo;s Week</h1>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Weekly Check-In</p>
+          <h1 className="text-white font-serif text-[38px] mb-1">{memberName.split(' ')[0]}&rsquo;s Week</h1>
           <p className="text-[#555] text-sm">Week of {weekLabel}</p>
         </div>
 

@@ -32,8 +32,8 @@ export default async function AdminReportsPage() {
     <div className="p-4 sm:p-8">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-          <h1 className="text-[var(--text)] font-serif text-3xl">Reports</h1>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
+          <h1 className="text-[var(--text)] font-serif text-[38px]">Reports</h1>
           <p className="text-[var(--text-3)] text-sm mt-1">All generated and sent Circle reports</p>
         </div>
         <div className="flex items-center gap-4 mt-2">

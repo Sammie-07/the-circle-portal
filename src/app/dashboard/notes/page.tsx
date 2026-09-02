@@ -23,8 +23,8 @@ export default async function NotesPage() {
   return (
     <div className="p-4 sm:p-8 max-w-5xl">
       <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Private workspace</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">My Notes</h1>
+        <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Private workspace</p>
+        <h1 className="text-[var(--text)] font-serif text-[38px]">My Notes</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">Just for you — ideas, wins, reminders, anything on your mind.</p>
       </div>
 

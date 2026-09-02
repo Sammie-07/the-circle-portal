@@ -32,10 +32,10 @@ export default async function ReportPage({ params }: PageProps) {
           ← All reports
         </Link>
         <div className="mt-4">
-          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">
             {report.period_type === 'monthly' ? 'Monthly Report' : report.period_type === 'quarterly' ? 'Quarterly Report' : 'Annual Review'}
           </p>
-          <h1 className="text-white font-serif text-3xl">{report.period_label}</h1>
+          <h1 className="text-white font-serif text-[38px]">{report.period_label}</h1>
           <p className="text-[#555] text-sm mt-1">
             Delivered {new Date(report.sent_at).toLocaleDateString('en-US', {
               month: 'long',

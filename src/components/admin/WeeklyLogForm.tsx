@@ -72,7 +72,7 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 space-y-4">
       <div>
         <label className="block text-xs text-[var(--text-2)] uppercase tracking-wider mb-1.5">Week of</label>
         <DateField

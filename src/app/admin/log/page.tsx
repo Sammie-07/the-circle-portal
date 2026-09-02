@@ -42,8 +42,8 @@ export default async function AdminLogPage() {
   return (
     <div className="p-4 sm:p-8 max-w-4xl">
       <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">Log This Week</h1>
+        <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
+        <h1 className="text-[var(--text)] font-serif text-[38px]">Log This Week</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
           Drop the Fathom call link to auto-fill everyone, or log attendance, questions, and notes by hand.
         </p>

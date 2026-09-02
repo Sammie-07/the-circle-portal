@@ -524,7 +524,7 @@ export default function BlueprintPanel({
       )}
 
       {/* ─── Panel ─── */}
-      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-6">
+      <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>

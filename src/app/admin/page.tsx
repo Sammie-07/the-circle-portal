@@ -45,8 +45,8 @@ export default async function AdminMembersPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-          <h1 className="text-[var(--text)] font-serif text-3xl">Circle Members</h1>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
+          <h1 className="text-[var(--text)] font-serif text-[38px]">Circle Members</h1>
         </div>
         <InviteMemberButton />
       </div>

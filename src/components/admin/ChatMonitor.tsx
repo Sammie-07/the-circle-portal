@@ -78,7 +78,7 @@ export default function ChatMonitor({ sessions }: { sessions: SessionSummary[] }
 
   if (sessions.length === 0) {
     return (
-      <div className="border border-[var(--border-color)] rounded-lg p-8 text-center">
+      <div className="border border-[var(--border-color)] rounded-[18px] p-8 text-center">
         <p className="text-[var(--text-3)] text-sm">No member chats yet.</p>
       </div>
     )

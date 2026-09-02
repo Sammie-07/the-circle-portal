@@ -28,7 +28,7 @@ export default function AdminReportsTable({ reports }: Props) {
 
   if (reports.length === 0) {
     return (
-      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-8 text-center">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[18px] p-8 text-center">
         <p className="text-[#555] text-sm">No reports generated yet.</p>
         <p className="text-[#444] text-xs mt-2">Open a member&apos;s profile to generate their first report.</p>
       </div>

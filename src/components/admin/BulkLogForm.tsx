@@ -270,7 +270,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
 
       {/* Member rows */}
       {members.length === 0 ? (
-        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-8 text-center">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded-[18px] p-8 text-center">
           <p className="text-[#555] text-sm">No active members yet.</p>
         </div>
       ) : (

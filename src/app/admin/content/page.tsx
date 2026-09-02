@@ -33,8 +33,8 @@ export default async function AdminContentPage() {
   return (
     <div className="p-4 sm:p-8 max-w-7xl">
       <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Admin</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">Content</h1>
+        <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
+        <h1 className="text-[var(--text)] font-serif text-[38px]">Content</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
           On-brand Instagram &amp; Facebook posts generated from real member wins. Review, approve,
           download, and post. Aim for one every couple of days from the bank below.
