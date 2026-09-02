@@ -55,6 +55,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const upcomingCount = dueSoonTasks.length - overdueCount
 
   const latestReport = reports[0] ?? null
+  const initials = (member.name ?? 'The Circle').split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || 'TC'
 
   // Determine current quarter from join date
   const joinDate = new Date(member.join_date)
@@ -79,63 +80,70 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Welcome back</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">{member.name}</h1>
-        <p className="text-[var(--text-3)] text-sm mt-1">
-          {member.cohort ? `${member.cohort} cohort` : 'The Circle'} · Week {weeksIn + 1} of your program
-        </p>
-      </div>
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto flex flex-col gap-6">
 
-      <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
+      {/* Welcome hero */}
+      <section className="flex flex-wrap items-center justify-between gap-6 rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] px-8 py-8">
+        <div className="min-w-[240px]">
+          <p className="text-[10px] tracking-[0.24em] uppercase text-[var(--text-3)] mb-1.5">Welcome back</p>
+          <h1 className="font-serif text-[38px] leading-none text-[var(--text)]">{member.name}</h1>
+          <p className="text-[13px] text-[var(--text-2)] mt-3">
+            {member.cohort ? `${member.cohort} cohort` : 'The Circle'} · Week {weeksIn + 1} of 52 · Q{currentQuarter} focus
+          </p>
+        </div>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold flex-none" style={{ background: '#F4A7B9', color: '#5A2233' }}>
+          {initials}
+        </div>
+      </section>
 
-      {/* Deadline reminder bubble */}
+      {/* Deadline reminder */}
       {dueSoonTasks.length > 0 && (
         <Link
           href="/dashboard/homework"
-          className={`flex items-center gap-3 mb-8 rounded-lg border px-4 py-3 transition-colors ${
-            overdueCount > 0
-              ? 'bg-[#CC1F1F]/10 border-[#CC1F1F]/30 hover:border-[#CC1F1F]/50'
-              : 'bg-[#C9A227]/10 border-[#C9A227]/30 hover:border-[#C9A227]/50'
-          }`}
+          className="block rounded-2xl border px-6 py-5 transition-colors"
+          style={{ background: overdueCount > 0 ? 'var(--red-soft)' : 'var(--gold-soft)', borderColor: 'var(--border-2)' }}
         >
-          <span className="text-xl flex-shrink-0">⏰</span>
-          <div className="min-w-0">
-            <p className="text-[var(--text)] text-sm font-medium">
-              {dueSoonTasks.length === 1 ? 'You have a task coming due' : `You have ${dueSoonTasks.length} tasks coming due`}
-            </p>
-            <p className="text-[var(--text-2)] text-xs mt-0.5">
-              {overdueCount > 0 && <span className="text-[#ff8080]">{overdueCount} overdue</span>}
-              {overdueCount > 0 && upcomingCount > 0 && ' · '}
-              {upcomingCount > 0 && `${upcomingCount} due within 3 days`}
-              {' · tap to view →'}
-            </p>
+          <div className="flex items-center justify-between gap-6">
+            <div className="min-w-0">
+              <p className="text-[var(--text)] text-sm font-medium">
+                {dueSoonTasks.length === 1 ? 'You have a task coming due' : `${dueSoonTasks.length} tasks need you this week`}
+              </p>
+              <p className="text-[var(--text-2)] text-xs mt-1">
+                {overdueCount > 0 && <span style={{ color: 'var(--red-text)' }}>{overdueCount} overdue</span>}
+                {overdueCount > 0 && upcomingCount > 0 && ' · '}
+                {upcomingCount > 0 && `${upcomingCount} due within 3 days`}
+              </p>
+            </div>
+            <span
+              className="flex-none text-xs px-4 py-2 rounded-full border"
+              style={{ borderColor: overdueCount > 0 ? 'var(--red-text)' : 'var(--gold-line)', color: overdueCount > 0 ? 'var(--red-text)' : 'var(--gold-text)' }}
+            >
+              Open homework →
+            </span>
           </div>
         </Link>
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <AttendanceCard logs={logs} joinDate={member.join_date} />
-        <Link href="/dashboard/homework" className="block bg-[var(--surface)] border border-[var(--border-color)] rounded p-5 hover:border-[#C9A227]/40 transition-colors group">
+        <Link href="/dashboard/homework" className="block rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-6 hover:border-[var(--gold-line)] transition-colors group">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[var(--text-3)] text-xs uppercase tracking-wider">Homework</p>
-            <span className="text-[#C9A227] text-xs opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
+            <p className="text-[var(--text-3)] text-[10px] uppercase tracking-[0.18em]">Homework</p>
+            <span className="text-[var(--gold-text)] text-xs opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
           </div>
-          <p className="text-[var(--text)] font-serif text-3xl">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
+          <p className="text-[var(--text)] font-serif text-[30px] leading-none">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
           <p className="text-[var(--text-3)] text-xs mt-2">{tasksDone} of {taskTotal} tasks complete</p>
-          <div className="mt-3 h-1 bg-[var(--border-color)] rounded-full overflow-hidden">
+          <div className="mt-3 h-[3px] bg-[var(--surface-2)] rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full ${homeworkRate && homeworkRate >= 75 ? 'bg-green-500' : homeworkRate && homeworkRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-              style={{ width: `${homeworkRate ?? 0}%` }}
+              className="h-full rounded-full"
+              style={{ width: `${homeworkRate ?? 0}%`, background: homeworkRate && homeworkRate >= 75 ? '#22C55E' : 'var(--gold)' }}
             />
           </div>
         </Link>
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
-          <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-2">Current Quarter</p>
-          <p className="text-[var(--text)] font-serif text-3xl">Q{currentQuarter}</p>
+        <div className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-6">
+          <p className="text-[var(--text-3)] text-[10px] uppercase tracking-[0.18em] mb-2">Current Quarter</p>
+          <p className="text-[var(--text)] font-serif text-[30px] leading-none">Q{currentQuarter}</p>
           <p className="text-[var(--text-3)] text-xs mt-2">of your 12-month blueprint</p>
         </div>
       </div>
@@ -143,16 +151,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* Two columns: Blueprint + Latest Report */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Blueprint card */}
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[var(--text)] font-serif text-lg">Your Blueprint</h2>
+        <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-7">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-[var(--text)] font-serif text-[19px]">Your Blueprint</h2>
             {member.blueprint_sent_to_member_at && member.blueprint_share_token && (
-              <a
-                href={`/b/${member.blueprint_share_token}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#C9A227] text-xs hover:text-[#d4ac2d]"
-              >
+              <a href={`/b/${member.blueprint_share_token}`} target="_blank" rel="noopener noreferrer" className="text-[var(--gold-text)] text-[11.5px] hover:text-[var(--gold)]">
                 View full ↗
               </a>
             )}
@@ -160,21 +163,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {member.blueprint_sent_to_member_at ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
-                <p className="text-green-400 text-xs">Your blueprint is ready</p>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] flex-shrink-0" />
+                <p className="text-[#22C55E] text-xs">Your blueprint is ready</p>
               </div>
               <div>
-                <p className="text-[var(--text-3)] text-xs uppercase tracking-wider mb-1">Current Focus</p>
+                <p className="text-[var(--text-3)] text-[10px] uppercase tracking-[0.2em] mb-1">Current Focus</p>
                 <p className="text-[var(--text)] text-sm">Q{currentQuarter} · Months {((currentQuarter - 1) * 3) + 1}–{currentQuarter * 3}</p>
-                <p className="text-[var(--text-3)] text-xs mt-1">Week {Math.floor((new Date().getTime() - new Date(member.join_date).getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1} of your program</p>
+                <p className="text-[var(--text-3)] text-xs mt-1">Week {weeksIn + 1} of your program</p>
               </div>
               {member.blueprint_share_token && (
-                <a
-                  href={`/b/${member.blueprint_share_token}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block text-xs bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded hover:bg-[#C9A227]/15 transition-colors"
-                >
+                <a href={`/b/${member.blueprint_share_token}`} target="_blank" rel="noopener noreferrer" className="inline-block text-xs rounded-full bg-[var(--gold)] text-[#0B0B0B] font-medium px-4 py-2 hover:brightness-110 transition-all">
                   Open blueprint →
                 </a>
               )}
@@ -182,20 +180,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           ) : (
             <div>
               <p className="text-[var(--text-3)] text-sm mb-3">Your blueprint is being prepared by Gogo.</p>
-              <p className="text-[var(--text-4)] text-xs leading-relaxed">
-                It will appear here after your clarity call is reviewed.
-              </p>
+              <p className="text-[var(--text-4)] text-xs leading-relaxed">It will appear here after your clarity call is reviewed.</p>
             </div>
           )}
-        </div>
+        </section>
 
         {/* Latest report */}
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[var(--text)] font-serif text-lg">Latest Report</h2>
-            <Link href="/dashboard/reports" className="text-[#C9A227] text-xs hover:text-[#d4ac2d]">
-              All reports →
-            </Link>
+        <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-7">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-[var(--text)] font-serif text-[19px]">Latest Report</h2>
+            <Link href="/dashboard/reports" className="text-[var(--gold-text)] text-[11.5px] hover:text-[var(--gold)]">All reports →</Link>
           </div>
           {latestReport ? (
             <div>
@@ -203,20 +197,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <p className="text-[var(--text-3)] text-xs mt-1">
                 Sent {new Date(latestReport.sent_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
-              <Link
-                href={`/dashboard/reports/${latestReport.id}`}
-                className="inline-block mt-4 text-xs bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227] px-3 py-1.5 rounded hover:bg-[#C9A227]/15 transition-colors"
-              >
+              <Link href={`/dashboard/reports/${latestReport.id}`} className="inline-block mt-4 text-xs rounded-full bg-[var(--gold)] text-[#0B0B0B] font-medium px-4 py-2 hover:brightness-110 transition-all">
                 Read report →
               </Link>
             </div>
           ) : (
             <p className="text-[var(--text-3)] text-sm">Your first report will appear here after your first month.</p>
           )}
-        </div>
+        </section>
       </div>
 
-      {/* Tuesday Office Hours — Join button on Tuesdays, popup when off */}
+      {/* Tuesday Office Hours */}
       <OfficeHoursCard
         status={officeHours.status}
         isMeetingDay={officeHours.isMeetingDayET}
@@ -228,42 +219,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       />
 
       {/* GoGet'Em Community */}
-      <div className="mt-6 bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
+      <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-7">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h2 className="text-[var(--text)] font-serif text-lg">GoGet&apos;Em Community</h2>
-            <p className="text-[var(--text-3)] text-sm mt-0.5">
-              Your community is part of The Circle. Jump in and see what&apos;s coming up.
-            </p>
+            <h2 className="text-[var(--text)] font-serif text-[19px]">GoGet&apos;Em Community</h2>
+            <p className="text-[var(--text-3)] text-sm mt-0.5">Your community is part of The Circle. Jump in and see what&apos;s coming up.</p>
           </div>
           <div className="flex gap-2 flex-wrap flex-shrink-0">
-            <a
-              href="http://members.gogetemcommunity.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
-            >
+            <a href="http://members.gogetemcommunity.com/" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[var(--gold)] text-[#0B0B0B] font-medium text-sm px-5 py-2 hover:brightness-110 transition-all">
               Open Community ↗
             </a>
-            <a
-              href="https://gogetemwebinars.app.clientclub.net/communities/groups/gogetem-community/events"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors"
-            >
+            <a href="https://gogetemwebinars.app.clientclub.net/communities/groups/gogetem-community/events" target="_blank" rel="noopener noreferrer" className="rounded-full border border-[var(--border-2)] text-[var(--text-2)] text-sm px-5 py-2 hover:border-[var(--gold)] hover:text-[var(--text)] transition-colors">
               Community Calendar ↗
             </a>
-            <a
-              href="https://calendar.google.com/calendar/embed?src=c_0aee2350885ffb2ab13aa6e23fd6c6394348bda90c1f29615cd5e34de956186c%40group.calendar.google.com&ctz=Africa%2FLagos"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-4 py-2 rounded hover:border-[#C9A227] hover:text-[var(--text)] transition-colors"
-            >
+            <a href="https://calendar.google.com/calendar/embed?src=c_0aee2350885ffb2ab13aa6e23fd6c6394348bda90c1f29615cd5e34de956186c%40group.calendar.google.com&ctz=Africa%2FLagos" target="_blank" rel="noopener noreferrer" className="rounded-full border border-[var(--border-2)] text-[var(--text-2)] text-sm px-5 py-2 hover:border-[var(--gold)] hover:text-[var(--text)] transition-colors">
               GGTC Social Calendar ↗
             </a>
           </div>
         </div>
-      </div>
+      </section>
 
     </div>
   )

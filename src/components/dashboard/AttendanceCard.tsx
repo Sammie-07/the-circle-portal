@@ -81,13 +81,13 @@ export default function AttendanceCard({ logs, joinDate }: { logs: Log[]; joinDa
   const suffix = isAll ? '' : isSingle ? ' this month' : ' in range'
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-5">
+    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-6">
       <div className="flex items-center justify-between mb-2 gap-2">
-        <p className="text-[var(--text-3)] text-xs uppercase tracking-wider">Attendance</p>
+        <p className="text-[var(--text-3)] text-[10px] uppercase tracking-[0.18em]">Attendance</p>
         <span className="text-[var(--text-3)] text-[10px] truncate">{rangeLabel}</span>
       </div>
 
-      <p className="text-[var(--text)] font-serif text-3xl">{rate !== null ? `${rate}%` : '—'}</p>
+      <p className="text-[var(--text)] font-serif text-[30px] leading-none">{rate !== null ? `${rate}%` : '—'}</p>
       <p className="text-[var(--text-3)] text-xs mt-2">
         {attended} of {total} Tuesday call{total === 1 ? '' : 's'}
         {suffix}
