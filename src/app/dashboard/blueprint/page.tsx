@@ -24,26 +24,37 @@ export default async function BlueprintPage() {
     : null
 
   return (
-    <div className="p-4 sm:p-8 max-w-3xl">
-      <div className="mb-8">
-        <p className="text-[#C9A227] text-xs tracking-[0.25em] uppercase mb-2">Your 12-Month Plan</p>
-        <h1 className="text-[var(--text)] font-serif text-3xl">Business Blueprint</h1>
-        <p className="text-[var(--text-3)] text-sm mt-1">
-          Prepared by Gogo Bethke · {member.cohort ?? 'The Circle'} · Joined {joinDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-        </p>
+    <div className="p-4 sm:p-8 max-w-3xl mx-auto tc-rise">
+      <div className="flex items-end justify-between gap-8 mb-8">
+        <div>
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">12-month plan</p>
+          <h1 className="text-[var(--text)] font-serif text-[38px]">My Blueprint</h1>
+          <p className="text-[var(--text-2)] text-[13.5px] mt-2.5">
+            Prepared by Gogo Bethke · {member.cohort ?? 'The Circle'} · Joined {joinDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        {blueprintUrl && (
+          <a
+            href={blueprintUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-none rounded-full text-[12.5px] px-5 py-2.5"
+            style={{ border: '1px solid var(--gold-line)', background: 'var(--gold-soft)', color: 'var(--gold-text)' }}
+          >
+            Open shareable version ↗
+          </a>
+        )}
       </div>
-
-      <div className="h-px bg-gradient-to-r from-transparent via-[#C9A227]/40 to-transparent mb-8" />
 
       {blueprintUrl ? (
         /* Auto-opens blueprint in new tab on mount, shows button as fallback */
         <BlueprintOpener blueprintUrl={blueprintUrl} />
       ) : (
-        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded p-10 text-center">
-          <div className="w-14 h-14 rounded-full border border-[#C9A227]/30 bg-[#C9A227]/5 flex items-center justify-center mx-auto mb-5">
-            <span className="text-[#C9A227] text-2xl">◈</span>
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-10 text-center">
+          <div className="w-14 h-14 rounded-full border border-[var(--gold-line)] bg-[var(--gold-soft)] flex items-center justify-center mx-auto mb-5">
+            <span className="text-[var(--gold)] text-2xl">◈</span>
           </div>
-          <h2 className="text-[var(--text)] font-serif text-xl mb-3">Your Blueprint Is Being Prepared</h2>
+          <h2 className="text-[var(--text)] font-serif text-xl mb-3">Your blueprint is being prepared</h2>
           <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">
             Gogo is reviewing your clarity call and writing your personalized 12-month business plan.
             It will appear here once it&apos;s ready.
@@ -52,16 +63,16 @@ export default async function BlueprintPage() {
       )}
 
       <div className="mt-10 text-center">
-        <div className="h-px bg-gradient-to-r from-transparent via-[#1A1A1A] to-transparent mb-6" />
-        <p className="text-[#C9A227] font-serif italic text-sm">
-          &ldquo;The quickest way to reach your goals isn&apos;t through trial and error —<br />
+        <div className="h-px bg-[var(--border-color)] mb-6" />
+        <p className="text-[var(--gold-text)] font-serif italic text-sm">
+          &ldquo;The quickest way to reach your goals isn&apos;t through trial and error,<br />
           it&apos;s by learning directly from someone who&apos;s already done it.&rdquo;
         </p>
         <p className="text-[var(--text-3)] text-xs mt-2">— Gogo Bethke</p>
       </div>
 
       <div className="mt-6">
-        <Link href="/dashboard" className="text-xs text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+        <Link href="/dashboard" className="text-xs text-[var(--text-3)] hover:text-[var(--gold)] transition-colors">
           ← Back to dashboard
         </Link>
       </div>
