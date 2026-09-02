@@ -38,16 +38,27 @@ const memberNav = [
   { href: '/dashboard/profile', label: 'My Profile', icon: '◑' },
 ]
 
+// The Circle network mark — a ring with four connection nodes.
+function CircleMark({ size = 30 }: { size?: number }) {
+  const s = { width: size, height: size }
+  return (
+    <div className="rounded-full flex-none relative" style={{ ...s, border: '1px solid var(--red)' }}>
+      <span className="absolute rounded-full" style={{ width: 4, height: 4, background: 'var(--red)', top: 3, left: '50%', marginLeft: -2 }} />
+      <span className="absolute rounded-full" style={{ width: 4, height: 4, background: 'var(--red)', bottom: 3, left: '50%', marginLeft: -2 }} />
+      <span className="absolute rounded-full" style={{ width: 4, height: 4, background: 'var(--red)', left: 3, top: '50%', marginTop: -2 }} />
+      <span className="absolute rounded-full" style={{ width: 4, height: 4, background: 'var(--red)', right: 3, top: '50%', marginTop: -2 }} />
+    </div>
+  )
+}
+
 function Logo({ subtitle }: { subtitle: string }) {
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-1">
-        <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex items-center justify-center flex-shrink-0">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
-        </div>
-        <span className="text-[var(--text)] font-serif text-base leading-none">The Circle</span>
+    <div className="flex items-center gap-3">
+      <CircleMark size={30} />
+      <div>
+        <p className="text-[var(--text)] font-serif text-[17px] leading-none">The Circle</p>
+        <p className="text-[var(--text-3)] text-[8.5px] tracking-[0.26em] uppercase mt-1">{subtitle}</p>
       </div>
-      <p className="text-[var(--text-3)] text-[10px] tracking-widest uppercase pl-10">{subtitle}</p>
     </div>
   )
 }
@@ -61,6 +72,8 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
 
   const nav = role === 'admin' ? adminNav : memberNav
   const subtitle = role === 'admin' ? 'Admin' : 'Member Portal'
+  const displayName = memberName ?? 'The Circle'
+  const initials = displayName.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase() || 'TC'
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -68,7 +81,7 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
   }
 
   const navLinks = (
-    <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <nav className="flex-1 px-2.5 py-4 space-y-0.5 overflow-y-auto">
       {nav.map((item) => {
         const active = pathname === item.href || (item.href !== '/admin' && item.href !== '/dashboard' && pathname.startsWith(item.href))
         return (
@@ -76,13 +89,13 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
             key={item.href}
             href={item.href}
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-all ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] transition-colors ${
               active
-                ? 'bg-[#C9A227]/10 text-[#C9A227] border-l-2 border-[#C9A227]'
+                ? 'bg-[var(--gold-soft)] text-[var(--gold-text)]'
                 : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface)]'
             }`}
           >
-            <span className={`text-xs ${active ? 'text-[#C9A227]' : 'text-[var(--text-3)]'}`}>{item.icon}</span>
+            <span className={`text-xs ${active ? 'text-[var(--gold)]' : 'text-[var(--text-3)]'}`}>{item.icon}</span>
             {item.label}
           </Link>
         )
@@ -91,34 +104,40 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
   )
 
   const userSection = (
-    <div className="px-4 py-4 border-t border-[var(--border-color)]">
-      {memberName && (
-        <p className="text-[var(--text-2)] text-xs mb-3 truncate">{memberName}</p>
-      )}
-      <button
-        onClick={toggle}
-        className="w-full text-left text-xs text-[var(--text-3)] hover:text-[var(--text-2)] transition-colors mb-2"
-        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {theme === 'dark' ? '☀ Light mode' : '☾ Dark mode'}
-      </button>
-      <button
-        onClick={handleSignOut}
-        className="w-full text-left text-xs text-[var(--text-3)] hover:text-[#CC1F1F] transition-colors"
-      >
-        Sign out →
-      </button>
+    <div className="p-3">
+      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-3.5 flex flex-col gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-none" style={{ background: '#F4A7B9', color: '#5A2233' }}>
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[var(--text)] text-[12.5px] truncate">{displayName}</p>
+            <p className="text-[var(--text-3)] text-[10px]">{subtitle}</p>
+          </div>
+        </div>
+        <button
+          onClick={toggle}
+          className="text-center py-1.5 rounded-md bg-[var(--surface-2)] text-[10.5px] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀ Light mode' : '☾ Dark mode'}
+        </button>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[var(--border-2)] text-[11.5px] font-medium text-[var(--text-2)] hover:border-[var(--red)] hover:text-[var(--red-text)] transition-colors"
+        >
+          Sign out →
+        </button>
+      </div>
     </div>
   )
 
   return (
     <>
-      {/* Mobile top bar (in normal flow, stacked above main content) */}
+      {/* Mobile top bar */}
       <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 bg-[var(--sidebar-bg)] border-b border-[var(--border-color)]">
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-full border border-[#CC1F1F] flex items-center justify-center flex-shrink-0">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
-          </div>
+          <CircleMark size={24} />
           <span className="text-[var(--text)] font-serif text-base">The Circle</span>
         </div>
         <button
@@ -139,7 +158,7 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-64 max-w-[82%] bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col shadow-2xl">
-            <div className="px-6 py-5 border-b border-[var(--border-color)] flex items-start justify-between">
+            <div className="px-5 py-5 border-b border-[var(--border-color)] flex items-start justify-between">
               <Logo subtitle={subtitle} />
               <button
                 onClick={() => setMobileOpen(false)}
@@ -155,10 +174,9 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
         </div>
       )}
 
-      {/* Desktop sidebar — pinned to the viewport so the footer (user / theme /
-          sign out) stays in place and doesn't drop to the bottom of long pages. */}
-      <aside className="hidden md:flex w-56 h-screen sticky top-0 self-start bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex-col">
-        <div className="px-6 py-7 border-b border-[var(--border-color)]">
+      {/* Desktop sidebar — pinned to the viewport so the footer stays in place. */}
+      <aside className="hidden md:flex w-[250px] h-screen sticky top-0 self-start bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex-col">
+        <div className="px-5 py-6">
           <Logo subtitle={subtitle} />
         </div>
         {navLinks}
