@@ -107,42 +107,44 @@ export default function MyNotes({ initialEntries }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
       {/* List */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase">All Notes</p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase">
+            All Notes{entries.length > 0 ? ` · ${entries.length}` : ''}
+          </p>
           <button
             onClick={createNote}
             disabled={busy}
-            className="text-xs text-[var(--text-2)] border border-[var(--border-color)] rounded-full px-3 py-1 hover:border-[var(--gold-line)] hover:text-[var(--text)] transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 bg-[var(--gold)] text-[#0B0B0B] text-[12px] font-medium rounded-full px-3.5 py-1.5 hover:brightness-110 transition-all disabled:opacity-50"
           >
-            ＋ New note
+            <span className="text-[13px] leading-none">＋</span> New note
           </button>
         </div>
 
         {entries.length === 0 ? (
-          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-5 text-center">
-            <p className="text-[var(--text-3)] text-sm">No notes yet — create your first.</p>
+          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-6 text-center">
+            <p className="text-[var(--text-3)] text-sm">No notes yet — start your first.</p>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2.5">
             {entries.map((entry) => {
               const active = entry.id === selectedId
               return (
                 <li key={entry.id}>
                   <button
                     onClick={() => openEntry(entry)}
-                    className="w-full text-left border rounded-[14px] px-3.5 py-2.5 transition-colors"
+                    className="w-full text-left border rounded-[14px] px-4 py-3 transition-colors"
                     style={
                       active
-                        ? { background: 'var(--gold-soft)', borderColor: 'var(--gold-line)' }
+                        ? { background: 'var(--gold-soft)', borderColor: 'var(--gold-line)', boxShadow: 'inset 2px 0 0 var(--gold)' }
                         : { background: 'var(--surface)', borderColor: 'var(--border-color)' }
                     }
                   >
-                    <p className="text-[var(--text)] text-sm font-medium truncate">{entry.title}</p>
-                    <p className="text-[var(--text-3)] text-xs mt-0.5 truncate">{preview(entry.content)}</p>
-                    <p className="text-[var(--text-4)] text-[10px] mt-1">updated {fmtDate(entry.updated_at)}</p>
+                    <p className="text-[var(--text)] text-[13.5px] font-medium truncate">{entry.title || 'Untitled note'}</p>
+                    <p className="text-[var(--text-3)] text-xs mt-1 truncate">{preview(entry.content)}</p>
+                    <p className="text-[var(--text-4)] text-[10px] tracking-[0.02em] mt-1.5 uppercase">Updated {fmtDate(entry.updated_at)}</p>
                   </button>
                 </li>
               )
@@ -155,35 +157,40 @@ export default function MyNotes({ initialEntries }: Props) {
       <div>
         {selected ? (
           <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] overflow-hidden focus-within:border-[var(--gold-line)] transition-colors">
+            <div className="px-6 pt-5 pb-0 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ background: 'var(--gold)' }} />
+              <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--text-4)]">Private to you · updated {fmtDate(selected.updated_at)}</p>
+            </div>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={save}
               placeholder="Untitled note"
-              className="w-full bg-transparent text-[var(--text)] font-serif text-xl px-4 pt-4 pb-2 focus:outline-none placeholder-[var(--text-4)]"
+              className="w-full bg-transparent text-[var(--text)] font-serif text-[26px] leading-tight px-6 pt-2.5 pb-3.5 focus:outline-none placeholder-[var(--text-4)]"
             />
-            <div className="px-4">
-              <div className="h-px bg-[var(--border-color)]" />
+            <div className="px-6">
+              <div className="h-px" style={{ background: 'var(--gold-line)' }} />
             </div>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onBlur={save}
-              placeholder="Write anything here — ideas, wins, reminders. Only you can see this."
-              rows={18}
-              className="w-full bg-transparent text-[var(--text-2)] placeholder-[var(--text-4)] text-sm leading-relaxed p-4 resize-none focus:outline-none focus:text-[var(--text)] transition-colors"
+              placeholder="Write anything here — ideas, wins, reminders, scripts you want to remember. Only you can see this."
+              rows={16}
+              className="w-full bg-transparent text-[var(--text-2)] placeholder-[var(--text-4)] text-[14.5px] leading-[1.75] px-6 py-5 resize-none focus:outline-none focus:text-[var(--text)] transition-colors"
             />
-            <div className="px-4 py-2 border-t border-[var(--border-color)] flex items-center justify-between gap-3">
+            <div className="px-6 py-3.5 border-t border-[var(--border-color)] flex items-center justify-between gap-3" style={{ background: 'var(--surface-2)' }}>
               <div className="flex items-center gap-3">
                 <button
                   onClick={save}
                   disabled={busy}
-                  className="bg-[var(--gold)] text-black text-xs font-medium px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className="bg-[var(--gold)] text-[#0B0B0B] text-xs font-medium px-4 py-1.5 rounded-full hover:brightness-110 transition-all disabled:opacity-50"
                 >
                   Save
                 </button>
-                {status === 'saving' && <span className="text-[var(--text-3)] text-[10px]">Saving…</span>}
-                {status === 'saved' && <span className="text-green-500 text-[10px]">Saved ✓</span>}
+                {status === 'saving' && <span className="text-[var(--text-3)] text-[11px]">Saving…</span>}
+                {status === 'saved' && <span className="text-[11px]" style={{ color: 'var(--gold-text)' }}>Saved ✓</span>}
+                {status === 'idle' && <span className="text-[var(--text-4)] text-[11px]">Autosaves when you click away</span>}
               </div>
               <button
                 onClick={remove}
@@ -195,17 +202,24 @@ export default function MyNotes({ initialEntries }: Props) {
             </div>
           </div>
         ) : (
-          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-10 text-center h-full flex flex-col items-center justify-center">
+          <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-[18px] p-12 text-center h-full flex flex-col items-center justify-center min-h-[320px]">
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
               style={{ border: '1px solid var(--gold-line)', background: 'var(--gold-soft)' }}
             >
               <span className="text-[var(--gold)] text-2xl">◈</span>
             </div>
-            <h2 className="text-[var(--text)] font-serif text-xl mb-3">No notes yet</h2>
+            <h2 className="text-[var(--text)] font-serif text-xl mb-3">Your private workspace</h2>
             <p className="text-[var(--text-3)] text-sm leading-relaxed max-w-sm mx-auto">
-              Create your first note with the “＋ New note” button.
+              Ideas, wins, reminders, scripts — anything on your mind. Only you can see what you write here.
             </p>
+            <button
+              onClick={createNote}
+              disabled={busy}
+              className="mt-6 inline-flex items-center gap-1.5 bg-[var(--gold)] text-[#0B0B0B] text-[12.5px] font-medium rounded-full px-5 py-2.5 hover:brightness-110 transition-all disabled:opacity-50"
+            >
+              <span className="text-[13px] leading-none">＋</span> Create your first note
+            </button>
           </div>
         )}
       </div>
