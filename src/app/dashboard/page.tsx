@@ -60,14 +60,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const attTotal = logs.length
   const attended = logs.filter((l: { showed_up: boolean }) => l.showed_up).length
   const attendanceRate = attTotal > 0 ? Math.round((attended / attTotal) * 100) : null
-  // Blueprint quarter segments (Q1–Q4) for the progress bar.
-  const quarterSegments = [1, 2, 3, 4].map((q) => (q < currentQuarter ? 'done' : q === currentQuarter ? 'current' : 'todo'))
 
   // Determine current quarter from join date
   const joinDate = new Date(member.join_date)
   const now = new Date()
   const weeksIn = Math.floor((now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 7))
   const currentQuarter = Math.min(Math.ceil(weeksIn / 13) || 1, 4)
+  // Blueprint quarter segments (Q1–Q4) for the progress bar.
+  const quarterSegments = [1, 2, 3, 4].map((q) => (q < currentQuarter ? 'done' : q === currentQuarter ? 'current' : 'todo'))
 
   let officeHours = await getOfficeHoursStatus()
   // Opt-in preview overrides for testing (not the real day/state):
