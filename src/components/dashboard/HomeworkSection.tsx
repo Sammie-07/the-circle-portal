@@ -149,7 +149,7 @@ export default function HomeworkSection({ initialItems }: Props) {
               {homework.filter(i => i.completed).length}/{homework.length} done
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] overflow-hidden">
             {homework.map(item => (
               <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
                 onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
@@ -170,7 +170,7 @@ export default function HomeworkSection({ initialItems }: Props) {
               {tasks.filter(i => i.completed).length}/{tasks.length} complete
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] overflow-hidden">
             {tasks.map(item => (
               <CheckItem key={item.id} item={item} onToggle={handleToggle} toggling={toggling}
                 onSaveNote={handleSaveNote} followUps={followUpsBySource.get(item.id) ?? []}
@@ -230,11 +230,9 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, onCreateFollowUp, fol
   return (
     <div
       id={`hw-${item.id}`}
-      className={`flex items-start gap-3 p-4 rounded border transition-all ${
-        highlighted ? 'border-[#C9A227] ring-2 ring-[#C9A227]/40' :
-        item.completed
-          ? 'bg-[var(--surface-2)] border-[var(--border-color)] opacity-60'
-          : 'bg-[var(--surface)] border-[var(--border-color)]'
+      className={`flex items-start gap-3 px-6 py-[18px] border-b border-[var(--border-color)] last:border-b-0 transition-colors ${
+        highlighted ? 'bg-[var(--gold-soft)]' :
+        item.completed ? 'opacity-55' : ''
       }`}
     >
       {/* Circle checkbox — its own toggle control */}
