@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 
 interface Member {
   id: string
@@ -29,6 +29,20 @@ interface Props {
 
 export default function BulkReportPanel({ members }: Props) {
   const [periodType, setPeriodType] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly')
+  const [reportMonth, setReportMonth] = useState<string>(() => {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  })
+  const monthOptions = useMemo(() => {
+    const now = new Date()
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      return {
+        value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`,
+        label: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      }
+    })
+  }, [])
   const [rows, setRows] = useState<MemberRow[]>(() =>
     members.map(m => ({
       member: m,
@@ -154,6 +168,7 @@ export default function BulkReportPanel({ members }: Props) {
         body: JSON.stringify({
           member_id: memberId,
           period_type: periodType,
+          ...(periodType === 'monthly' ? { period_start: reportMonth } : {}),
           ...(feedback ? { feedback } : {}),
           ...(reportId ? { report_id: reportId } : {}),
         }),
@@ -216,7 +231,11 @@ export default function BulkReportPanel({ members }: Props) {
         const res = await fetch('/api/reports/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ member_id: row.member.id, period_type: periodType }),
+          body: JSON.stringify({
+            member_id: row.member.id,
+            period_type: periodType,
+            ...(periodType === 'monthly' ? { period_start: reportMonth } : {}),
+          }),
           signal: controller.signal,
         })
 
@@ -262,7 +281,7 @@ export default function BulkReportPanel({ members }: Props) {
     setMemberProgress(0)
     setCurrentMemberName('')
     setBulkRunning(false)
-  }, [rows, periodType])
+  }, [rows, periodType, reportMonth])
 
   // ─── Send all checked + done ───────────────────────────────────────────────
 
@@ -377,6 +396,23 @@ export default function BulkReportPanel({ members }: Props) {
             </button>
           ))}
         </div>
+
+        {periodType === 'monthly' && (
+          <div className="mt-4">
+            <label className="block text-[#555] text-[10px] uppercase tracking-wider mb-1.5">Report month</label>
+            <select
+              value={reportMonth}
+              onChange={(e) => { if (!bulkRunning) { setReportMonth(e.target.value); resetGenerated() } }}
+              disabled={bulkRunning}
+              className="w-full max-w-xs bg-[#0D0D0D] border border-[#2A2A2A] text-white text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]/50 disabled:opacity-50"
+            >
+              {monthOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <p className="text-[#555] text-[11px] mt-1.5">Each report covers this whole month. Defaults to last month.</p>
+          </div>
+        )}
       </div>
 
       {/* ─── Step 2: Select members + generate ────────────────────────────── */}

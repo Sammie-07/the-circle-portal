@@ -91,21 +91,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 })
     }
 
-    let body: { member_id?: string; period_type?: string; feedback?: string; report_id?: string }
+    let body: { member_id?: string; period_type?: string; feedback?: string; report_id?: string; period_start?: string }
     try {
       body = await request.json()
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { member_id, period_type, feedback, report_id } = body
+    const { member_id, period_type, feedback, report_id, period_start } = body
     if (!member_id || !period_type) {
       return NextResponse.json({ error: 'member_id and period_type required' }, { status: 400 })
     }
 
-    const weeks = getWeeksForPeriod(period_type)
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - weeks * 7)
+    // Reporting window [windowStartIso, windowEndIso). A monthly report with an
+    // explicit period_start (YYYY-MM-01) covers that WHOLE calendar month, so the
+    // data (attendance, homework, questions) matches the month on the label.
+    // Otherwise fall back to the old trailing-weeks window (quarterly/annual).
+    const pad = (n: number) => String(n).padStart(2, '0')
+    let windowStartIso: string
+    let windowEndIso: string // exclusive
+    let periodLabel: string
+    let asOf: Date // for "week X of program" — end of the reported period
+
+    if (period_type === 'monthly' && period_start) {
+      const anchor = new Date(period_start + 'T12:00:00')
+      const y = anchor.getFullYear()
+      const m = anchor.getMonth()
+      const end = new Date(y, m + 1, 1)
+      windowStartIso = `${y}-${pad(m + 1)}-01`
+      windowEndIso = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-01`
+      periodLabel = anchor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      asOf = new Date(y, m + 1, 0) // last day of the reported month
+    } else {
+      const weeks = getWeeksForPeriod(period_type)
+      const start = new Date()
+      start.setDate(start.getDate() - weeks * 7)
+      const end = new Date()
+      end.setDate(end.getDate() + 1) // include today
+      windowStartIso = start.toISOString().split('T')[0]
+      windowEndIso = end.toISOString().split('T')[0]
+      periodLabel = getPeriodLabel(period_type)
+      asOf = new Date()
+    }
 
     const { data: member } = await supabase.from('members').select('*').eq('id', member_id).single()
     if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
@@ -114,7 +141,8 @@ export async function POST(request: Request) {
       .from('weekly_logs')
       .select('*')
       .eq('member_id', member_id)
-      .gte('week_of', cutoff.toISOString().split('T')[0])
+      .gte('week_of', windowStartIso)
+      .lt('week_of', windowEndIso)
       .order('week_of', { ascending: false })
 
     const allLogs = logs ?? []
@@ -124,7 +152,7 @@ export async function POST(request: Request) {
     const attendanceRate = totalWeeks > 0 ? Math.round((attended / totalWeeks) * 100) : 0
 
     const joinDate = new Date(member.join_date)
-    const weeksIn = Math.floor((new Date().getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 7))
+    const weeksIn = Math.max(0, Math.floor((asOf.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 7)))
     const currentQuarter = Math.min(Math.ceil(weeksIn / 13) || 1, 4)
 
     const blueprintText = member.blueprint_html ? stripHtml(member.blueprint_html) : null
@@ -148,7 +176,11 @@ export async function POST(request: Request) {
       .eq('member_id', member_id)
 
     const hw = homeworkRows ?? []
-    const inWindow = (ts: string | null) => Boolean(ts && new Date(ts) >= cutoff)
+    const inWindow = (ts: string | null) => {
+      if (!ts) return false
+      const day = ts.slice(0, 10)
+      return day >= windowStartIso && day < windowEndIso
+    }
 
     // Blueprint items are the north star and the ONLY thing scored for blueprint %.
     const blueprintHw = hw.filter((h) => h.source === 'blueprint')
@@ -183,8 +215,9 @@ export async function POST(request: Request) {
     const allCompletedList = hw.filter((h) => h.completed).map(fmtTask).join('\n') || '(none yet)'
 
     // Quarters are per-member (their own journey from join_date), so quarterly
-    // reports are labelled by program quarter, not the calendar quarter.
-    const periodLabel = period_type === 'quarterly' ? `Q${currentQuarter} Review` : getPeriodLabel(period_type)
+    // reports are labelled by program quarter, not the calendar quarter. Monthly
+    // and annual labels are already set from the window above.
+    if (period_type === 'quarterly') periodLabel = `Q${currentQuarter} Review`
 
     const brainQuery = `Circle coaching ${period_type} progress accountability ${currentQuarterData?.focus ?? 'results business growth'}`
     const brainContext = await fetchBrainContext(brainQuery)

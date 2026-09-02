@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { toast } from '@/lib/toast'
 
 interface Report {
@@ -22,6 +22,22 @@ interface Props {
 export default function MemberReportPanel({ memberId, memberName, memberEmail, reports: initialReports }: Props) {
   const [reports, setReports] = useState<Report[]>(initialReports)
   const [periodType, setPeriodType] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly')
+  // Monthly reports cover a full calendar month. Default to LAST month (the most
+  // recent completed month), so generating in early September reports on August.
+  const [reportMonth, setReportMonth] = useState<string>(() => {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  })
+  const monthOptions = useMemo(() => {
+    const now = new Date()
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      return {
+        value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`,
+        label: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      }
+    })
+  }, [])
 
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -107,6 +123,7 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
         body: JSON.stringify({
           member_id: memberId,
           period_type: periodType,
+          ...(periodType === 'monthly' ? { period_start: reportMonth } : {}),
           ...(feedback ? { feedback } : {}),
           ...(reportIdToUpdate ? { report_id: reportIdToUpdate } : {}),
         }),
@@ -220,6 +237,23 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Month selector — a monthly report covers that whole calendar month */}
+        {!generating && periodType === 'monthly' && (
+          <div className="mb-4">
+            <label className="block text-[var(--text-3)] text-[10px] uppercase tracking-wider mb-1.5">Report month</label>
+            <select
+              value={reportMonth}
+              onChange={(e) => setReportMonth(e.target.value)}
+              className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text)] text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]/40"
+            >
+              {monthOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <p className="text-[var(--text-4)] text-[11px] mt-1.5">Attendance, homework, and questions are pulled from this month only. Defaults to last month.</p>
           </div>
         )}
 
