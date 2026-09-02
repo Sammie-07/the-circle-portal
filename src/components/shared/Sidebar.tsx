@@ -97,11 +97,15 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
             key={item.href}
             href={item.href}
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] transition-colors ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] transition-colors ${
               active
-                ? 'bg-[var(--gold-soft)] text-[var(--gold-text)]'
-                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface)]'
+                ? 'text-[var(--gold-text)] border border-[var(--gold-line)]'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface)] border border-transparent'
             }`}
+            style={active ? {
+              background: 'linear-gradient(90deg, var(--gold-soft), rgba(0,0,0,0))',
+              boxShadow: '0 0 22px rgba(201,162,39,0.10), inset 3px 0 0 var(--gold)',
+            } : undefined}
           >
             <Icon size={16} strokeWidth={2} className={`flex-none ${active ? 'text-[var(--gold)]' : 'text-[var(--text-3)]'}`} />
             {item.label}

@@ -204,6 +204,12 @@ input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 
+/* New design system motion */
+@keyframes tcrise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes tcpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.tc-rise { animation: tcrise .28s ease both; }
+.tc-pulse { animation: tcpulse 2s ease-in-out infinite; }
+
 /* Survey completion confetti */
 @keyframes confetti-fall {
   0% { transform: translateY(-24px) rotate(0deg); opacity: 1; }

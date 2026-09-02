@@ -27,6 +27,22 @@ function fmtDay(dateISO: string | null) {
   return new Date(dateISO + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
+const heroClass = 'relative overflow-hidden rounded-[18px] border border-[var(--border-2)] px-[34px] py-8'
+const heroGlow = { background: 'radial-gradient(120% 140% at 100% 0%, var(--gold-soft) 0%, rgba(0,0,0,0) 62%), var(--surface)' } as React.CSSProperties
+const joinBtn = 'inline-flex items-center rounded-full bg-[var(--gold)] text-[#0B0B0B] text-[13px] font-medium px-[22px] py-[11px] hover:brightness-110 transition-all'
+
+function LiveTag({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-[18px]">
+      <span className="w-1.5 h-1.5 rounded-full tc-pulse" style={{ background: 'var(--red)' }} />
+      <span className="text-[10px] tracking-[0.24em] uppercase" style={{ color: 'var(--red-text)' }}>{text}</span>
+    </div>
+  )
+}
+function Heading({ children }: { children: React.ReactNode }) {
+  return <h2 className="font-serif text-[32px] leading-[1.15] text-[var(--text)] mb-2.5" style={{ letterSpacing: '-0.01em' }}>{children}</h2>
+}
+
 export default function OfficeHoursCard({ status, isMeetingDay, note, zoomLink, tuesdayISO, rescheduledDate, rescheduledTime }: Props) {
   // Announcement popup for a changed week (no meeting OR rescheduled) — shown once
   // per week. Decided after mount to avoid an SSR hydration mismatch.
@@ -51,15 +67,13 @@ export default function OfficeHoursCard({ status, isMeetingDay, note, zoomLink, 
   if (status === 'no_meeting') {
     return (
       <>
-        <div className="mt-6 border border-[var(--border-color)] bg-[var(--surface)] rounded p-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[var(--text-2)] text-sm font-medium">No Office Hours this week</p>
-            <p className="text-[var(--text-3)] text-xs mt-0.5">
-              {note?.trim() ? note : 'There is no Tuesday call this week. See you next Tuesday at 12 noon ET.'}
-            </p>
-          </div>
-          <span className="text-[var(--text-3)] text-2xl flex-shrink-0">⊘</span>
-        </div>
+        <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] px-[34px] py-8">
+          <p className="text-[10px] tracking-[0.24em] uppercase text-[var(--text-3)] mb-[18px]">Office Hours</p>
+          <Heading>No call this week</Heading>
+          <p className="text-sm text-[var(--text-2)] max-w-[44ch]" style={{ textWrap: 'pretty' }}>
+            {note?.trim() ? note : 'There is no Tuesday Office Hours this week. See you next Tuesday at 12 noon ET.'}
+          </p>
+        </section>
         {showPopup && (
           <Popup icon="📣" title="No Office Hours this week" onDismiss={dismiss}>
             {note?.trim() ? note : 'Heads up, there is no Tuesday Office Hours call this week. We will be back next Tuesday at 12 noon ET.'}
@@ -74,25 +88,22 @@ export default function OfficeHoursCard({ status, isMeetingDay, note, zoomLink, 
     return (
       <>
         {isMeetingDay ? (
-          <div className="mt-6 border border-[#C9A227]/30 bg-[#C9A227]/5 rounded p-4 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-[#C9A227] text-sm font-medium">Office Hours are live today — {fmt12h(rescheduledTime)} ET (rescheduled)</p>
-              <p className="text-[var(--text-2)] text-xs mt-0.5">{note?.trim() ? note : 'The call moved to today this week. Show up. Ask questions.'}</p>
-            </div>
-            <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="bg-[#C9A227] text-[#090909] font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors flex-shrink-0">
-              Join the Zoom →
-            </a>
-          </div>
+          <section className={heroClass} style={heroGlow}>
+            <LiveTag text="Live today" />
+            <Heading>Office Hours (rescheduled)</Heading>
+            <p className="text-sm text-[var(--text-2)] max-w-[44ch] mb-[26px]" style={{ textWrap: 'pretty' }}>
+              The call moved to today, {fmt12h(rescheduledTime)} ET. {note?.trim() ? note : 'Show up. Ask questions. Do the work.'}
+            </p>
+            <a href={zoomLink} target="_blank" rel="noopener noreferrer" className={joinBtn}>Join the Zoom →</a>
+          </section>
         ) : (
-          <div className="mt-6 border border-[#C9A227]/30 bg-[#C9A227]/5 rounded p-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[#C9A227] text-sm font-medium">Office Hours moved this week</p>
-              <p className="text-[var(--text-2)] text-xs mt-0.5">
-                This week&apos;s call is on <strong className="text-[var(--text)]">{movedWhen}</strong>{note?.trim() ? ` — ${note}` : '.'} The join button appears here that day.
-              </p>
-            </div>
-            <span className="text-[#C9A227] text-2xl flex-shrink-0">↻</span>
-          </div>
+          <section className={heroClass} style={heroGlow}>
+            <p className="text-[10px] tracking-[0.24em] uppercase text-[var(--gold-text)] mb-[18px]">Rescheduled this week</p>
+            <Heading>Office Hours moved this week</Heading>
+            <p className="text-sm text-[var(--text-2)] max-w-[48ch]" style={{ textWrap: 'pretty' }}>
+              This week&apos;s call is on <strong className="text-[var(--text)] font-medium">{movedWhen}</strong>{note?.trim() ? ` — ${note}` : '.'} The join button appears here that day.
+            </p>
+          </section>
         )}
         {showPopup && (
           <Popup icon="↻" title="Office Hours moved this week" onDismiss={dismiss}>
@@ -106,27 +117,26 @@ export default function OfficeHoursCard({ status, isMeetingDay, note, zoomLink, 
   // ── Meeting as usual — Tuesday shows the Join button ──────────────────
   if (isMeetingDay) {
     return (
-      <div className="mt-6 border border-[#C9A227]/30 bg-[#C9A227]/5 rounded p-4 flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-[#C9A227] text-sm font-medium">Office Hours are live today — 12 noon ET</p>
-          <p className="text-[var(--text-2)] text-xs mt-0.5">Show up. Ask questions. Do the work.</p>
-        </div>
-        <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="bg-[#C9A227] text-[#090909] font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors flex-shrink-0">
-          Join the Zoom →
-        </a>
-      </div>
+      <section className={heroClass} style={heroGlow}>
+        <LiveTag text="Live now" />
+        <Heading>Tuesday Office Hours</Heading>
+        <p className="text-sm text-[var(--text-2)] max-w-[44ch] mb-[26px]" style={{ textWrap: 'pretty' }}>
+          It&apos;s live today at 12 noon ET with Gogo. Show up. Ask questions. Do the work.
+        </p>
+        <a href={zoomLink} target="_blank" rel="noopener noreferrer" className={joinBtn}>Join the Zoom →</a>
+      </section>
     )
   }
 
   // ── Normal week, not Tuesday yet ──────────────────────────────────────
   return (
-    <div className="mt-6 border border-[#C9A227]/20 bg-[#C9A227]/5 rounded p-4 flex items-center justify-between gap-4">
-      <div>
-        <p className="text-[#C9A227] text-sm font-medium">Tuesday Office Hours — 12 noon ET</p>
-        <p className="text-[var(--text-2)] text-xs mt-0.5">Show up. Ask questions. Do the work. The join button appears here Tuesday.</p>
-      </div>
-      <span className="text-[#C9A227] text-2xl flex-shrink-0">◈</span>
-    </div>
+    <section className={heroClass} style={heroGlow}>
+      <p className="text-[10px] tracking-[0.24em] uppercase text-[var(--gold-text)] mb-[18px]">This Tuesday · 12 noon ET</p>
+      <Heading>Tuesday Office Hours</Heading>
+      <p className="text-sm text-[var(--text-2)] max-w-[44ch]" style={{ textWrap: 'pretty' }}>
+        12 noon ET with Gogo. Show up, ask questions, do the work. The join button appears here on Tuesday.
+      </p>
+    </section>
   )
 }
 

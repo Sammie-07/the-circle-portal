@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import AttendanceCard from '@/components/dashboard/AttendanceCard'
 import OfficeHoursCard from '@/components/dashboard/OfficeHoursCard'
 import { resolvePortalContext } from '@/lib/portalContext'
 import { getOfficeHoursStatus } from '@/lib/office-hours'
@@ -57,6 +56,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const latestReport = reports[0] ?? null
   const initials = (member.name ?? 'The Circle').split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || 'TC'
 
+  // All-time attendance for the welcome hero stat.
+  const attTotal = logs.length
+  const attended = logs.filter((l: { showed_up: boolean }) => l.showed_up).length
+  const attendanceRate = attTotal > 0 ? Math.round((attended / attTotal) * 100) : null
+  // Blueprint quarter segments (Q1–Q4) for the progress bar.
+  const quarterSegments = [1, 2, 3, 4].map((q) => (q < currentQuarter ? 'done' : q === currentQuarter ? 'current' : 'todo'))
+
   // Determine current quarter from join date
   const joinDate = new Date(member.join_date)
   const now = new Date()
@@ -80,27 +86,54 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl mx-auto flex flex-col gap-6">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto flex flex-col gap-[22px] tc-rise">
 
-      {/* Welcome hero */}
-      <section className="flex flex-wrap items-center justify-between gap-6 rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] px-8 py-8">
-        <div className="min-w-[240px]">
-          <p className="text-[10px] tracking-[0.24em] uppercase text-[var(--text-3)] mb-1.5">Welcome back</p>
-          <h1 className="font-serif text-[38px] leading-none text-[var(--text)]">{member.name}</h1>
+      {/* Welcome hero — attendance + homework + avatar folded in */}
+      <section className="flex flex-wrap items-center justify-between gap-x-12 gap-y-6 rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] px-[34px] py-[30px]">
+        <div className="flex-1 min-w-[260px]">
+          <p className="text-[10px] tracking-[0.24em] uppercase text-[var(--text-3)] mb-1">Welcome back</p>
+          <p className="font-serif text-[38px] leading-[1.1] text-[var(--text)]">{member.name}</p>
           <p className="text-[13px] text-[var(--text-2)] mt-3">
-            {member.cohort ? `${member.cohort} cohort` : 'The Circle'} · Week {weeksIn + 1} of 52 · Q{currentQuarter} focus
+            {member.cohort ? `${member.cohort} cohort · ` : ''}Week {weeksIn + 1} of 52 · Q{currentQuarter} focus
           </p>
         </div>
-        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold flex-none" style={{ background: '#F4A7B9', color: '#5A2233' }}>
-          {initials}
+        <div className="flex items-center gap-9 flex-none">
+          <div className="w-[140px]">
+            <p className="text-[10px] tracking-[0.18em] uppercase text-[var(--text-3)] mb-2">Attendance</p>
+            <p className="font-serif text-[30px] leading-none text-[var(--text)]">{attendanceRate !== null ? `${attendanceRate}%` : '—'}</p>
+            <div className="mt-[9px] h-[3px] rounded-[2px] bg-[var(--surface-2)] overflow-hidden">
+              <div className="h-full" style={{ width: `${attendanceRate ?? 0}%`, background: '#22C55E' }} />
+            </div>
+          </div>
+          <div className="w-[140px]">
+            <p className="text-[10px] tracking-[0.18em] uppercase text-[var(--text-3)] mb-2">Homework</p>
+            <p className="font-serif text-[30px] leading-none text-[var(--text)]">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
+            <div className="mt-[9px] h-[3px] rounded-[2px] bg-[var(--surface-2)] overflow-hidden">
+              <div className="h-full" style={{ width: `${homeworkRate ?? 0}%`, background: 'var(--gold)' }} />
+            </div>
+          </div>
+          <div className="w-14 h-14 rounded-full flex items-center justify-center text-[17px] font-bold flex-none" style={{ background: '#F4A7B9', color: '#5A2233' }}>
+            {initials}
+          </div>
         </div>
       </section>
+
+      {/* Tuesday Office Hours (hero) */}
+      <OfficeHoursCard
+        status={officeHours.status}
+        isMeetingDay={officeHours.isMeetingDayET}
+        note={officeHours.note}
+        zoomLink={officeHours.zoomLink}
+        tuesdayISO={officeHours.tuesdayISO}
+        rescheduledDate={officeHours.rescheduledDate}
+        rescheduledTime={officeHours.rescheduledTime}
+      />
 
       {/* Deadline reminder */}
       {dueSoonTasks.length > 0 && (
         <Link
           href="/dashboard/homework"
-          className="block rounded-2xl border px-6 py-5 transition-colors"
+          className="block rounded-2xl border px-[26px] py-[22px] transition-colors"
           style={{ background: overdueCount > 0 ? 'var(--red-soft)' : 'var(--gold-soft)', borderColor: 'var(--border-2)' }}
         >
           <div className="flex items-center justify-between gap-6">
@@ -115,7 +148,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </p>
             </div>
             <span
-              className="flex-none text-xs px-4 py-2 rounded-full border"
+              className="flex-none text-xs px-[18px] py-[9px] rounded-full border"
               style={{ borderColor: overdueCount > 0 ? 'var(--red-text)' : 'var(--gold-line)', color: overdueCount > 0 ? 'var(--red-text)' : 'var(--gold-text)' }}
             >
               Open homework →
@@ -124,32 +157,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Link>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <AttendanceCard logs={logs} joinDate={member.join_date} />
-        <Link href="/dashboard/homework" className="block rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-6 hover:border-[var(--gold-line)] transition-colors group">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[var(--text-3)] text-[10px] uppercase tracking-[0.18em]">Homework</p>
-            <span className="text-[var(--gold-text)] text-xs opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
-          </div>
-          <p className="text-[var(--text)] font-serif text-[30px] leading-none">{homeworkRate !== null ? `${homeworkRate}%` : '—'}</p>
-          <p className="text-[var(--text-3)] text-xs mt-2">{tasksDone} of {taskTotal} tasks complete</p>
-          <div className="mt-3 h-[3px] bg-[var(--surface-2)] rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${homeworkRate ?? 0}%`, background: homeworkRate && homeworkRate >= 75 ? '#22C55E' : 'var(--gold)' }}
-            />
-          </div>
-        </Link>
-        <div className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-6">
-          <p className="text-[var(--text-3)] text-[10px] uppercase tracking-[0.18em] mb-2">Current Quarter</p>
-          <p className="text-[var(--text)] font-serif text-[30px] leading-none">Q{currentQuarter}</p>
-          <p className="text-[var(--text-3)] text-xs mt-2">of your 12-month blueprint</p>
-        </div>
-      </div>
-
       {/* Two columns: Blueprint + Latest Report */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-[22px]">
         {/* Blueprint card */}
         <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-7">
           <div className="flex items-center justify-between mb-5">
@@ -162,6 +171,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
           {member.blueprint_sent_to_member_at ? (
             <div className="space-y-4">
+              {/* Q1–Q4 progress */}
+              <div className="flex gap-1.5">
+                {quarterSegments.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 h-1 rounded-[2px]"
+                    style={{ background: s === 'done' ? 'var(--gold)' : s === 'current' ? 'linear-gradient(90deg, var(--gold) 62%, var(--surface-2) 62%)' : 'var(--surface-2)' }}
+                  />
+                ))}
+              </div>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] flex-shrink-0" />
                 <p className="text-[#22C55E] text-xs">Your blueprint is ready</p>
@@ -207,26 +226,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </section>
       </div>
 
-      {/* Tuesday Office Hours */}
-      <OfficeHoursCard
-        status={officeHours.status}
-        isMeetingDay={officeHours.isMeetingDayET}
-        note={officeHours.note}
-        zoomLink={officeHours.zoomLink}
-        tuesdayISO={officeHours.tuesdayISO}
-        rescheduledDate={officeHours.rescheduledDate}
-        rescheduledTime={officeHours.rescheduledTime}
-      />
-
       {/* GoGet'Em Community */}
-      <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-7">
+      <section className="rounded-[18px] border border-[var(--border-color)] p-7" style={{ background: 'linear-gradient(100deg, rgba(232,112,154,0.09), rgba(123,95,196,0.09))' }}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-[var(--text)] font-serif text-[19px]">GoGet&apos;Em Community</h2>
-            <p className="text-[var(--text-3)] text-sm mt-0.5">Your community is part of The Circle. Jump in and see what&apos;s coming up.</p>
+            <p className="text-[var(--text-2)] text-sm mt-0.5">Your community is part of The Circle. Jump in and see what&apos;s coming up.</p>
           </div>
           <div className="flex gap-2 flex-wrap flex-shrink-0">
-            <a href="http://members.gogetemcommunity.com/" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[var(--gold)] text-[#0B0B0B] font-medium text-sm px-5 py-2 hover:brightness-110 transition-all">
+            <a href="http://members.gogetemcommunity.com/" target="_blank" rel="noopener noreferrer" className="rounded-full text-white font-medium text-sm px-5 py-2 hover:brightness-110 transition-all" style={{ background: 'linear-gradient(135deg, #E8709A, #7B5FC4)' }}>
               Open Community ↗
             </a>
             <a href="https://gogetemwebinars.app.clientclub.net/communities/groups/gogetem-community/events" target="_blank" rel="noopener noreferrer" className="rounded-full border border-[var(--border-2)] text-[var(--text-2)] text-sm px-5 py-2 hover:border-[var(--gold)] hover:text-[var(--text)] transition-colors">
