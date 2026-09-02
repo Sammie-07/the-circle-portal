@@ -376,9 +376,9 @@ export default function BlueprintPanel({
                 />
 
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="flex-1 h-px bg-[#2A2A2A]" />
+                  <div className="flex-1 h-px bg-[#1A1A1A]" />
                   <span className="text-[var(--text-4)] text-xs">or paste directly</span>
-                  <div className="flex-1 h-px bg-[#2A2A2A]" />
+                  <div className="flex-1 h-px bg-[#1A1A1A]" />
                 </div>
 
                 <textarea
@@ -405,7 +405,7 @@ export default function BlueprintPanel({
               </button>
               <button
                 onClick={() => handleGenerate()}
-                className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-6 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors"
+                className="bg-[#C9A227] text-[#090909] font-medium text-sm px-6 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors"
               >
                 ✦ Generate Blueprint
               </button>
@@ -513,7 +513,7 @@ export default function BlueprintPanel({
                 <button
                   onClick={() => handleGenerate(refineFeedback.trim() || undefined)}
                   disabled={!refineFeedback.trim()}
-                  className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ↺ Apply & Regenerate
                 </button>
@@ -621,7 +621,7 @@ export default function BlueprintPanel({
                   setShowIntake(true)
                 }
               }}
-              className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors"
+              className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors"
             >
               {html ? '↺ Regenerate Blueprint' : '✦ Generate Blueprint'}
             </button>

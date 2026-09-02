@@ -44,7 +44,7 @@ export default function SendInviteButton({ email, memberName }: { email: string;
       <button
         onClick={handleSend}
         disabled={status === 'sending'}
-        className="text-xs bg-[#C9A227] text-[#0D0D0D] font-bold px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+        className="text-xs bg-[#C9A227] text-[#090909] font-bold px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
       >
         {status === 'sending' ? 'Sending…' : '✉ Send Portal Invite'}
       </button>

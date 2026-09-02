@@ -210,20 +210,20 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
             value={weekOf}
             onChange={v => { setWeekOf(v); setSaved(false) }}
             clearable={false}
-            className="w-44 bg-[#1A1A1A] border border-[#2A2A2A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
+            className="w-44 bg-[#0E0E0E] border border-[#1A1A1A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
           />
         </div>
         <div className="flex-1" />
         <div className="flex gap-2">
           <button
             onClick={() => markAll(true)}
-            className="text-xs border border-[#2A2A2A] text-[#888] hover:text-white hover:border-[#C9A227]/40 px-3 py-2 rounded transition-all"
+            className="text-xs border border-[#1A1A1A] text-[#888] hover:text-white hover:border-[#C9A227]/40 px-3 py-2 rounded transition-all"
           >
             Mark all present
           </button>
           <button
             onClick={() => markAll(false)}
-            className="text-xs border border-[#2A2A2A] text-[#888] hover:text-white hover:border-[#CC1F1F]/40 px-3 py-2 rounded transition-all"
+            className="text-xs border border-[#1A1A1A] text-[#888] hover:text-white hover:border-[#CC1F1F]/40 px-3 py-2 rounded transition-all"
           >
             Clear all
           </button>
@@ -231,7 +231,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       </div>
 
       {/* Import from Fathom */}
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-4 mb-6">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-4 mb-6">
         <p className="text-[#C9A227] text-xs uppercase tracking-wider mb-2">Import from Fathom</p>
         <p className="text-[#666] text-xs mb-3 leading-relaxed">
           Paste the call recording link. It reads the transcript and pre-fills Showed Up, Questions,
@@ -243,12 +243,12 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
             value={fathomUrl}
             onChange={e => setFathomUrl(e.target.value)}
             placeholder="https://fathom.video/share/..."
-            className="flex-1 bg-[#0D0D0D] border border-[#2A2A2A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
+            className="flex-1 bg-[#090909] border border-[#1A1A1A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
           />
           <button
             onClick={importFromFathom}
             disabled={importing}
-            className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 whitespace-nowrap"
+            className="bg-[#C9A227] text-[#090909] text-sm font-medium px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 whitespace-nowrap"
           >
             {importing ? 'Processing…' : 'Process call'}
           </button>
@@ -257,7 +257,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
 
       {/* Summary bar */}
       <div className="mb-6">
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-3 flex items-center justify-between">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-3 flex items-center justify-between">
           <span className="text-[#555] text-xs uppercase tracking-wider">Attendance</span>
           <span className="text-white font-serif text-lg">
             {attendanceCount}/{total}
@@ -270,13 +270,13 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
 
       {/* Member rows */}
       {members.length === 0 ? (
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-8 text-center">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-8 text-center">
           <p className="text-[#555] text-sm">No active members yet.</p>
         </div>
       ) : (
-        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-hidden mb-6">
+        <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded overflow-hidden mb-6">
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-3 border-b border-[#2A2A2A]">
+          <div className="grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-3 border-b border-[#1A1A1A]">
             <span className="text-[#555] text-xs uppercase tracking-wider">Member</span>
             <span className="text-[#555] text-xs uppercase tracking-wider text-center">Showed Up</span>
             <span className="text-[#555] text-xs uppercase tracking-wider text-center">Questions</span>
@@ -291,7 +291,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
               <div
                 key={member.id}
                 className={`grid grid-cols-[1fr_120px_90px_1fr] gap-4 px-5 py-4 items-start transition-colors ${
-                  i < members.length - 1 ? 'border-b border-[#2A2A2A]' : ''
+                  i < members.length - 1 ? 'border-b border-[#1A1A1A]' : ''
                 } ${!log.showed_up && !isImported ? 'opacity-60' : ''} ${
                   isImported ? 'bg-[#C9A227]/[0.08] shadow-[inset_3px_0_0_#C9A227]' : ''
                 }`}
@@ -318,7 +318,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
                     className={`w-9 h-9 rounded border-2 flex items-center justify-center transition-all ${
                       log.showed_up
                         ? 'border-green-500 bg-green-500/20 text-green-500'
-                        : 'border-[#2A2A2A] text-transparent hover:border-[#444]'
+                        : 'border-[#1A1A1A] text-transparent hover:border-[#444]'
                     }`}
                     title={log.showed_up ? 'Present — click to mark absent' : 'Absent — click to mark present'}
                   >
@@ -330,12 +330,12 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
                 <div className="flex items-center justify-center gap-2 pt-1.5">
                   <button
                     onClick={() => setQuestions(member.id, log.questions_asked - 1)}
-                    className="w-6 h-6 rounded bg-[#2A2A2A] text-[#888] hover:text-white flex items-center justify-center text-xs transition-colors"
+                    className="w-6 h-6 rounded bg-[#1A1A1A] text-[#888] hover:text-white flex items-center justify-center text-xs transition-colors"
                   >−</button>
                   <span className="text-white text-sm w-4 text-center">{log.questions_asked}</span>
                   <button
                     onClick={() => setQuestions(member.id, log.questions_asked + 1)}
-                    className="w-6 h-6 rounded bg-[#2A2A2A] text-[#888] hover:text-white flex items-center justify-center text-xs transition-colors"
+                    className="w-6 h-6 rounded bg-[#1A1A1A] text-[#888] hover:text-white flex items-center justify-center text-xs transition-colors"
                   >+</button>
                 </div>
 
@@ -352,7 +352,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
                   className={`bg-[#111] border rounded px-3 py-2 text-xs w-full resize-none leading-relaxed overflow-y-auto focus:outline-none focus:text-white transition-colors ${
                     isImported
                       ? 'border-[#C9A227]/50 text-white'
-                      : 'border-[#2A2A2A] text-[#888] placeholder-[#333] focus:border-[#C9A227]/40'
+                      : 'border-[#1A1A1A] text-[#888] placeholder-[#333] focus:border-[#C9A227]/40'
                   }`}
                 />
               </div>
@@ -366,7 +366,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
         <button
           onClick={handleSave}
           disabled={saving || members.length === 0}
-          className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-6 py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="bg-[#C9A227] text-[#090909] font-medium text-sm px-6 py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {saving ? 'Saving…' : 'Save All Logs'}
         </button>

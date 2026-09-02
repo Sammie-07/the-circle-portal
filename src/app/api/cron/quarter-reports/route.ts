@@ -68,9 +68,9 @@ export async function GET(request: Request) {
     .map(
       (c) =>
         `<tr>
-          <td style="padding:10px 14px;border-bottom:1px solid #2A2A2A;color:#F5F5F5;">${c.name}</td>
-          <td style="padding:10px 14px;border-bottom:1px solid #2A2A2A;color:#C9A227;">Completed Quarter ${c.completedQuarter}</td>
-          <td style="padding:10px 14px;border-bottom:1px solid #2A2A2A;"><a href="${APP_URL}/admin/member/${c.id}" style="color:#C9A227;">Open member →</a></td>
+          <td style="padding:10px 14px;border-bottom:1px solid #1A1A1A;color:#F5F5F5;">${c.name}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #1A1A1A;color:#C9A227;">Completed Quarter ${c.completedQuarter}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #1A1A1A;"><a href="${APP_URL}/admin/member/${c.id}" style="color:#C9A227;">Open member →</a></td>
         </tr>`
     )
     .join('')

@@ -79,7 +79,7 @@ export default function OfficeHoursCard({ status, isMeetingDay, note, zoomLink, 
               <p className="text-[#C9A227] text-sm font-medium">Office Hours are live today — {fmt12h(rescheduledTime)} ET (rescheduled)</p>
               <p className="text-[var(--text-2)] text-xs mt-0.5">{note?.trim() ? note : 'The call moved to today this week. Show up. Ask questions.'}</p>
             </div>
-            <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="bg-[#C9A227] text-[#0D0D0D] font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors flex-shrink-0">
+            <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="bg-[#C9A227] text-[#090909] font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors flex-shrink-0">
               Join the Zoom →
             </a>
           </div>
@@ -111,7 +111,7 @@ export default function OfficeHoursCard({ status, isMeetingDay, note, zoomLink, 
           <p className="text-[#C9A227] text-sm font-medium">Office Hours are live today — 12 noon ET</p>
           <p className="text-[var(--text-2)] text-xs mt-0.5">Show up. Ask questions. Do the work.</p>
         </div>
-        <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="bg-[#C9A227] text-[#0D0D0D] font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors flex-shrink-0">
+        <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="bg-[#C9A227] text-[#090909] font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors flex-shrink-0">
           Join the Zoom →
         </a>
       </div>
@@ -140,7 +140,7 @@ function Popup({ icon, title, children, onDismiss }: { icon: string; title: stri
         </div>
         <h2 className="text-[var(--text)] font-serif text-xl mb-2">{title}</h2>
         <p className="text-[var(--text-2)] text-sm leading-relaxed mb-5">{children}</p>
-        <button onClick={onDismiss} className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-6 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors">
+        <button onClick={onDismiss} className="bg-[#C9A227] text-[#090909] text-sm font-medium px-6 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors">
           Got it
         </button>
       </div>

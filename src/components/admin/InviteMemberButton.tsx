@@ -53,7 +53,7 @@ export default function InviteMemberButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+        className="bg-[#C9A227] text-[#090909] text-sm font-medium px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
       >
         + Add Member
       </button>
@@ -115,7 +115,7 @@ export default function InviteMemberButton() {
                     Cancel
                   </button>
                   <button type="submit" disabled={loading}
-                    className="flex-1 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
+                    className="flex-1 bg-[#C9A227] text-[#090909] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
                     {loading ? 'Adding…' : 'Add Member'}
                   </button>
                 </div>

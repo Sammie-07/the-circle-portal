@@ -241,7 +241,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               href="http://members.gogetemcommunity.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+              className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
             >
               Open Community ↗
             </a>

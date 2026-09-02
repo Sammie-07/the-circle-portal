@@ -59,7 +59,7 @@ export function brandedEmail({ eyebrow, heading, body, bodyHtml, cta, note, foot
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="background:#C9A227;border-radius:6px;">
-                <a href="${cta.url}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#0D0D0D;text-decoration:none;">
+                <a href="${cta.url}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#090909;text-decoration:none;">
                   ${cta.text}
                 </a>
               </td>
@@ -72,8 +72,8 @@ export function brandedEmail({ eyebrow, heading, body, bodyHtml, cta, note, foot
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0D0D0D;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0D0D0D;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#090909;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#090909;padding:40px 20px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
@@ -109,7 +109,7 @@ export function brandedEmail({ eyebrow, heading, body, bodyHtml, cta, note, foot
         ${ctaBlock}
 
         <!-- Divider -->
-        <tr><td style="border-top:1px solid #2A2A2A;padding-top:24px;">
+        <tr><td style="border-top:1px solid #1A1A1A;padding-top:24px;">
           <p style="margin:0;font-size:12px;color:#444444;">${footer}</p>
         </td></tr>
 

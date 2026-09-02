@@ -28,7 +28,7 @@ export default function AdminReportsTable({ reports }: Props) {
 
   if (reports.length === 0) {
     return (
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-8 text-center">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-8 text-center">
         <p className="text-[#555] text-sm">No reports generated yet.</p>
         <p className="text-[#444] text-xs mt-2">Open a member&apos;s profile to generate their first report.</p>
       </div>
@@ -36,10 +36,10 @@ export default function AdminReportsTable({ reports }: Props) {
   }
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-x-auto">
+    <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded overflow-x-auto">
       <table className="w-full text-sm min-w-[640px]">
         <thead>
-          <tr className="border-b border-[#2A2A2A]">
+          <tr className="border-b border-[#1A1A1A]">
             <th className="text-left px-5 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Member</th>
             <th className="text-left px-5 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Period</th>
             <th className="text-left px-5 py-3 text-[#555] text-xs uppercase tracking-wider font-normal">Type</th>
@@ -48,7 +48,7 @@ export default function AdminReportsTable({ reports }: Props) {
             <th className="px-5 py-3" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#2A2A2A]">
+        <tbody className="divide-y divide-[#1A1A1A]">
           {reports.map((report) => (
             <>
               {/* Main row */}
@@ -67,7 +67,7 @@ export default function AdminReportsTable({ reports }: Props) {
                 </td>
                 <td className="px-5 py-4 text-[#888]">{report.period_label}</td>
                 <td className="px-5 py-4">
-                  <span className="text-[10px] bg-[#2A2A2A] text-[#555] px-2 py-0.5 rounded uppercase tracking-wider">
+                  <span className="text-[10px] bg-[#1A1A1A] text-[#555] px-2 py-0.5 rounded uppercase tracking-wider">
                     {PERIOD_LABEL[report.period_type] ?? report.period_type}
                   </span>
                 </td>
@@ -97,7 +97,7 @@ export default function AdminReportsTable({ reports }: Props) {
                         className={`text-xs border px-2.5 py-1 rounded transition-colors ${
                           previewId === report.id
                             ? 'border-[#C9A227]/50 text-[#C9A227] bg-[#C9A227]/8'
-                            : 'border-[#2A2A2A] text-[#555] hover:text-[#888] hover:border-[#444]'
+                            : 'border-[#1A1A1A] text-[#555] hover:text-[#888] hover:border-[#444]'
                         }`}
                       >
                         {previewId === report.id ? 'Hide' : 'Preview'}
@@ -119,9 +119,9 @@ export default function AdminReportsTable({ reports }: Props) {
               {previewId === report.id && report.content_html && (
                 <tr key={`${report.id}-preview`}>
                   <td colSpan={6} className="p-0">
-                    <div className="border-t border-[#2A2A2A]">
+                    <div className="border-t border-[#1A1A1A]">
                       {/* Preview header */}
-                      <div className="bg-[#111] px-5 py-2.5 border-b border-[#2A2A2A] flex items-center justify-between">
+                      <div className="bg-[#111] px-5 py-2.5 border-b border-[#1A1A1A] flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span className="text-[#C9A227] text-[10px] tracking-[0.2em] uppercase">
                             Preview
@@ -150,7 +150,7 @@ export default function AdminReportsTable({ reports }: Props) {
                       </div>
                       {/* Report HTML */}
                       <div
-                        className="bg-[#0D0D0D] px-8 py-6 max-h-[600px] overflow-y-auto text-sm leading-relaxed"
+                        className="bg-[#090909] px-8 py-6 max-h-[600px] overflow-y-auto text-sm leading-relaxed"
                         dangerouslySetInnerHTML={{ __html: report.content_html }}
                       />
                     </div>

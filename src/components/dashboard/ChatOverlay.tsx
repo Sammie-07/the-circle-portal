@@ -318,7 +318,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
           </div>
           <button
             onClick={() => { newChat(); if (window.innerWidth < 768) setSidebarOpen(false) }}
-            className="w-full bg-[#C9A227] text-[#0D0D0D] text-xs font-medium py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+            className="w-full bg-[#C9A227] text-[#090909] text-xs font-medium py-2 rounded hover:bg-[#d4ac2d] transition-colors"
           >
             + New Chat
           </button>
@@ -412,7 +412,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
               </p>
               <button
                 onClick={newChat}
-                className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-6 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors"
+                className="bg-[#C9A227] text-[#090909] text-sm font-medium px-6 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors"
               >
                 Start a chat
               </button>
@@ -537,7 +537,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
                 <button
                   onClick={sendMessage}
                   disabled={(!input.trim() && !attachment) || isStreaming}
-                  className="flex-shrink-0 w-8 h-8 bg-[#C9A227] text-[#0D0D0D] rounded flex items-center justify-center hover:bg-[#d4ac2d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex-shrink-0 w-8 h-8 bg-[#C9A227] text-[#090909] rounded flex items-center justify-center hover:bg-[#d4ac2d] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   title="Send (Enter)"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

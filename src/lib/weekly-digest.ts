@@ -192,7 +192,7 @@ export async function buildWeeklyDigest(): Promise<{ subject: string; html: stri
       if (m.attendance) chips.push(m.attendance.showedUp ? 'Attended call' : 'Missed call')
       if (m.outstanding > 0) chips.push(`${m.outstanding} open${m.overdue > 0 ? `, ${m.overdue} overdue` : ''}`)
       const chipHtml = chips
-        .map((c) => `<span style="display:inline-block;font-size:11px;color:#AAAAAA;border:1px solid #2A2A2A;border-radius:4px;padding:2px 8px;margin:0 6px 6px 0;">${esc(c)}</span>`)
+        .map((c) => `<span style="display:inline-block;font-size:11px;color:#AAAAAA;border:1px solid #1A1A1A;border-radius:4px;padding:2px 8px;margin:0 6px 6px 0;">${esc(c)}</span>`)
         .join('')
 
       const notesHtml = m.notes.length

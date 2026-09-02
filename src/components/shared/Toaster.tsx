@@ -32,8 +32,8 @@ export default function Toaster() {
           role="status"
           className={`pointer-events-auto flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm shadow-xl border w-full ${
             t.type === 'error'
-              ? 'bg-[#1A1A1A] border-[#CC1F1F]/40 text-[#ff8080]'
-              : 'bg-[#1A1A1A] border-[#C9A227]/40 text-white'
+              ? 'bg-[#0E0E0E] border-[#CC1F1F]/40 text-[#ff8080]'
+              : 'bg-[#0E0E0E] border-[#C9A227]/40 text-white'
           }`}
         >
           <span

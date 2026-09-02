@@ -426,7 +426,7 @@ export default function MemberPaymentsPanel({ memberId, programStart }: { member
         </div>
         <button
           onClick={openAdd}
-          className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+          className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
         >
           + Add Payment
         </button>
@@ -444,7 +444,7 @@ export default function MemberPaymentsPanel({ memberId, programStart }: { member
           <button
             onClick={saveProgramStart}
             disabled={savingStart || (startDate === (programStart ?? ''))}
-            className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {savingStart ? 'Saving…' : 'Save'}
           </button>
@@ -579,7 +579,7 @@ export default function MemberPaymentsPanel({ memberId, programStart }: { member
               <button
                 type="submit"
                 disabled={savingBilling}
-                className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+                className="bg-[#C9A227] text-[#090909] text-sm font-medium px-5 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
               >
                 {savingBilling ? 'Saving…' : 'Save Billing'}
               </button>
@@ -780,7 +780,7 @@ export default function MemberPaymentsPanel({ memberId, programStart }: { member
                   Cancel
                 </button>
                 <button type="submit" disabled={savingPay}
-                  className="flex-1 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
+                  className="flex-1 bg-[#C9A227] text-[#090909] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
                   {savingPay ? 'Saving…' : editing ? 'Save Changes' : 'Add Payment'}
                 </button>
               </div>

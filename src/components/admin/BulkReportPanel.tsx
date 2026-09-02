@@ -377,7 +377,7 @@ export default function BulkReportPanel({ members }: Props) {
     <div className="space-y-6">
 
       {/* ─── Step 1: Choose period ─────────────────────────────────────────── */}
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded p-5">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-5">
         <p className="text-[#C9A227] text-[10px] tracking-[0.25em] uppercase mb-1">Step 1</p>
         <p className="text-white text-sm font-medium mb-4">Choose report period</p>
         <div className="flex gap-2">
@@ -389,7 +389,7 @@ export default function BulkReportPanel({ members }: Props) {
               className={`px-5 py-2 text-sm rounded border transition-all disabled:cursor-not-allowed ${
                 periodType === type
                   ? 'bg-[#C9A227]/10 border-[#C9A227]/50 text-[#C9A227]'
-                  : 'bg-[#0D0D0D] border-[#2A2A2A] text-[#555] hover:border-[#444] hover:text-[#888]'
+                  : 'bg-[#090909] border-[#1A1A1A] text-[#555] hover:border-[#444] hover:text-[#888]'
               }`}
             >
               {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -404,7 +404,7 @@ export default function BulkReportPanel({ members }: Props) {
               value={reportMonth}
               onChange={(e) => { if (!bulkRunning) { setReportMonth(e.target.value); resetGenerated() } }}
               disabled={bulkRunning}
-              className="w-full max-w-xs bg-[#0D0D0D] border border-[#2A2A2A] text-white text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]/50 disabled:opacity-50"
+              className="w-full max-w-xs bg-[#090909] border border-[#1A1A1A] text-white text-sm rounded px-3 py-2 focus:outline-none focus:border-[#C9A227]/50 disabled:opacity-50"
             >
               {monthOptions.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -416,10 +416,10 @@ export default function BulkReportPanel({ members }: Props) {
       </div>
 
       {/* ─── Step 2: Select members + generate ────────────────────────────── */}
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded overflow-hidden">
+      <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded overflow-hidden">
 
         {/* Table header / toolbar */}
-        <div className="px-5 py-4 border-b border-[#2A2A2A] flex items-center justify-between gap-4">
+        <div className="px-5 py-4 border-b border-[#1A1A1A] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {/* Select all checkbox */}
             <button
@@ -434,7 +434,7 @@ export default function BulkReportPanel({ members }: Props) {
               }`}
             >
               {(allChecked || someChecked) && (
-                <span className="text-[#0D0D0D] text-[10px] font-bold leading-none">{allChecked ? '✓' : '–'}</span>
+                <span className="text-[#090909] text-[10px] font-bold leading-none">{allChecked ? '✓' : '–'}</span>
               )}
             </button>
             <div>
@@ -460,11 +460,11 @@ export default function BulkReportPanel({ members }: Props) {
             <button
               onClick={handleGenerateAll}
               disabled={bulkRunning || !anyIdleChecked}
-              className="flex items-center gap-2 bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-[#C9A227] text-[#090909] text-xs font-bold px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {bulkRunning ? (
                 <>
-                  <span className="w-2 h-2 rounded-full bg-[#0D0D0D] animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-[#090909] animate-pulse" />
                   {bulkProgress.done}/{bulkProgress.total} generated…
                 </>
               ) : (
@@ -476,7 +476,7 @@ export default function BulkReportPanel({ members }: Props) {
 
         {/* Bulk progress bar — full styled block while running */}
         {bulkRunning && (
-          <div className="px-5 py-4 bg-[#111] border-b border-[#2A2A2A] space-y-3">
+          <div className="px-5 py-4 bg-[#111] border-b border-[#1A1A1A] space-y-3">
             {/* Label row */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -489,7 +489,7 @@ export default function BulkReportPanel({ members }: Props) {
             </div>
 
             {/* Bar */}
-            <div className="h-2 bg-[#0D0D0D] border border-[#333] rounded-full overflow-hidden">
+            <div className="h-2 bg-[#090909] border border-[#333] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#C9A227] rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${bulkPct}%` }}
@@ -541,7 +541,7 @@ export default function BulkReportPanel({ members }: Props) {
                         : 'bg-transparent border-[#444] hover:border-[#C9A227]/60'
                     }`}
                   >
-                    {row.checked && <span className="text-[#0D0D0D] text-[10px] font-bold leading-none">✓</span>}
+                    {row.checked && <span className="text-[#090909] text-[10px] font-bold leading-none">✓</span>}
                   </button>
 
                   {/* Name + cohort */}
@@ -552,7 +552,7 @@ export default function BulkReportPanel({ members }: Props) {
 
                   {/* Cohort tag */}
                   {row.member.cohort && (
-                    <span className="text-[#555] text-[10px] border border-[#2A2A2A] px-2 py-0.5 rounded hidden sm:inline">
+                    <span className="text-[#555] text-[10px] border border-[#1A1A1A] px-2 py-0.5 rounded hidden sm:inline">
                       {row.member.cohort}
                     </span>
                   )}
@@ -571,7 +571,7 @@ export default function BulkReportPanel({ members }: Props) {
                         className={`text-xs border px-2.5 py-1 rounded transition-colors ${
                           row.previewOpen
                             ? 'border-[#C9A227]/50 text-[#C9A227] bg-[#C9A227]/8'
-                            : 'border-[#2A2A2A] text-[#555] hover:text-[#888] hover:border-[#444]'
+                            : 'border-[#1A1A1A] text-[#555] hover:text-[#888] hover:border-[#444]'
                         }`}
                       >
                         {row.previewOpen ? 'Hide' : 'Preview'}
@@ -586,7 +586,7 @@ export default function BulkReportPanel({ members }: Props) {
                         className={`text-xs border px-2.5 py-1 rounded transition-colors disabled:opacity-40 ${
                           refineRowId === row.member.id
                             ? 'border-[#C9A227]/40 text-[#C9A227]'
-                            : 'border-[#2A2A2A] text-[#555] hover:text-[#888] hover:border-[#444]'
+                            : 'border-[#1A1A1A] text-[#555] hover:text-[#888] hover:border-[#444]'
                         }`}
                       >
                         ↺ Regen
@@ -634,12 +634,12 @@ export default function BulkReportPanel({ members }: Props) {
                         onChange={e => setRefineFeedback(e.target.value)}
                         placeholder="What needs to change? e.g. Push harder on the attendance gap. Mention her Florida team."
                         rows={3}
-                        className="w-full bg-[#0D0D0D] border border-[#2A2A2A] text-white placeholder-[#333] text-sm rounded px-3 py-2.5 pr-20 resize-none focus:outline-none focus:border-[#C9A227]/40"
+                        className="w-full bg-[#090909] border border-[#1A1A1A] text-white placeholder-[#333] text-sm rounded px-3 py-2.5 pr-20 resize-none focus:outline-none focus:border-[#C9A227]/40"
                       />
                       <button
                         type="button"
                         onClick={() => refineFileRef.current?.click()}
-                        className="absolute bottom-2.5 right-2.5 text-[#444] hover:text-[#888] text-xs border border-[#2A2A2A] px-2 py-0.5 rounded bg-[#0D0D0D] transition-colors"
+                        className="absolute bottom-2.5 right-2.5 text-[#444] hover:text-[#888] text-xs border border-[#1A1A1A] px-2 py-0.5 rounded bg-[#090909] transition-colors"
                       >
                         {refineUploadLabel ? '📎' : '+ File'}
                       </button>
@@ -651,7 +651,7 @@ export default function BulkReportPanel({ members }: Props) {
                       <button onClick={closeRefine} className="text-[#555] text-xs hover:text-[#888] transition-colors">Cancel</button>
                       <button
                         onClick={() => handleRegenerateOne(row.member.id, row.reportId, refineFeedback)}
-                        className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors"
+                        className="bg-[#C9A227] text-[#090909] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors"
                       >
                         ✦ Apply &amp; Regenerate
                       </button>
@@ -661,8 +661,8 @@ export default function BulkReportPanel({ members }: Props) {
 
                 {/* Inline preview */}
                 {row.previewOpen && row.reportHtml && (
-                  <div className="border-t border-[#2A2A2A]">
-                    <div className="bg-[#111] px-5 py-2 border-b border-[#2A2A2A] flex items-center justify-between">
+                  <div className="border-t border-[#1A1A1A]">
+                    <div className="bg-[#111] px-5 py-2 border-b border-[#1A1A1A] flex items-center justify-between">
                       <p className="text-[#555] text-xs">{row.member.name} — {row.reportLabel}</p>
                       <button
                         onClick={() => updateRow(row.member.id, { previewOpen: false })}
@@ -672,7 +672,7 @@ export default function BulkReportPanel({ members }: Props) {
                       </button>
                     </div>
                     <div
-                      className="bg-[#0D0D0D] p-6 max-h-[480px] overflow-y-auto text-sm leading-relaxed"
+                      className="bg-[#090909] p-6 max-h-[480px] overflow-y-auto text-sm leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: row.reportHtml }}
                     />
                   </div>
@@ -684,7 +684,7 @@ export default function BulkReportPanel({ members }: Props) {
 
         {/* Bottom toolbar (mirrors top when list is long) */}
         {rows.length > 5 && (
-          <div className="px-5 py-3 border-t border-[#2A2A2A] flex items-center justify-between bg-[#111]">
+          <div className="px-5 py-3 border-t border-[#1A1A1A] flex items-center justify-between bg-[#111]">
             <p className="text-[#555] text-xs">{checkedRows.length} selected</p>
             <div className="flex items-center gap-2">
               {anyDoneChecked && (
@@ -699,7 +699,7 @@ export default function BulkReportPanel({ members }: Props) {
               <button
                 onClick={handleGenerateAll}
                 disabled={bulkRunning || !anyIdleChecked}
-                className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+                className="bg-[#C9A227] text-[#090909] text-xs font-bold px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
               >
                 ✦ Generate Selected
               </button>

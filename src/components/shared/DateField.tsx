@@ -147,7 +147,7 @@ export default function DateField({ value, onChange, className, placeholder = 'S
                   onClick={() => pick(day)}
                   className={`h-8 rounded text-xs transition-colors ${
                     isSelected
-                      ? 'bg-[#C9A227] text-[#0D0D0D] font-semibold'
+                      ? 'bg-[#C9A227] text-[#090909] font-semibold'
                       : isToday
                         ? 'text-[#C9A227] border border-[#C9A227]/40 hover:bg-[#C9A227]/10'
                         : 'text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'

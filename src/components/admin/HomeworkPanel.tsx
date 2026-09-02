@@ -232,7 +232,7 @@ export default function HomeworkPanel({ memberId }: Props) {
                 </div>
               </div>
               <button type="button" onClick={() => setShowForm(false)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)]">Cancel</button>
-              <button type="submit" disabled={saving} className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
+              <button type="submit" disabled={saving} className="bg-[#C9A227] text-[#090909] text-xs font-bold px-4 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
                 {saving ? 'Saving…' : 'Add'}
               </button>
             </div>
@@ -321,7 +321,7 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
           </div>
           <button onClick={() => setEditId(null)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] ml-auto">Cancel</button>
           <button onClick={() => onEditSave(item.id)} disabled={saving}
-            className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">
+            className="bg-[#C9A227] text-[#090909] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -338,7 +338,7 @@ function ItemRow({ item, editId, editForm, setEditId, setEditForm, onToggle, onE
         className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
           item.completed ? 'bg-[#C9A227] border-[#C9A227]' : 'border-[var(--text-4)] hover:border-[#C9A227]/60'
         }`}>
-        {item.completed && <span className="text-[#0D0D0D] text-[10px] font-bold leading-none">✓</span>}
+        {item.completed && <span className="text-[#090909] text-[10px] font-bold leading-none">✓</span>}
       </button>
 
       {/* Content */}

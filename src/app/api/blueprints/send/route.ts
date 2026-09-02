@@ -29,7 +29,7 @@ function buildEmailHtml(opts: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${heading}</title>
 </head>
-<body style="margin:0;padding:0;background:#0D0D0D;font-family:Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#090909;font-family:Helvetica,Arial,sans-serif;">
   <div style="max-width:580px;margin:0 auto;padding:48px 32px;">
 
     <!-- Logo -->
@@ -55,7 +55,7 @@ function buildEmailHtml(opts: {
 
     <!-- CTA Button -->
     <div style="text-align:center;margin:36px 0;">
-      <a href="${blueprintUrl}" style="display:inline-block;background:#C9A227;color:#0D0D0D;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.05em;text-decoration:none;padding:14px 36px;border-radius:3px;">
+      <a href="${blueprintUrl}" style="display:inline-block;background:#C9A227;color:#090909;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.05em;text-decoration:none;padding:14px 36px;border-radius:3px;">
         ${buttonLabel}
       </a>
     </div>

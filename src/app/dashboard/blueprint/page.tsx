@@ -52,7 +52,7 @@ export default async function BlueprintPage() {
       )}
 
       <div className="mt-10 text-center">
-        <div className="h-px bg-gradient-to-r from-transparent via-[#2A2A2A] to-transparent mb-6" />
+        <div className="h-px bg-gradient-to-r from-transparent via-[#1A1A1A] to-transparent mb-6" />
         <p className="text-[#C9A227] font-serif italic text-sm">
           &ldquo;The quickest way to reach your goals isn&apos;t through trial and error —<br />
           it&apos;s by learning directly from someone who&apos;s already done it.&rdquo;

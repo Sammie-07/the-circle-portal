@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
 
 // ─── Full CSS — injected by the API, never sent to Claude ───
 const BLUEPRINT_CSS = `<style>
-  :root{--gold:#C9A227;--red:#CC1F1F;--bg:#0D0D0D;--card:#161616;--card2:#1C1C1C;--border:rgba(201,162,39,0.18);--border2:rgba(255,255,255,0.06);--text:#EFEFEF;--muted:#777;--dim:#444;}
+  :root{--gold:#C9A227;--red:#CC1F1F;--bg:#090909;--card:#161616;--card2:#1C1C1C;--border:rgba(201,162,39,0.18);--border2:rgba(255,255,255,0.06);--text:#EFEFEF;--muted:#777;--dim:#444;}
   *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
   body{background:var(--bg);color:var(--text);font-family:'Georgia','Times New Roman',serif;font-size:16px;line-height:1.8;}
   nav{position:sticky;top:0;z-index:200;background:rgba(13,13,13,0.98);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 56px;height:54px;}

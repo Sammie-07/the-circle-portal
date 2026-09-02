@@ -108,7 +108,7 @@ export default function PasswordSetupFlow() {
     'w-full bg-[var(--surface)] border border-[var(--border-color)] text-[var(--text)] placeholder-[var(--text-4)] rounded px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] transition-colors'
   const labelClass = 'block text-xs text-[var(--text-2)] uppercase tracking-wider mb-2'
   const primaryBtn =
-    'w-full bg-[#C9A227] text-[#0D0D0D] font-medium text-sm py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+    'w-full bg-[#C9A227] text-[#090909] font-medium text-sm py-3 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
   const errorBox = error && (
     <div className="text-[var(--text-2)] text-xs leading-relaxed bg-[#C9A227]/10 border border-[#C9A227]/30 rounded px-3 py-2.5">{error}</div>
   )

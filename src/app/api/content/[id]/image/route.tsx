@@ -45,7 +45,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#0D0D0D',
+          background: '#090909',
           padding: '90px 88px',
           position: 'relative',
         }}

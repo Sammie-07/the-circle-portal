@@ -126,7 +126,7 @@ export default function OfficeHoursPanel() {
         </div>
         <button
           onClick={openAdd}
-          className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+          className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
         >
           + Add Recording
         </button>
@@ -237,7 +237,7 @@ export default function OfficeHoursPanel() {
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
+                  className="flex-1 bg-[#C9A227] text-[#090909] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
                   {saving ? 'Saving…' : editing ? 'Save Changes' : 'Add Recording'}
                 </button>
               </div>

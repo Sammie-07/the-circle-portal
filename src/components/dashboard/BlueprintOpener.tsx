@@ -29,7 +29,7 @@ export default function BlueprintOpener({ blueprintUrl }: { blueprintUrl: string
         href={blueprintUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-block bg-[#C9A227] text-[#0D0D0D] font-bold text-sm px-8 py-3 rounded hover:bg-[#d4ac2d] transition-colors"
+        className="inline-block bg-[#C9A227] text-[#090909] font-bold text-sm px-8 py-3 rounded hover:bg-[#d4ac2d] transition-colors"
       >
         Open Blueprint ↗
       </a>

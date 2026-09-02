@@ -25,7 +25,7 @@ function interstitialHtml(tokenHash: string, type: string, ctx: string): string 
 <meta name="robots" content="noindex" />
 <title>Sign in · The Circle</title>
 <style>
-  html,body{margin:0;height:100%;background:#0D0D0D;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;}
+  html,body{margin:0;height:100%;background:#090909;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;}
   .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;}
   .card{width:100%;max-width:400px;text-align:center;}
   .mark{width:56px;height:56px;border:2px solid #CC1F1F;border-radius:9999px;margin:0 auto 24px;position:relative;}
@@ -35,7 +35,7 @@ function interstitialHtml(tokenHash: string, type: string, ctx: string): string 
   .eyebrow{color:#C9A227;font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin:0 0 8px;}
   h1{color:#fff;font-family:Georgia,serif;font-size:22px;font-weight:normal;margin:0 0 12px;}
   p{color:#AAA;font-size:14px;line-height:1.6;margin:0 0 24px;}
-  button{width:100%;background:#C9A227;color:#0D0D0D;font-size:15px;font-weight:600;border:0;border-radius:6px;padding:14px 24px;cursor:pointer;}
+  button{width:100%;background:#C9A227;color:#090909;font-size:15px;font-weight:600;border:0;border-radius:6px;padding:14px 24px;cursor:pointer;}
   button:hover{background:#d4ac2d;}
   .fine{color:#666;font-size:12px;margin-top:20px;}
 </style>

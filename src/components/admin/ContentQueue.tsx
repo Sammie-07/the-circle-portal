@@ -293,7 +293,7 @@ function PostCard({
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
             {dirty ? (
-              <button onClick={save} disabled={saving} className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-3.5 py-1.5 rounded-lg disabled:opacity-40">
+              <button onClick={save} disabled={saving} className="bg-[#C9A227] text-[#090909] text-sm font-medium px-3.5 py-1.5 rounded-lg disabled:opacity-40">
                 {saving ? 'Saving…' : 'Save edits'}
               </button>
             ) : null}
@@ -339,7 +339,7 @@ function PostCard({
                 placeholder="e.g. Punchier hooks, less salesy, always lead with the number…"
                 className="w-full bg-[var(--bg)] border border-[var(--border-color)] rounded-lg p-2.5 text-sm text-[var(--text)]"
               />
-              <button onClick={saveFeedback} disabled={savingFb} className="mt-2 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-3.5 py-1.5 rounded-lg disabled:opacity-40">
+              <button onClick={saveFeedback} disabled={savingFb} className="mt-2 bg-[#C9A227] text-[#090909] text-sm font-medium px-3.5 py-1.5 rounded-lg disabled:opacity-40">
                 {savingFb ? 'Saving…' : 'Save feedback'}
               </button>
             </div>

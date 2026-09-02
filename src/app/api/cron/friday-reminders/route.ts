@@ -44,8 +44,8 @@ function memberEmailHtml(name: string, checkinUrl: string, weekLabel: string): s
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0D0D0D;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0D0D0D;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#090909;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#090909;padding:40px 20px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
@@ -92,7 +92,7 @@ function memberEmailHtml(name: string, checkinUrl: string, weekLabel: string): s
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="background:#C9A227;border-radius:6px;">
-                <a href="${checkinUrl}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#0D0D0D;text-decoration:none;">
+                <a href="${checkinUrl}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#090909;text-decoration:none;">
                   Open My Check-In →
                 </a>
               </td>
@@ -101,7 +101,7 @@ function memberEmailHtml(name: string, checkinUrl: string, weekLabel: string): s
         </td></tr>
 
         <!-- Divider -->
-        <tr><td style="border-top:1px solid #2A2A2A;padding-top:24px;">
+        <tr><td style="border-top:1px solid #1A1A1A;padding-top:24px;">
           <p style="margin:0;font-size:12px;color:#444444;">
             The Circle · 12-Month Coaching Program ·
             <a href="${checkinUrl}" style="color:#C9A227;text-decoration:none;">${checkinUrl}</a>
@@ -120,8 +120,8 @@ function adminEmailHtml(memberCount: number, weekLabel: string, portalUrl: strin
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0D0D0D;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0D0D0D;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#090909;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#090909;padding:40px 20px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
@@ -156,7 +156,7 @@ function adminEmailHtml(memberCount: number, weekLabel: string, portalUrl: strin
           </p>
           <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:16px;">
             <tr>
-              <td style="padding:16px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <td style="padding:16px;background:#0E0E0E;border:1px solid #1A1A1A;border-radius:6px;">
                 <p style="margin:0 0 8px;font-size:13px;color:#C9A227;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">1. Log this week's attendance</p>
                 <p style="margin:0;font-size:14px;color:#888888;line-height:1.5;">
                   Open each member's page in the portal and log whether they showed up to the call this week.
@@ -166,7 +166,7 @@ function adminEmailHtml(memberCount: number, weekLabel: string, portalUrl: strin
           </table>
           <table cellpadding="0" cellspacing="0" style="width:100%;">
             <tr>
-              <td style="padding:16px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;">
+              <td style="padding:16px;background:#0E0E0E;border:1px solid #1A1A1A;border-radius:6px;">
                 <p style="margin:0 0 8px;font-size:13px;color:#C9A227;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">2. Check-in emails sent</p>
                 <p style="margin:0;font-size:14px;color:#888888;line-height:1.5;">
                   Weekly Check-In emails just went out to <strong style="color:#FFFFFF;">${memberCount} member${memberCount !== 1 ? 's' : ''}</strong>.
@@ -182,7 +182,7 @@ function adminEmailHtml(memberCount: number, weekLabel: string, portalUrl: strin
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="background:#C9A227;border-radius:6px;">
-                <a href="${portalUrl}/admin" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#0D0D0D;text-decoration:none;">
+                <a href="${portalUrl}/admin" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#090909;text-decoration:none;">
                   Open Portal →
                 </a>
               </td>
@@ -191,7 +191,7 @@ function adminEmailHtml(memberCount: number, weekLabel: string, portalUrl: strin
         </td></tr>
 
         <!-- Divider -->
-        <tr><td style="border-top:1px solid #2A2A2A;padding-top:24px;">
+        <tr><td style="border-top:1px solid #1A1A1A;padding-top:24px;">
           <p style="margin:0;font-size:12px;color:#444444;">The Circle · Admin Portal</p>
         </td></tr>
 

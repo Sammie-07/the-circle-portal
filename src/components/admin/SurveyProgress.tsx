@@ -294,7 +294,7 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
                             {isLatest ? (
                               <span className="inline-flex items-center gap-1.5">
                                 {c.label}
-                                <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#0D0D0D', background: GOLD }}>Latest</span>
+                                <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#090909', background: GOLD }}>Latest</span>
                               </span>
                             ) : (
                               c.label
@@ -361,7 +361,7 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-[var(--text-3)] text-xs uppercase tracking-wider">{monthLong(r.periodMonth)}</span>
                             {isLatest && (
-                              <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#0D0D0D', background: GOLD }}>Latest</span>
+                              <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#090909', background: GOLD }}>Latest</span>
                             )}
                           </div>
                           <p

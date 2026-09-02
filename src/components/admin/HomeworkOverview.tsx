@@ -119,7 +119,7 @@ function TaskRow({
           </div>
           <button onClick={() => setEditing(false)} className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] ml-auto">Cancel</button>
           <button onClick={save} disabled={saving}
-            className="bg-[#C9A227] text-[#0D0D0D] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">
+            className="bg-[#C9A227] text-[#090909] text-xs font-bold px-3 py-1.5 rounded disabled:opacity-40">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -135,7 +135,7 @@ function TaskRow({
         onClick={toggle}
         title={done ? 'Mark not done' : 'Mark done'}
         className={`mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-bold transition-colors ${
-          done ? 'bg-[#C9A227] text-[#0D0D0D]' : 'border border-[var(--text-4)] text-transparent hover:border-[#C9A227]/60'
+          done ? 'bg-[#C9A227] text-[#090909]' : 'border border-[var(--text-4)] text-transparent hover:border-[#C9A227]/60'
         }`}
       >
         ✓

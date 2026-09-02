@@ -250,7 +250,7 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, onCreateFollowUp, fol
       >
         {item.completed && !isLoading && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4l3 3 5-6" stroke="#0D0D0D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 4l3 3 5-6" stroke="#090909" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         )}
         {isLoading && <div className="w-2 h-2 rounded-full bg-[#C9A227] animate-pulse" />}
@@ -361,7 +361,7 @@ function CheckItem({ item, onToggle, toggling, onSaveNote, onCreateFollowUp, fol
                 type="button"
                 onClick={save}
                 disabled={saving}
-                className="text-xs bg-[#C9A227] text-[#0D0D0D] font-medium px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-50"
+                className="text-xs bg-[#C9A227] text-[#090909] font-medium px-3 py-1.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-50"
               >
                 {saving ? 'Saving…' : 'Save note'}
               </button>

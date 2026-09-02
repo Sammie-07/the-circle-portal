@@ -68,7 +68,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#090909] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
           <div className="w-14 h-14 rounded-full border-2 border-[#C9A227] flex items-center justify-center mx-auto mb-6">
             <span className="text-[#C9A227] text-2xl">✓</span>
@@ -80,7 +80,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
           </p>
           <a
             href="/dashboard"
-            className="inline-block mt-8 bg-[#C9A227] text-[#0D0D0D] font-semibold text-sm px-6 py-3 rounded-lg hover:bg-[#d4ac2d] transition-colors"
+            className="inline-block mt-8 bg-[#C9A227] text-[#090909] font-semibold text-sm px-6 py-3 rounded-lg hover:bg-[#d4ac2d] transition-colors"
           >
             Go to my portal →
           </a>
@@ -93,7 +93,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
   const totalCount = homework.length
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D]">
+    <div className="min-h-screen bg-[#090909]">
       <div className="max-w-lg mx-auto px-6 py-10">
 
         {/* Header */}
@@ -140,7 +140,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
                       className={`w-full text-left flex items-start gap-4 px-4 py-3.5 rounded-lg border transition-all ${
                         isChecked
                           ? 'bg-[#C9A227]/8 border-[#C9A227]/40'
-                          : 'bg-[#1A1A1A] border-[#2A2A2A] hover:border-[#3A3A3A]'
+                          : 'bg-[#0E0E0E] border-[#1A1A1A] hover:border-[#3A3A3A]'
                       }`}
                     >
                       {/* Checkbox */}
@@ -149,7 +149,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
                       }`}>
                         {isChecked && (
                           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="#0D0D0D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M1 4L3.5 6.5L9 1" stroke="#090909" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
                       </div>
@@ -184,7 +184,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
               onChange={e => setComments(e.target.value)}
               rows={5}
               placeholder="This week I also..."
-              className="w-full bg-[#1A1A1A] border border-[#2A2A2A] text-white placeholder-[#444] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] resize-none transition-colors"
+              className="w-full bg-[#0E0E0E] border border-[#1A1A1A] text-white placeholder-[#444] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#C9A227] resize-none transition-colors"
             />
           </div>
 
@@ -193,7 +193,7 @@ export default function CheckinForm({ token, memberName, weekLabel, homework, al
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-[#C9A227] text-[#0D0D0D] font-semibold text-sm py-4 rounded-lg hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+            className="w-full bg-[#C9A227] text-[#090909] font-semibold text-sm py-4 rounded-lg hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
           >
             {submitting ? 'Submitting…' : 'Submit Check-In'}
           </button>

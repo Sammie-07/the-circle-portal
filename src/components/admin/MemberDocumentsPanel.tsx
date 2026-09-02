@@ -133,7 +133,7 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
         </div>
         <button
           onClick={openAdd}
-          className="bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
+          className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors"
         >
           + Add Document
         </button>
@@ -241,7 +241,7 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
                   accept=".pdf,.doc,.docx,.txt,.csv,image/*"
                   onChange={e => setFile(e.target.files?.[0] ?? null)}
                   required
-                  className={inputClass + ' file:mr-3 file:rounded file:border-0 file:bg-[#C9A227] file:px-3 file:py-1 file:text-[#0D0D0D] file:text-xs'}
+                  className={inputClass + ' file:mr-3 file:rounded file:border-0 file:bg-[#C9A227] file:px-3 file:py-1 file:text-[#090909] file:text-xs'}
                 />
               </div>
 
@@ -253,7 +253,7 @@ export default function MemberDocumentsPanel({ memberId }: { memberId: string })
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
+                  className="flex-1 bg-[#C9A227] text-[#090909] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40">
                   {saving ? 'Uploading…' : 'Upload'}
                 </button>
               </div>

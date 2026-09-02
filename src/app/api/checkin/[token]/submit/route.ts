@@ -123,7 +123,7 @@ function buildNotificationEmail(
   const completedHtml = completedTasks.length > 0
     ? completedTasks.map(t => `
         <tr>
-          <td style="padding:6px 0;border-bottom:1px solid #2A2A2A;">
+          <td style="padding:6px 0;border-bottom:1px solid #1A1A1A;">
             <span style="color:#C9A227;margin-right:8px;">✓</span>
             <span style="color:#FFFFFF;font-size:14px;">${t.title}</span>
           </td>
@@ -133,7 +133,7 @@ function buildNotificationEmail(
   const missedHtml = missedTasks.length > 0
     ? missedTasks.map(t => `
         <tr>
-          <td style="padding:6px 0;border-bottom:1px solid #2A2A2A;">
+          <td style="padding:6px 0;border-bottom:1px solid #1A1A1A;">
             <span style="color:#555555;margin-right:8px;">✗</span>
             <span style="color:#888888;font-size:14px;">${t.title}</span>
           </td>
@@ -144,7 +144,7 @@ function buildNotificationEmail(
     ? `
       <tr><td style="padding-top:24px;">
         <p style="margin:0 0 8px;font-size:11px;color:#C9A227;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">Notes from ${memberName.split(' ')[0]}</p>
-        <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-left:3px solid #C9A227;border-radius:4px;padding:14px;">
+        <div style="background:#0E0E0E;border:1px solid #1A1A1A;border-left:3px solid #C9A227;border-radius:4px;padding:14px;">
           <p style="margin:0;font-size:14px;color:#CCCCCC;line-height:1.6;">${comments.replace(/\n/g, '<br>')}</p>
         </div>
       </td></tr>`
@@ -156,8 +156,8 @@ function buildNotificationEmail(
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0D0D0D;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0D0D0D;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#090909;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#090909;padding:40px 20px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
@@ -190,7 +190,7 @@ function buildNotificationEmail(
         </td></tr>
 
         <tr><td style="padding-bottom:16px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:6px;padding:4px 16px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#0E0E0E;border:1px solid #1A1A1A;border-radius:6px;padding:4px 16px;">
             ${completedHtml}
             ${missedHtml}
           </table>
@@ -202,7 +202,7 @@ function buildNotificationEmail(
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="background:#C9A227;border-radius:6px;">
-                <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#0D0D0D;text-decoration:none;">
+                <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#090909;text-decoration:none;">
                   Open Portal →
                 </a>
               </td>
@@ -210,7 +210,7 @@ function buildNotificationEmail(
           </table>
         </td></tr>
 
-        <tr><td style="border-top:1px solid #2A2A2A;padding-top:24px;margin-top:32px;">
+        <tr><td style="border-top:1px solid #1A1A1A;padding-top:24px;margin-top:32px;">
           <p style="margin:0;font-size:12px;color:#444444;">The Circle · Admin Notification</p>
         </td></tr>
 

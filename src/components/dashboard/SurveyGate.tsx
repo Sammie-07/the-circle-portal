@@ -170,7 +170,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           </p>
           <button
             onClick={finish}
-            style={{ padding: '14px 28px', background: GOLD, color: '#0D0D0D', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '14px 28px', background: GOLD, color: '#090909', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
           >
             {preview ? 'Close preview' : 'Continue to my portal'}
           </button>
@@ -204,7 +204,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         style={{
           position: 'relative',
           background: 'var(--surface, #141414)',
-          border: '1px solid var(--border-color, #2a2a2a)',
+          border: '1px solid var(--border-color, #1A1A1A)',
           borderRadius: 14,
           maxWidth: 640,
           width: '100%',
@@ -225,8 +225,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: 'var(--bg, #0d0d0d)',
-              border: '1px solid var(--border-color, #2a2a2a)',
+              background: 'var(--bg, #090909)',
+              border: '1px solid var(--border-color, #1A1A1A)',
               color: 'var(--text-2, #888)',
               fontSize: 18,
               lineHeight: 1,
@@ -237,7 +237,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           </button>
         ) : null}
         {/* Header — fixed, so the progress bar stays visible while scrolling */}
-        <div style={{ flexShrink: 0, padding: '28px 28px 16px', borderBottom: '1px solid var(--border-color, #2a2a2a)' }}>
+        <div style={{ flexShrink: 0, padding: '28px 28px 16px', borderBottom: '1px solid var(--border-color, #1A1A1A)' }}>
           <div style={{ color: GOLD, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             {payload.monthLabel} · Progress Check{preview ? ' · Preview' : ''}
           </div>
@@ -249,7 +249,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             needs to be completed to continue. Your answers save as you go.
           </p>
           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ flex: 1, height: 6, background: 'var(--border-color, #2a2a2a)', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ flex: 1, height: 6, background: 'var(--border-color, #1A1A1A)', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${total ? (answered / total) * 100 : 0}%`, height: '100%', background: GOLD, transition: 'width 0.2s' }} />
             </div>
             <span style={{ color: 'var(--text-2, #AAAAAA)', fontSize: 12, whiteSpace: 'nowrap' }}>
@@ -263,7 +263,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           {questions.map((q, i) => (
             <div key={q.key}>
               {q.section ? (
-                <div style={{ margin: i === 0 ? '0 0 16px' : '30px 0 16px', paddingBottom: 8, borderBottom: '1px solid var(--border-color, #2a2a2a)' }}>
+                <div style={{ margin: i === 0 ? '0 0 16px' : '30px 0 16px', paddingBottom: 8, borderBottom: '1px solid var(--border-color, #1A1A1A)' }}>
                   <span style={{ color: GOLD, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{q.section}</span>
                 </div>
               ) : null}
@@ -281,7 +281,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             </div>
           ))}
           {/* Closing line — sits at the true end of the form, seen when they reach it */}
-          <div style={{ textAlign: 'center', margin: '8px 0 4px', paddingTop: 20, borderTop: '1px solid var(--border-color, #2a2a2a)' }}>
+          <div style={{ textAlign: 'center', margin: '8px 0 4px', paddingTop: 20, borderTop: '1px solid var(--border-color, #1A1A1A)' }}>
             <p style={{ color: GOLD, fontFamily: 'Georgia, serif', fontSize: 18, margin: '0 0 6px' }}>
               Congratulations, you made it to the end.
             </p>
@@ -292,7 +292,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         </div>
 
         {/* Footer — fixed, so submit stays in view */}
-        <div style={{ flexShrink: 0, padding: '16px 28px 28px', borderTop: '1px solid var(--border-color, #2a2a2a)' }}>
+        <div style={{ flexShrink: 0, padding: '16px 28px 28px', borderTop: '1px solid var(--border-color, #1A1A1A)' }}>
           {error ? (
             <p style={{ color: '#ff8080', fontSize: 13, margin: '0 0 12px' }}>{error}</p>
           ) : null}
@@ -302,8 +302,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             style={{
               width: '100%',
               padding: '14px',
-              background: allDone ? GOLD : 'var(--border-color, #2a2a2a)',
-              color: allDone ? '#0D0D0D' : 'var(--text-2, #888)',
+              background: allDone ? GOLD : 'var(--border-color, #1A1A1A)',
+              color: allDone ? '#090909' : 'var(--text-2, #888)',
               border: 'none',
               borderRadius: 8,
               fontSize: 15,
@@ -377,8 +377,8 @@ function QuestionInput({
   const baseInput: React.CSSProperties = {
     width: '100%',
     padding: '10px 12px',
-    background: 'var(--bg, #0d0d0d)',
-    border: '1px solid var(--border-color, #2a2a2a)',
+    background: 'var(--bg, #090909)',
+    border: '1px solid var(--border-color, #1A1A1A)',
     borderRadius: 8,
     color: 'var(--text, #f5f5f5)',
     fontSize: 14,
@@ -402,9 +402,9 @@ function QuestionInput({
               style={{
                 flex: 1,
                 padding: '10px',
-                background: active ? GOLD : 'var(--bg, #0d0d0d)',
-                color: active ? '#0D0D0D' : 'var(--text, #f5f5f5)',
-                border: `1px solid ${active ? GOLD : 'var(--border-color, #2a2a2a)'}`,
+                background: active ? GOLD : 'var(--bg, #090909)',
+                color: active ? '#090909' : 'var(--text, #f5f5f5)',
+                border: `1px solid ${active ? GOLD : 'var(--border-color, #1A1A1A)'}`,
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 500,

@@ -6,36 +6,43 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { UserRole } from '@/types'
 import { useTheme } from './ThemeProvider'
+import {
+  Users, SquareCheck, TrendingUp, Sparkles, FileText, Layers, CalendarCheck,
+  DollarSign, Video, MessageCircle, CircleUser, Settings, LayoutDashboard,
+  Compass, Folder, StickyNote, User, type LucideIcon,
+} from 'lucide-react'
 
 interface SidebarProps {
   role: UserRole
   memberName?: string
 }
 
-const adminNav = [
-  { href: '/admin', label: 'Members', icon: '◉' },
-  { href: '/admin/homework', label: 'Homework', icon: '◔' },
-  { href: '/admin/progress', label: 'Progress', icon: '▲' },
-  { href: '/admin/content', label: 'Content', icon: '✦' },
-  { href: '/admin/reports', label: 'Reports', icon: '◈' },
-  { href: '/admin/bulk-reports', label: 'Bulk Reports', icon: '◇' },
-  { href: '/admin/log', label: 'Log This Week', icon: '◆' },
-  { href: '/admin/payments', label: 'Payments', icon: '$' },
-  { href: '/admin/office-hours', label: 'Office Hours', icon: '▶' },
-  { href: '/admin/chats', label: 'Ask Gogo Chats', icon: '◌' },
-  { href: '/admin/team', label: 'Team', icon: '◑' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙' },
+interface NavItem { href: string; label: string; icon: LucideIcon }
+
+const adminNav: NavItem[] = [
+  { href: '/admin', label: 'Members', icon: Users },
+  { href: '/admin/homework', label: 'Homework', icon: SquareCheck },
+  { href: '/admin/progress', label: 'Progress', icon: TrendingUp },
+  { href: '/admin/content', label: 'Content', icon: Sparkles },
+  { href: '/admin/reports', label: 'Reports', icon: FileText },
+  { href: '/admin/bulk-reports', label: 'Bulk Reports', icon: Layers },
+  { href: '/admin/log', label: 'Log This Week', icon: CalendarCheck },
+  { href: '/admin/payments', label: 'Payments', icon: DollarSign },
+  { href: '/admin/office-hours', label: 'Office Hours', icon: Video },
+  { href: '/admin/chats', label: 'Ask Gogo Chats', icon: MessageCircle },
+  { href: '/admin/team', label: 'Team', icon: CircleUser },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
-const memberNav = [
-  { href: '/dashboard', label: 'My Dashboard', icon: '◉' },
-  { href: '/dashboard/homework', label: 'My Homework', icon: '◔' },
-  { href: '/dashboard/blueprint', label: 'My Blueprint', icon: '◈' },
-  { href: '/dashboard/reports', label: 'My Reports', icon: '◆' },
-  { href: '/dashboard/calls', label: 'My Calls', icon: '▶' },
-  { href: '/dashboard/documents', label: 'My Documents', icon: '◈' },
-  { href: '/dashboard/notes', label: 'My Notes', icon: '◇' },
-  { href: '/dashboard/profile', label: 'My Profile', icon: '◑' },
+const memberNav: NavItem[] = [
+  { href: '/dashboard', label: 'My Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/homework', label: 'My Homework', icon: SquareCheck },
+  { href: '/dashboard/blueprint', label: 'My Blueprint', icon: Compass },
+  { href: '/dashboard/reports', label: 'My Reports', icon: FileText },
+  { href: '/dashboard/calls', label: 'My Calls', icon: Video },
+  { href: '/dashboard/documents', label: 'My Documents', icon: Folder },
+  { href: '/dashboard/notes', label: 'My Notes', icon: StickyNote },
+  { href: '/dashboard/profile', label: 'My Profile', icon: User },
 ]
 
 // The Circle network mark — a ring with four connection nodes.
@@ -84,6 +91,7 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
     <nav className="flex-1 px-2.5 py-4 space-y-0.5 overflow-y-auto">
       {nav.map((item) => {
         const active = pathname === item.href || (item.href !== '/admin' && item.href !== '/dashboard' && pathname.startsWith(item.href))
+        const Icon = item.icon
         return (
           <Link
             key={item.href}
@@ -95,7 +103,7 @@ export default function Sidebar({ role, memberName }: SidebarProps) {
                 : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface)]'
             }`}
           >
-            <span className={`text-xs ${active ? 'text-[var(--gold)]' : 'text-[var(--text-3)]'}`}>{item.icon}</span>
+            <Icon size={16} strokeWidth={2} className={`flex-none ${active ? 'text-[var(--gold)]' : 'text-[var(--text-3)]'}`} />
             {item.label}
           </Link>
         )

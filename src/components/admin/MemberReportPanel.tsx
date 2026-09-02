@@ -436,7 +436,7 @@ export default function MemberReportPanel({ memberId, memberName, memberEmail, r
               <button
                 onClick={() => handleGenerate(refineFeedback || undefined, refineReportId)}
                 disabled={generating}
-                className="ml-auto bg-[#C9A227] text-[#0D0D0D] text-sm font-bold px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+                className="ml-auto bg-[#C9A227] text-[#090909] text-sm font-bold px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
               >
                 ✦ Apply &amp; Regenerate
               </button>

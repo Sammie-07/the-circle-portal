@@ -37,7 +37,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     if (target) {
       return (
         <div className="flex min-h-screen flex-col">
-          <div className="flex items-center justify-between gap-4 px-5 py-2 bg-[#C9A227] text-[#0D0D0D] text-sm font-medium">
+          <div className="flex items-center justify-between gap-4 px-5 py-2 bg-[#C9A227] text-[#090909] text-sm font-medium">
             <span>👁 Viewing {target.name}&apos;s portal — admin preview</span>
             <a
               href="/api/admin/impersonate?exit=1"

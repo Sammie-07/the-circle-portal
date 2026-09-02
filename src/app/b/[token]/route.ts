@@ -17,7 +17,7 @@ const PRINT_BAR = `
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button onclick="window.print()" style="
-      background:#C9A227;color:#0D0D0D;border:none;cursor:pointer;
+      background:#C9A227;color:#090909;border:none;cursor:pointer;
       font-family:inherit;font-size:13px;font-weight:700;
       padding:7px 20px;border-radius:3px;letter-spacing:0.03em;
     ">Print / Save as PDF</button>
@@ -109,7 +109,7 @@ export async function GET(
   if (!member || !member.blueprint_html) {
     return new NextResponse(
       `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Not Found</title>
-      <style>body{background:#0D0D0D;color:#555;font-family:Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}</style>
+      <style>body{background:#090909;color:#555;font-family:Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}</style>
       </head><body><p>Blueprint not found or not yet generated.</p></body></html>`,
       { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
     )

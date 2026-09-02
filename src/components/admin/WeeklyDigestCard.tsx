@@ -31,7 +31,7 @@ export default function WeeklyDigestCard() {
       <button
         onClick={sendPreview}
         disabled={sending}
-        className="bg-[#C9A227] text-[#0D0D0D] text-sm font-medium px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
+        className="bg-[#C9A227] text-[#090909] text-sm font-medium px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40"
       >
         {sending ? 'Sending…' : 'Send me a preview now'}
       </button>

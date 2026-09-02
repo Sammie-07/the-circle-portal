@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 
 // The Circle — new design tokens (scoped to login; the global roll-out follows).
 const C = {
-  bg: '#090909', surface: '#0E0E0E', border: '#1A1A1A', border2: '#262421',
+  bg: '#090909', surface: '#0E0E0E', border: '#0E0E0E', border2: '#262421',
   text: '#F2F0EC', text2: '#9A958D', text3: '#6E6A64',
   gold: '#C9A227', goldText: '#E8CF7A', goldSoft: 'rgba(201,162,39,0.13)', goldLine: 'rgba(201,162,39,0.35)',
   red: '#CC1F1F',

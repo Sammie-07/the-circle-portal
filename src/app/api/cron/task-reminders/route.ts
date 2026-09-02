@@ -39,7 +39,7 @@ function taskListHtml(tasks: Task[], todayMs: number): string {
       const dateStr = new Date(t.due_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
       return `
         <tr>
-          <td style="padding:12px 16px;border:1px solid #2A2A2A;border-bottom:none;background:#1A1A1A;">
+          <td style="padding:12px 16px;border:1px solid #1A1A1A;border-bottom:none;background:#0E0E0E;">
             <div style="font-size:15px;color:#FFFFFF;font-weight:600;">${t.title}</div>
             ${t.description ? `<div style="font-size:13px;color:#888888;margin-top:2px;">${t.description}</div>` : ''}
             <div style="font-size:12px;color:${color};margin-top:6px;font-weight:600;">${label} · ${dateStr}</div>
@@ -47,7 +47,7 @@ function taskListHtml(tasks: Task[], todayMs: number): string {
         </tr>`
     })
     .join('')
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-bottom:1px solid #2A2A2A;">${rows}</table>`
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-bottom:1px solid #1A1A1A;">${rows}</table>`
 }
 
 // Daily — email each member a single bundled reminder of their tasks that are

@@ -116,7 +116,7 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
       <button
         type="submit"
         disabled={loading || showedUp === null}
-        className="w-full bg-[#C9A227] text-[#0D0D0D] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full bg-[#C9A227] text-[#090909] text-sm font-medium py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {saved ? 'Saved ✓' : loading ? 'Saving…' : 'Save This Week'}
       </button>

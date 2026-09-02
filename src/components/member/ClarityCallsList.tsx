@@ -74,7 +74,7 @@ function VideoEmbed({ url, title }: { url: string; title: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 bg-[#C9A227] text-[#0D0D0D] font-medium text-sm px-5 py-3 rounded hover:bg-[#d4ac2d] transition-colors"
+      className="inline-flex items-center gap-2 bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-3 rounded hover:bg-[#d4ac2d] transition-colors"
     >
       Watch recording ↗
     </a>

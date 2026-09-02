@@ -279,7 +279,7 @@ PUNCTUATION AND VOICE (strict):
 - NEVER use em dashes or en dashes. Use commas, periods, or rewrite the sentence.
 - Write natural, flowing prose in complete sentences. Short sentences for emphasis only, never a string of clipped fragments.
 
-OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags, no markdown code fences, never start with \`\`\`). Begin directly with an HTML tag. Inline styles only. Brand: background #0D0D0D, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #1A1A1A, borders #2A2A2A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nAddress every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
+OUTPUT: Return ONLY the raw HTML body content (no <html>/<head> tags, no markdown code fences, never start with \`\`\`). Begin directly with an HTML tag. Inline styles only. Brand: background #090909, text #F5F5F5, gold #C9A227, red #CC1F1F, card background #0E0E0E, borders #1A1A1A. Georgia serif headings, Helvetica body. Max width 700px.${feedback ? `\n\n---\n\nREGENERATION REQUEST FROM ADMIN:\n${feedback}\n\nAddress every point in the feedback above while keeping the same structure, brand, and voice.` : ''}`
 
     // ─── REVISION MODE ───────────────────────────────────────────────────────
     // When refining an existing unsent report, we must EDIT THE CURRENT DOCUMENT

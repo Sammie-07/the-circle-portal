@@ -29,7 +29,7 @@ export function wrapPdfBlueprint({
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>${escapeHtml(memberName)} · Blueprint · The Circle</title>
 <style>
-  :root{--gold:#C9A227;--red:#CC1F1F;--bg:#0D0D0D;--border:rgba(201,162,39,0.18);--muted:#777;}
+  :root{--gold:#C9A227;--red:#CC1F1F;--bg:#090909;--border:rgba(201,162,39,0.18);--muted:#777;}
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{background:var(--bg);height:100%;color:#EFEFEF;font-family:'Georgia','Times New Roman',serif;}
   nav{position:sticky;top:0;z-index:200;background:rgba(13,13,13,0.98);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 56px;height:54px;}
