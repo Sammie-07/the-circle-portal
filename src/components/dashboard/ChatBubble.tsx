@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 
 const ChatOverlay = dynamic(() => import('./ChatOverlay'), { ssr: false })
 
 export default function ChatBubble({ preview = false }: { preview?: boolean }) {
   const [open, setOpen] = useState(false)
+
+  // The top bar's "Ask Gogo" button opens this chat via a window event.
+  useEffect(() => {
+    const openChat = () => setOpen(true)
+    window.addEventListener('ask-gogo:open', openChat)
+    return () => window.removeEventListener('ask-gogo:open', openChat)
+  }, [])
 
   return (
     <>

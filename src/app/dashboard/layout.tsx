@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 import ChatBubble from '@/components/dashboard/ChatBubble'
 import SurveyGate from '@/components/dashboard/SurveyGate'
+import PortalTopBar from '@/components/shared/PortalTopBar'
+import { getOfficeHoursStatus } from '@/lib/office-hours'
 
 const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
 
@@ -65,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: member } = await supabase
     .from('members')
-    .select('name, status')
+    .select('name, status, cohort, join_date')
     .eq('email', user.email)
     .single()
 
@@ -87,10 +89,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
     )
   }
 
+  // Top-bar context line: week + quarter of their program.
+  const weeksIn = member?.join_date
+    ? Math.max(0, Math.floor((new Date().getTime() - new Date(member.join_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))
+    : 0
+  const quarter = Math.min(Math.ceil((weeksIn + 1) / 13) || 1, 4)
+  const topline = member?.join_date ? `Week ${weeksIn + 1} of 52 · Q${quarter} focus` : 'The Circle'
+  const oh = await getOfficeHoursStatus()
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <Sidebar role="member" memberName={member?.name ?? profile?.full_name ?? user.email} />
       <main className="flex-1 overflow-auto pb-28">
+        <PortalTopBar topline={topline} zoomLink={oh.zoomLink} />
         {children}
       </main>
       <ChatBubble />
