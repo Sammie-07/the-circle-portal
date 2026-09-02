@@ -161,11 +161,12 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             {payload?.monthLabel} · Complete
           </div>
           <h2 style={{ color: 'var(--text, #f5f5f5)', fontFamily: 'Georgia, serif', fontSize: 30, margin: '0 0 14px', lineHeight: 1.2 }}>
-            Congratulations, you made it to the end.
+            That is a wrap on this month.
           </h2>
           <p style={{ color: 'var(--text-2, #AAAAAA)', fontSize: 15, lineHeight: 1.7, margin: '0 auto 28px', maxWidth: 420 }}>
-            We track this every month so you can see exactly how far you have come. Most people never
-            measure their growth. You just did, and future you will thank you for it.
+            Your numbers are locked in. Every month you do this, the picture of how far you have come
+            gets clearer. Most people never measure their growth. You just did, and future you will
+            thank you for it. See you next month.
           </p>
           <button
             onClick={finish}
@@ -241,9 +242,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             Your monthly check-in
           </h2>
           <p style={{ color: 'var(--text-2, #AAAAAA)', fontSize: 14, lineHeight: 1.6, margin: 0 }}>
-            A few quick numbers so Gogo and the team can track your growth. This takes
-            about 3 minutes and needs to be completed to continue. Your answers save as
-            you go.
+            A few quick numbers so we can track your growth. This takes about 3 minutes and
+            needs to be completed to continue. Your answers save as you go.
           </p>
           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ flex: 1, height: 6, background: 'var(--border-color, #2a2a2a)', borderRadius: 999, overflow: 'hidden' }}>
@@ -281,6 +281,14 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
 
         {/* Footer */}
         <div style={{ padding: '16px 28px 28px', borderTop: '1px solid var(--border-color, #2a2a2a)' }}>
+          <div style={{ textAlign: 'center', margin: '0 0 18px' }}>
+            <p style={{ color: GOLD, fontFamily: 'Georgia, serif', fontSize: 16, margin: '0 0 4px' }}>
+              Congratulations, you made it to the end.
+            </p>
+            <p style={{ color: 'var(--text-2, #AAAAAA)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+              We track this every month so you can see exactly how far you have come.
+            </p>
+          </div>
           {error ? (
             <p style={{ color: '#ff8080', fontSize: 13, margin: '0 0 12px' }}>{error}</p>
           ) : null}
