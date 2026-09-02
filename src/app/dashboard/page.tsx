@@ -36,6 +36,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
+  // Recent replays — the member's clarity calls + the global office-hours
+  // recordings, merged, newest first (a dashboard shortcut to the Calls page).
+  const { data: clarityCalls } = await db
+    .from('clarity_calls')
+    .select('id, title, call_date, created_at')
+    .eq('member_id', member.id as string)
+    .order('call_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(5)
+  const { data: ohCalls } = await db
+    .from('office_hours')
+    .select('id, title, call_date, created_at')
+    .order('call_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(5)
+  type Replay = { id: string; title: string; call_date: string | null; created_at: string; kind: 'clarity' | 'office' }
+  const recentReplays: Replay[] = [
+    ...((clarityCalls ?? []) as Omit<Replay, 'kind'>[]).map((c) => ({ ...c, kind: 'clarity' as const })),
+    ...((ohCalls ?? []) as Omit<Replay, 'kind'>[]).map((c) => ({ ...c, kind: 'office' as const })),
+  ]
+    .sort((a, b) => (b.call_date ?? b.created_at ?? '').localeCompare(a.call_date ?? a.created_at ?? ''))
+    .slice(0, 3)
+  const fmtReplayDate = (d: string | null) => (d ? new Date(d.length <= 10 ? d + 'T00:00:00' : d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '')
+
   const logs = member.weekly_logs ?? []
   const reports = (member.reports ?? []).filter((r: { sent_at: string | null }) => r.sent_at)
 
@@ -225,6 +249,34 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           )}
         </section>
       </div>
+
+      {/* Recent replays */}
+      {recentReplays.length > 0 && (
+        <section className="rounded-[18px] border border-[var(--border-color)] bg-[var(--surface)] p-7">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-[var(--text)] font-serif text-[19px]">Recent replays</h2>
+            <Link href="/dashboard/calls" className="text-[var(--gold-text)] text-[11.5px] hover:text-[var(--gold)]">All calls →</Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {recentReplays.map((r) => {
+              const accent = r.kind === 'clarity' ? 'var(--red)' : 'var(--gold)'
+              return (
+                <Link key={`${r.kind}-${r.id}`} href="/dashboard/calls" className="group block">
+                  <div className="aspect-video rounded-[11px] border border-[var(--border-2)] flex items-center justify-center mb-[11px] transition-transform group-hover:scale-[1.01]" style={{ background: 'var(--tile)' }}>
+                    <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center" style={{ border: `1px solid ${accent}`, color: accent }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                    </div>
+                  </div>
+                  <p className="text-[13.5px] text-[var(--text)] truncate">{r.title}</p>
+                  <p className="text-[11.5px] text-[var(--text-3)] mt-[3px]">
+                    {r.kind === 'clarity' ? 'Clarity call' : 'Office Hours'}{r.call_date ? ` · ${fmtReplayDate(r.call_date)}` : ''}
+                  </p>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* GoGet'Em Community */}
       <section className="rounded-[18px] border border-[var(--border-color)] p-7" style={{ background: 'linear-gradient(100deg, rgba(232,112,154,0.09), rgba(123,95,196,0.09))' }}>
