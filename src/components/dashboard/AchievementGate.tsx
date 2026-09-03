@@ -44,6 +44,21 @@ export default function AchievementGate() {
     return () => { cancelled = true }
   }, [])
 
+  // Re-experience a specific celebration on demand — fired by the member's
+  // notification bell when they click an achievement to replay it.
+  useEffect(() => {
+    function onShow(e: Event) {
+      const detail = (e as CustomEvent).detail as { achievements?: Achievement[] } | undefined
+      if (detail?.achievements && detail.achievements.length > 0) {
+        setItems(detail.achievements)
+        setIdx(0)
+        setOpen(true)
+      }
+    }
+    window.addEventListener('achievements:show', onShow)
+    return () => window.removeEventListener('achievements:show', onShow)
+  }, [])
+
   function close() {
     setOpen(false)
     // Testers keep their cards unseen so the set can be replayed anytime.

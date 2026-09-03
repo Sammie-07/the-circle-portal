@@ -5,37 +5,47 @@ import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// GET /api/achievements/me — achievements for the logged-in member, to pop the
-// confetti gate. Real members: only UNSEEN ones, and only once the feature is
-// live. Test accounts: ALL of them (incl. already-seen) so they can replay the
-// full set, plus an isTester flag that reveals the tester-only Replay button.
-export async function GET() {
+// GET /api/achievements/me — achievements for the logged-in member.
+//   default        → UNSEEN only (drives the auto-popup confetti gate)
+//   ?scope=all     → the member's full history (drives the notification bell)
+// Always returns `unread` (unexperienced = seen_at null) for the bell badge and
+// `isTester` (reveals the tester-only Replay button + returns all on default).
+// Real members get nothing until the feature is flipped live.
+export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ achievements: [], isTester: false })
+  if (!user) return NextResponse.json({ achievements: [], isTester: false, unread: 0 })
 
   const { data: member } = await supabase
     .from('members')
     .select('id, status')
     .eq('email', user.email)
     .maybeSingle()
-  if (!member || member.status !== 'active') return NextResponse.json({ achievements: [], isTester: false })
+  if (!member || member.status !== 'active') return NextResponse.json({ achievements: [], isTester: false, unread: 0 })
 
   const isTester = isAchievementTester(user.email)
-
-  // Real members see nothing until the feature is flipped live.
   if (!isTester) {
     const live = await achievementsLive(createAdminClient())
-    if (!live) return NextResponse.json({ achievements: [], isTester: false })
+    if (!live) return NextResponse.json({ achievements: [], isTester: false, unread: 0 })
   }
+
+  const scopeAll = new URL(request.url).searchParams.get('scope') === 'all'
+
+  const { count: unread } = await supabase
+    .from('achievements')
+    .select('id', { count: 'exact', head: true })
+    .eq('member_id', member.id)
+    .is('seen_at', null)
 
   let q = supabase
     .from('achievements')
-    .select('id, achievement_key, title, body, emoji, tier, badge_key, created_at')
+    .select('id, achievement_key, title, body, emoji, tier, badge_key, created_at, seen_at')
     .eq('member_id', member.id)
     .order('created_at', { ascending: true })
 
-  q = isTester ? q.limit(50) : q.is('seen_at', null).is('dismissed_at', null).limit(6)
+  // Full history for the bell (and for testers, who replay the whole set);
+  // just the unseen ones for the auto-popup.
+  q = (isTester || scopeAll) ? q.limit(60) : q.is('seen_at', null).is('dismissed_at', null).limit(6)
 
   const { data } = await q
   const achievements = (data ?? []).map((a) => ({
@@ -46,8 +56,9 @@ export async function GET() {
     emoji: a.emoji,
     tier: a.tier,
     badgeKey: a.badge_key,
+    seen: !!a.seen_at,
   }))
-  return NextResponse.json({ achievements, isTester })
+  return NextResponse.json({ achievements, isTester, unread: unread ?? 0 })
 }
 
 // POST /api/achievements/me — mark achievements seen after the member views the

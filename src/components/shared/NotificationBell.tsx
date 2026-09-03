@@ -10,9 +10,13 @@ interface Notif {
   title: string
   body: string
   member_id: string | null
+  achievement_id: string | null
   post_id: string | null
   created_at: string
   read_at: string | null
+  tier?: string | null
+  canMakePost?: boolean
+  posted?: boolean
 }
 
 function timeAgo(iso: string): string {
@@ -30,6 +34,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Notif[]>([])
   const [unread, setUnread] = useState(0)
+  const [busyId, setBusyId] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   const load = useCallback(() => {
@@ -70,6 +75,21 @@ export default function NotificationBell() {
     }
   }
 
+  // Admin opts a small (non-milestone) celebration into a content post.
+  function makePost(n: Notif) {
+    if (!n.achievement_id || busyId) return
+    setBusyId(n.id)
+    fetch('/api/admin/achievements/make-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ achievementId: n.achievement_id }),
+    })
+      .then((r) => r.json())
+      .then(() => load())
+      .catch(() => {})
+      .finally(() => setBusyId(null))
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -104,28 +124,37 @@ export default function NotificationBell() {
             <p className="px-4 py-8 text-center text-[13px] text-[var(--text-3)]">No activity yet. Celebrations will show up here.</p>
           ) : (
             <ul>
-              {items.map((n) => {
-                const inner = (
-                  <div className="flex gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-b-0 hover:bg-[var(--gold-soft)] transition-colors">
+              {items.map((n) => (
+                <li key={n.id} className="border-b border-[var(--border-color)] last:border-b-0">
+                  <div className="flex gap-3 px-4 py-3">
                     <span className="text-[18px] leading-none mt-0.5 flex-none">{n.emoji ?? '🎉'}</span>
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] text-[var(--text)] leading-snug">{n.title}</p>
                       {n.body && <p className="text-[12px] text-[var(--text-3)] mt-0.5">{n.body}</p>}
-                      <p className="text-[11px] text-[var(--text-4)] mt-1">{timeAgo(n.created_at)}</p>
+                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                        <span className="text-[11px] text-[var(--text-4)]">{timeAgo(n.created_at)}</span>
+                        {n.type === 'post_created' && (
+                          <Link href="/admin/content" onClick={() => setOpen(false)} className="text-[11px] text-[var(--gold-text)] hover:text-[var(--gold)]">Review in Content →</Link>
+                        )}
+                        {n.type === 'celebration' && n.canMakePost && (
+                          <button
+                            onClick={() => makePost(n)}
+                            disabled={busyId === n.id}
+                            className="text-[11px] rounded-full px-2.5 py-1 border transition-colors disabled:opacity-50"
+                            style={{ borderColor: 'var(--gold-line)', background: 'var(--gold-soft)', color: 'var(--gold-text)' }}
+                          >
+                            {busyId === n.id ? 'Creating…' : '＋ Make post'}
+                          </button>
+                        )}
+                        {n.type === 'celebration' && n.posted && (
+                          <Link href="/admin/content" onClick={() => setOpen(false)} className="text-[11px] text-[var(--text-4)] hover:text-[var(--gold)]">Posted →</Link>
+                        )}
+                      </div>
                     </div>
                     {!n.read_at && <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-none" style={{ background: 'var(--gold)' }} />}
                   </div>
-                )
-                return (
-                  <li key={n.id}>
-                    {n.type === 'post_created' ? (
-                      <Link href="/admin/content" onClick={() => setOpen(false)}>{inner}</Link>
-                    ) : (
-                      inner
-                    )}
-                  </li>
-                )
-              })}
+                </li>
+              ))}
             </ul>
           )}
         </div>

@@ -39,8 +39,8 @@ function themeForKey(key: string): string {
   return 'growth'
 }
 
-// Map a milestone achievement key to a coarse content theme.
-function themeForAchievement(key: string): string {
+// Map an achievement key to a coarse content theme.
+export function themeForAchievement(key: string): string {
   if (key.startsWith('attendance') || key.startsWith('perfect_month') || key.startsWith('survey_streak')) return 'consistency'
   if (key.startsWith('blueprint')) return 'planning'
   if (key.startsWith('tenure')) return 'journey'
