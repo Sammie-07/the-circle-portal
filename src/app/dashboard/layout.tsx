@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import Sidebar from '@/components/shared/Sidebar'
 import ChatBubble from '@/components/dashboard/ChatBubble'
 import SurveyGate from '@/components/dashboard/SurveyGate'
+import AchievementGate from '@/components/dashboard/AchievementGate'
 import PortalTopBar from '@/components/shared/PortalTopBar'
 import { getOfficeHoursStatus } from '@/lib/office-hours'
 
@@ -109,6 +110,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Blocking monthly progress survey — real, active members only (resolved
           by email inside its own API; renders nothing when not due). */}
       <SurveyGate />
+      {/* Celebration pop-up for newly earned achievements (confetti; own API,
+          renders nothing when there's nothing unseen to celebrate). */}
+      <AchievementGate />
     </div>
   )
 }

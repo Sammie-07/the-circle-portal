@@ -39,6 +39,23 @@ function themeForKey(key: string): string {
   return 'growth'
 }
 
+// Map a milestone achievement key to a coarse content theme.
+function themeForAchievement(key: string): string {
+  if (key.startsWith('attendance') || key.startsWith('perfect_month') || key.startsWith('survey_streak')) return 'consistency'
+  if (key.startsWith('blueprint')) return 'planning'
+  if (key.startsWith('tenure')) return 'journey'
+  return 'growth'
+}
+
+interface AchievementSignalRow {
+  member_id: string
+  achievement_key: string
+  title: string
+  body: string
+  created_at: string
+  members: { name: string; is_internal: boolean; status: string } | null
+}
+
 interface MemberRow {
   id: string
   name: string
@@ -158,6 +175,40 @@ export async function scanRecentSignals(admin: SupabaseClient): Promise<ContentS
           member: name,
           milestone: 'has a personalized 12-month blueprint mapping their next year',
           note: 'committed to The Circle, has a clear roadmap and is executing on it',
+        },
+      })
+    }
+  }
+
+  // --- Milestone achievements → member_win posts ---
+  // The achievements engine already detected these celebrations; surface the
+  // milestone ones as postable wins. Skip survey financial wins and raw homework
+  // totals (they have dedicated signals above) so we never double-post one win.
+  {
+    const cutoff = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: achs } = await admin
+      .from('achievements')
+      .select('member_id, achievement_key, title, body, created_at, members!inner ( name, is_internal, status )')
+      .eq('tier', 'milestone')
+      .gte('created_at', cutoff)
+    for (const a of (achs ?? []) as unknown as AchievementSignalRow[]) {
+      const mem = a.members
+      if (!mem || mem.is_internal || mem.status !== 'active') continue
+      if (a.achievement_key.startsWith('survey_win_') || a.achievement_key.startsWith('homework_total_')) continue
+      const theme = themeForAchievement(a.achievement_key)
+      themesPresent.add(theme)
+      signals.push({
+        sourceType: 'member_win',
+        memberId: a.member_id,
+        memberName: mem.name,
+        theme,
+        dedupeKey: `achv:${a.member_id}:${a.achievement_key}`,
+        summary: `${mem.name} · ${a.title}`,
+        data: {
+          member: mem.name,
+          milestone: a.title,
+          detail: a.body,
+          note: 'a milestone worth celebrating publicly — consistency, discipline, and doing the work in The Circle',
         },
       })
     }

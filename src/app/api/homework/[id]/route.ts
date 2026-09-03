@@ -1,5 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { detectForMember } from '@/lib/achievements'
+import { generateBatch } from '@/lib/content/generate-batch'
+import { NextResponse, after } from 'next/server'
+
+export const runtime = 'nodejs'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -59,6 +64,22 @@ export async function PATCH(request: Request, { params }: Params) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Completing an assignment is fresh activity — check for newly earned
+  // achievements in the background (rules only for speed; milestone emails on).
+  // Never blocks the toggle; failures are swallowed.
+  if (patch.completed === true && data?.member_id) {
+    const memberId = data.member_id as string
+    after(async () => {
+      const awarded = await detectForMember(createAdminClient(), memberId, { includeAi: false, email: true }).catch(() => [])
+      // A milestone is postable — draft content for it (achievements now feed the
+      // content machine as member_win signals). Background, capped, never blocks.
+      if (awarded.some((a) => a.tier === 'milestone')) {
+        await generateBatch({ memberId, force: true, cap: 2 }).catch(() => {})
+      }
+    })
+  }
+
   return NextResponse.json({ item: data })
 }
 
