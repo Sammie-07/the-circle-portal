@@ -26,19 +26,20 @@ interface Skin {
   align: 'flex-start' | 'center'
   header: 'text' | 'band'
   deco: 'glow' | 'rail' | 'ring' | 'none'
+  anchor: 'top' | 'center' | 'bottom' // where the headline block sits vertically
 }
 
 const SKINS: Skin[] = [
-  // 0 — Noir with a soft gold corner glow, left aligned.
-  { bg: '#090909', fg: '#FFFFFF', sub: '#CFCFCF', accent: '#C9A227', eyebrow: '#C9A227', counter: '#666666', footerBrand: '#FFFFFF', align: 'flex-start', header: 'text', deco: 'glow' },
-  // 1 — Gold band header, high contrast.
-  { bg: '#0B0B0B', fg: '#FFFFFF', sub: '#C9C9C9', accent: '#C9A227', eyebrow: '#0B0B0B', counter: '#0B0B0B', footerBrand: '#FFFFFF', align: 'flex-start', header: 'band', deco: 'none' },
-  // 2 — Editorial: full-bleed gold left rail, charcoal ground.
-  { bg: '#0E0E0E', fg: '#F2F0EC', sub: '#B4B4B4', accent: '#C9A227', eyebrow: '#C9A227', counter: '#666666', footerBrand: '#F2F0EC', align: 'flex-start', header: 'text', deco: 'rail' },
-  // 3 — Cream / light. Stands out in a dark feed.
-  { bg: '#F2F0EC', fg: '#141414', sub: '#4A4A4A', accent: '#9A7B12', eyebrow: '#9A7B12', counter: '#B3AFA6', footerBrand: '#141414', align: 'flex-start', header: 'text', deco: 'none' },
-  // 4 — Spotlight: centered, warm-dark ground, gold ring, lighter gold accent.
-  { bg: '#0C0A07', fg: '#FFFFFF', sub: '#DADADA', accent: '#E8CF7A', eyebrow: '#E8CF7A', counter: '#7A7A7A', footerBrand: '#FFFFFF', align: 'center', header: 'text', deco: 'ring' },
+  // 0 — Noir with a soft gold corner glow; headline sits low.
+  { bg: '#090909', fg: '#FFFFFF', sub: '#CFCFCF', accent: '#C9A227', eyebrow: '#C9A227', counter: '#666666', footerBrand: '#FFFFFF', align: 'flex-start', header: 'text', deco: 'glow', anchor: 'bottom' },
+  // 1 — Gold band header, high contrast; headline centered.
+  { bg: '#0B0B0B', fg: '#FFFFFF', sub: '#C9C9C9', accent: '#C9A227', eyebrow: '#0B0B0B', counter: '#0B0B0B', footerBrand: '#FFFFFF', align: 'flex-start', header: 'band', deco: 'none', anchor: 'center' },
+  // 2 — Editorial: full-bleed gold left rail; headline high.
+  { bg: '#0E0E0E', fg: '#F2F0EC', sub: '#B4B4B4', accent: '#C9A227', eyebrow: '#C9A227', counter: '#666666', footerBrand: '#F2F0EC', align: 'flex-start', header: 'text', deco: 'rail', anchor: 'top' },
+  // 3 — Cream / light, stands out in a dark feed; headline low.
+  { bg: '#F2F0EC', fg: '#141414', sub: '#4A4A4A', accent: '#9A7B12', eyebrow: '#9A7B12', counter: '#B3AFA6', footerBrand: '#141414', align: 'flex-start', header: 'text', deco: 'none', anchor: 'bottom' },
+  // 4 — Spotlight: centered, warm-dark, gold ring, lighter gold accent.
+  { bg: '#0C0A07', fg: '#FFFFFF', sub: '#DADADA', accent: '#E8CF7A', eyebrow: '#E8CF7A', counter: '#7A7A7A', footerBrand: '#FFFFFF', align: 'center', header: 'text', deco: 'ring', anchor: 'center' },
 ]
 
 function hashStr(s: string): number {
@@ -77,6 +78,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const headlineColor = role === 'cta' ? skin.accent : skin.fg
 
   const pad = skin.deco === 'rail' ? '86px 80px 86px 118px' : '86px 80px'
+  // Vertical composition varies per skin so posts don't look identical.
+  const growTop = skin.anchor === 'top' ? 0 : skin.anchor === 'center' ? 1 : 2
+  const growBottom = skin.anchor === 'top' ? 2 : skin.anchor === 'center' ? 1 : 0
+  const headerColor = skin.header === 'band' ? '#0B0B0B' : skin.eyebrow
+  const ringSize = skin.header === 'band' ? 20 : 22
 
   return new ImageResponse(
     (
@@ -86,7 +92,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           height: '1080px',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
           background: skin.bg,
           padding: pad,
           position: 'relative',
@@ -103,18 +109,24 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           <div style={{ position: 'absolute', top: '270px', left: '290px', width: '500px', height: '500px', borderRadius: '9999px', border: '2px solid rgba(232,207,122,0.22)', display: 'flex' }} />
         ) : null}
 
-        {/* header */}
-        {skin.header === 'band' ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: skin.accent, borderRadius: '8px', padding: '16px 24px' }}>
-            <div style={{ display: 'flex', letterSpacing: '5px', color: '#0B0B0B', fontSize: '24px', fontWeight: 800 }}>THE CIRCLE · #TEAMGOGO</div>
-            <div style={{ display: 'flex', color: '#0B0B0B', fontSize: '24px', fontWeight: 800 }}>{total > 1 ? `${i + 1} / ${total}` : ''}</div>
+        {/* header — the brand mark carries a drawn ⭕ ring */}
+        <div
+          style={
+            skin.header === 'band'
+              ? { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: skin.accent, borderRadius: '8px', padding: '16px 24px' }
+              : { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }
+          }
+        >
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', letterSpacing: skin.header === 'band' ? '5px' : '6px', color: headerColor, fontSize: skin.header === 'band' ? '24px' : '26px', fontWeight: skin.header === 'band' ? 800 : 700 }}>THE CIRCLE</div>
+            <div style={{ display: 'flex', width: `${ringSize}px`, height: `${ringSize}px`, borderRadius: '9999px', border: `3px solid ${headerColor}`, margin: '0 12px' }} />
+            <div style={{ display: 'flex', letterSpacing: skin.header === 'band' ? '5px' : '6px', color: headerColor, fontSize: skin.header === 'band' ? '24px' : '26px', fontWeight: skin.header === 'band' ? 800 : 700 }}>#TEAMGOGO</div>
           </div>
-        ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', letterSpacing: '6px', color: skin.eyebrow, fontSize: '26px', fontWeight: 700 }}>THE CIRCLE · #TEAMGOGO</div>
-            <div style={{ display: 'flex', color: skin.counter, fontSize: '26px', fontWeight: 700 }}>{total > 1 ? `${i + 1} / ${total}` : ''}</div>
-          </div>
-        )}
+          <div style={{ display: 'flex', color: skin.header === 'band' ? '#0B0B0B' : skin.counter, fontSize: skin.header === 'band' ? '24px' : '26px', fontWeight: skin.header === 'band' ? 800 : 700 }}>{total > 1 ? `${i + 1} / ${total}` : ''}</div>
+        </div>
+
+        {/* spacer (varies headline position) */}
+        <div style={{ display: 'flex', flexGrow: growTop }} />
 
         {/* body */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: centered ? 'center' : 'flex-start', width: '100%' }}>
@@ -140,11 +152,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           ) : null}
         </div>
 
-        {/* footer */}
+        {/* spacer */}
+        <div style={{ display: 'flex', flexGrow: growBottom }} />
+
+        {/* footer — brand signature (The Circle ⭕), not a personal account */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', color: skin.footerBrand, fontSize: '30px', fontWeight: 700 }}>Gogo Bethke</div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', color: skin.footerBrand, fontSize: '30px', fontWeight: 700 }}>The Circle</div>
+            <div style={{ display: 'flex', width: '24px', height: '24px', borderRadius: '9999px', border: `3px solid ${skin.accent}`, marginLeft: '10px' }} />
+          </div>
           <div style={{ display: 'flex', color: skin.accent, fontSize: '30px', fontWeight: 700 }}>
-            {i === total - 1 ? 'Comment “CIRCLE”' : 'The Circle'}
+            {i === total - 1 ? 'Comment “CIRCLE”' : 'with Gogo Bethke'}
           </div>
         </div>
       </div>
