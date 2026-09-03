@@ -17,8 +17,14 @@ interface Achievement {
 // yet seen. Fetched on portal load; cycles one card at a time; marks everything
 // seen when the member closes it so it never re-fires. Positive reinforcement,
 // not a blocker — dismissible by button or backdrop.
+//
+// Test accounts get a demo experience: the API returns ALL their achievements
+// (so they can run the whole set) plus a tester-only Replay button, and closing
+// does NOT mark them seen — so it can be replayed. Real members never see the
+// Replay button and their cards are marked seen on close.
 export default function AchievementGate() {
   const [items, setItems] = useState<Achievement[] | null>(null)
+  const [isTester, setIsTester] = useState(false)
   const [idx, setIdx] = useState(0)
   const [open, setOpen] = useState(false)
 
@@ -26,8 +32,9 @@ export default function AchievementGate() {
     let cancelled = false
     fetch('/api/achievements/me')
       .then((r) => r.json())
-      .then((d: { achievements?: Achievement[] }) => {
+      .then((d: { achievements?: Achievement[]; isTester?: boolean }) => {
         if (cancelled) return
+        setIsTester(!!d.isTester)
         if (d.achievements && d.achievements.length > 0) {
           setItems(d.achievements)
           setOpen(true)
@@ -39,7 +46,8 @@ export default function AchievementGate() {
 
   function close() {
     setOpen(false)
-    if (items && items.length > 0) {
+    // Testers keep their cards unseen so the set can be replayed anytime.
+    if (!isTester && items && items.length > 0) {
       fetch('/api/achievements/me', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +86,9 @@ export default function AchievementGate() {
         {items.length > 1 && (
           <p className="absolute top-4 right-5 text-[11px] text-[var(--text-4)]">{idx + 1} of {items.length}</p>
         )}
+        {isTester && (
+          <p className="absolute top-4 left-5 text-[9px] tracking-[0.2em] uppercase text-[var(--text-4)]">Test mode</p>
+        )}
 
         <div
           className="w-[84px] h-[84px] rounded-full flex items-center justify-center mx-auto mb-6 text-[40px]"
@@ -94,12 +105,25 @@ export default function AchievementGate() {
           {current.body}
         </p>
 
-        <button
-          onClick={() => (isLast ? close() : setIdx((i) => i + 1))}
-          className="mt-7 inline-flex items-center justify-center rounded-full bg-[var(--gold)] text-[#0B0B0B] text-[13px] font-medium px-7 py-3 hover:brightness-110 transition-all"
-        >
-          {isLast ? "Let's keep going" : 'Next →'}
-        </button>
+        <div className="mt-7 flex items-center justify-center gap-3">
+          <button
+            onClick={() => (isLast ? close() : setIdx((i) => i + 1))}
+            className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] text-[#0B0B0B] text-[13px] font-medium px-7 py-3 hover:brightness-110 transition-all"
+          >
+            {isLast ? (isTester ? 'Done' : "Let's keep going") : 'Next →'}
+          </button>
+
+          {/* Tester-only — re-experience the whole set from the top. */}
+          {isTester && (
+            <button
+              onClick={() => setIdx(0)}
+              className="inline-flex items-center justify-center rounded-full border text-[13px] px-5 py-3 text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
+              style={{ borderColor: 'var(--border-2)' }}
+            >
+              ↻ Replay
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

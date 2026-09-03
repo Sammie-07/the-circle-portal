@@ -1,33 +1,43 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isAchievementTester, achievementsLive } from '@/lib/achievements'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 
-// GET /api/achievements/me — unseen achievements for the logged-in member, to
-// pop the confetti gate. Returns oldest-first so the celebration order matches
-// the order they were earned.
+// GET /api/achievements/me — achievements for the logged-in member, to pop the
+// confetti gate. Real members: only UNSEEN ones, and only once the feature is
+// live. Test accounts: ALL of them (incl. already-seen) so they can replay the
+// full set, plus an isTester flag that reveals the tester-only Replay button.
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ achievements: [] })
+  if (!user) return NextResponse.json({ achievements: [], isTester: false })
 
   const { data: member } = await supabase
     .from('members')
     .select('id, status')
     .eq('email', user.email)
     .maybeSingle()
-  if (!member || member.status !== 'active') return NextResponse.json({ achievements: [] })
+  if (!member || member.status !== 'active') return NextResponse.json({ achievements: [], isTester: false })
 
-  const { data } = await supabase
+  const isTester = isAchievementTester(user.email)
+
+  // Real members see nothing until the feature is flipped live.
+  if (!isTester) {
+    const live = await achievementsLive(createAdminClient())
+    if (!live) return NextResponse.json({ achievements: [], isTester: false })
+  }
+
+  let q = supabase
     .from('achievements')
     .select('id, achievement_key, title, body, emoji, tier, badge_key, created_at')
     .eq('member_id', member.id)
-    .is('seen_at', null)
-    .is('dismissed_at', null)
     .order('created_at', { ascending: true })
-    .limit(6)
 
+  q = isTester ? q.limit(50) : q.is('seen_at', null).is('dismissed_at', null).limit(6)
+
+  const { data } = await q
   const achievements = (data ?? []).map((a) => ({
     id: a.id,
     key: a.achievement_key,
@@ -37,7 +47,7 @@ export async function GET() {
     tier: a.tier,
     badgeKey: a.badge_key,
   }))
-  return NextResponse.json({ achievements })
+  return NextResponse.json({ achievements, isTester })
 }
 
 // POST /api/achievements/me — mark achievements seen after the member views the

@@ -21,6 +21,21 @@ import { brandedEmail, sendEmail } from '@/lib/email'
 
 export type Tier = 'small' | 'milestone'
 
+// Test accounts always experience achievements (confetti, emails, a Replay
+// button) regardless of the live flag — so the feature can be demoed on a real
+// login while it stays invisible to every real member.
+export const ACHIEVEMENT_TEST_EMAILS = new Set<string>(['akinwandesammy02@gmail.com'])
+export function isAchievementTester(email: string | null | undefined): boolean {
+  return !!email && ACHIEVEMENT_TEST_EMAILS.has(email.toLowerCase())
+}
+
+// Global launch switch. Until app_settings.achievements_live === 'true', the
+// only accounts that earn/see/receive achievements are the test accounts above.
+export async function achievementsLive(admin: SupabaseClient): Promise<boolean> {
+  const { data } = await admin.from('app_settings').select('value').eq('key', 'achievements_live').maybeSingle()
+  return data?.value === 'true'
+}
+
 export interface AchievementCandidate {
   key: string
   title: string
@@ -330,7 +345,9 @@ export async function loadMemberData(admin: SupabaseClient, memberId: string): P
     .select('id, name, email, join_date, status, is_internal')
     .eq('id', memberId)
     .maybeSingle()
-  if (!member || member.status !== 'active' || member.is_internal) return null
+  // Internal/test accounts are allowed to earn achievements (so the feature can
+  // be demoed on a real login); the content machine still skips them publicly.
+  if (!member || member.status !== 'active') return null
 
   const [{ data: homework }, { data: logs }, { data: surveys }] = await Promise.all([
     admin.from('homework').select('completed, completed_at, source, created_at').eq('member_id', memberId),
@@ -458,6 +475,10 @@ export async function detectForMember(
     }
     return awarded
   }
+
+  // Launch gate: until the feature is flipped live, only test accounts earn,
+  // get emailed, or feed content. Backfill (above) bypasses this deliberately.
+  if (!isAchievementTester(data.email) && !(await achievementsLive(admin))) return []
 
   let aiCandidates: AchievementCandidate[] = []
   if (opts.includeAi) {
