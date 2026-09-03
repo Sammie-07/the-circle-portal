@@ -104,13 +104,13 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
   const openCount = data.homework.filter((h) => !h.completed).length
 
   if (completedCount >= 1) {
-    out.push({ key: 'homework_first', emoji: '✅', tier: 'small', title: 'First one down', body: 'You completed your first assignment. This is exactly how momentum starts — keep it rolling.' })
+    out.push({ key: 'homework_first', emoji: '🎯', tier: 'small', title: 'First one down', body: 'You completed your first assignment. This is exactly how momentum starts — keep it rolling.' })
   }
   for (const t of [5, 10, 25, 50, 100]) {
     if (completedCount >= t) {
       out.push({
         key: `homework_total_${t}`,
-        emoji: t >= 50 ? '🏆' : t >= 25 ? '🔥' : '✅',
+        emoji: t >= 100 ? '👑' : t >= 50 ? '🏆' : t >= 25 ? '🔥' : '⚡',
         tier: t >= 25 ? 'milestone' : 'small',
         title: `${t} assignments done`,
         body: `You've completed ${t} assignments in The Circle. That's the compounding effect of showing up and doing the work.`,
@@ -167,7 +167,7 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
     if (weeks.length >= 3 && weeks.every((w) => w.showed_up)) {
       out.push({
         key: `perfect_month_${mk}`,
-        emoji: '🌟',
+        emoji: '🏅',
         tier: 'milestone',
         title: `Perfect ${monthName(mk).split(' ')[0]}`,
         body: `You didn't miss a single office hours in ${monthName(mk)}. A perfect month — that's elite consistency.`,
@@ -189,7 +189,7 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
   const questions = logs.reduce((s, l) => s + (l.questions_asked || 0), 0)
   for (const t of [10, 25]) {
     if (questions >= t) {
-      out.push({ key: `questions_${t}`, emoji: '🙋', tier: 'small', title: `${t} questions asked`, body: `You've brought ${t} questions to the room. The members who ask are the members who grow.` })
+      out.push({ key: `questions_${t}`, emoji: '💡', tier: 'small', title: `${t} questions asked`, body: `You've brought ${t} questions to the room. The members who ask are the members who grow.` })
     }
   }
 
@@ -201,7 +201,7 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
     if (bpDone >= 1) out.push({ key: 'blueprint_started', emoji: '🧭', tier: 'small', title: 'Blueprint underway', body: 'You completed your first step on your 12-month blueprint. The plan is in motion.' })
     for (const t of [25, 50, 75] as const) {
       if (pct >= t / 100) {
-        out.push({ key: `blueprint_pct_${t}`, emoji: t >= 50 ? '🔥' : '🧭', tier: t >= 50 ? 'milestone' : 'small', title: `Blueprint ${t}% complete`, body: `You're ${t}% of the way through your 12-month blueprint. Real, measurable progress on the plan Gogo built with you.`, badgeKey: `blueprint_${t}` })
+        out.push({ key: `blueprint_pct_${t}`, emoji: t >= 50 ? '🗺️' : '🧭', tier: t >= 50 ? 'milestone' : 'small', title: `Blueprint ${t}% complete`, body: `You're ${t}% of the way through your 12-month blueprint. Real, measurable progress on the plan Gogo built with you.`, badgeKey: `blueprint_${t}` })
       }
     }
     if (bpDone === bpTasks.length) {
@@ -231,7 +231,7 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
       else break
     }
     for (const t of [3, 6]) {
-      if (s >= t) out.push({ key: `survey_streak_${t}`, emoji: '🔥', tier: 'milestone', title: `${t}-month check-in streak`, body: `${t} monthly check-ins in a row without missing one. That discipline is the leading indicator of everything else.` })
+      if (s >= t) out.push({ key: `survey_streak_${t}`, emoji: '🔗', tier: 'milestone', title: `${t}-month check-in streak`, body: `${t} monthly check-ins in a row without missing one. That discipline is the leading indicator of everything else.` })
     }
   }
   // Real-life wins from the latest survey vs the prior one (income, credit, debt, growth)

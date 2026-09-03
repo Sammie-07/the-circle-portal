@@ -210,8 +210,35 @@ input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 .tc-rise { animation: tcrise .28s ease both; }
 .tc-pulse { animation: tcpulse 2s ease-in-out infinite; }
 
-/* Survey completion confetti */
+/* Confetti — falls the full height of the viewport and drifts as it goes */
 @keyframes confetti-fall {
-  0% { transform: translateY(-24px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(560px) rotate(720deg); opacity: 0; }
+  0%   { transform: translateY(-6vh) translateX(0) rotate(0deg); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(108vh) translateX(var(--drift, 0px)) rotate(var(--spin, 720deg)); opacity: 0; }
+}
+
+/* Achievement celebration animations */
+@keyframes achv-pop {
+  0%   { transform: scale(.6); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes achv-badge-in {
+  0%   { transform: scale(0) rotate(-25deg); opacity: 0; }
+  55%  { transform: scale(1.18) rotate(6deg); opacity: 1; }
+  75%  { transform: scale(.94) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes achv-ray-spin { to { transform: rotate(360deg); } }
+@keyframes achv-glow {
+  0%, 100% { opacity: .55; transform: scale(1); }
+  50%      { opacity: 1;  transform: scale(1.08); }
+}
+@keyframes achv-shine {
+  0%   { transform: translateX(-130%) rotate(8deg); }
+  100% { transform: translateX(230%) rotate(8deg); }
+}
+@keyframes achv-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
 }
