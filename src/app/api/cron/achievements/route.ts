@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     let ok = false
     if (user) {
       const { data: p } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      ok = ['owner', 'admin'].includes(p?.role ?? '')
+      ok = ['owner', 'admin', 'manager', 'support', 'tech'].includes(p?.role ?? '')
     }
     if (!ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
