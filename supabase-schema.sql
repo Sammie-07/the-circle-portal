@@ -470,7 +470,7 @@ create table if not exists content_posts (
   signal          jsonb not null default '{}'::jsonb,                -- raw trigger data (metrics, deltas)
   trigger_summary text not null default '',                          -- e.g. "Sean · income +45% in Sep"
   dedupe_key      text,                                              -- prevents regenerating the same signal
-  format          text not null default 'carousel' check (format in ('single','carousel')),
+  format          text not null default 'carousel' check (format in ('single','carousel','video')),
   platform        text not null default 'both' check (platform in ('instagram','facebook','both')),
   caption         text not null default '',
   hashtags        text not null default '',

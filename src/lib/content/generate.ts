@@ -15,8 +15,10 @@ export interface GeneratedSlide {
   imageDirection: string
 }
 
+export type ContentFormat = 'single' | 'carousel' | 'video'
+
 export interface GeneratedContent {
-  format: 'single' | 'carousel'
+  format: ContentFormat
   platform: 'instagram' | 'facebook' | 'both'
   caption: string
   hashtags: string
@@ -55,29 +57,36 @@ CALL TO ACTION (always the same mechanic, polish the wording only):
 - EVERY caption must close by inviting the reader to COMMENT the word "CIRCLE" to join / learn about the coaching. This is the only CTA. Vary the surrounding line, keep the ask identical.
 - Good energies: "Comment CIRCLE and I'll show you how to get inside.", "Want this to be your story? Comment CIRCLE.", "Ready to build your plan? Just comment CIRCLE to join the coaching."
 - Do NOT use "DM me", "link in bio", or "your turn" as the primary CTA. The ask is always: comment CIRCLE.
-- In a carousel, the FINAL slide is the CTA slide: its headline/body must be the comment-CIRCLE call to action.
+- In a carousel, the FINAL slide is the CTA slide. In a video, the FINAL beat SPEAKS the comment-CIRCLE call to action.
+
+FORMAT — choose the ONE that fits THIS post best. Do NOT default to carousel. Vary across posts so the feed feels alive:
+- "single": ONE bold graphic + caption. Best for a single punchy moment: a member milestone or number, one powerful belief, a quick win, a sharp quote. Return EXACTLY ONE slide (that graphic).
+- "carousel": 4 to 7 slides. Best when there are multiple points, steps, or a story that unfolds. Slide 1 is the hook cover; each middle slide makes one point; the LAST slide is the comment-CIRCLE CTA.
+- "video": a short vertical REEL script for a human to film (Gogo, or the member, talking to camera). Best for a hook-driven story, a transformation, or a lesson that hits harder spoken out loud. Return 3 to 6 slides used as SCRIPT BEATS where: headline = the on-screen caption text for that beat, body = the EXACT words to say out loud in that beat, imageDirection = the shot / b-roll / visual for that beat. Beat 1 is the scroll-stopping hook (first 2 seconds). The final beat speaks the comment-CIRCLE CTA.
+
+Match format to substance: a single stat or milestone is usually a "single"; a multi-step teaching is usually a "carousel"; an emotional or transformation story is often a "video". Pick what serves this specific win.
 
 BRAND: real estate, coaching, The Circle 12-month program, #teamgogo.
 
 OUTPUT: Return ONLY valid minified JSON, no markdown, no code fence, matching exactly:
-{"format":"single|carousel","platform":"both","caption":"...","hashtags":"#a #b ...","slides":[{"headline":"...","body":"...","imageDirection":"..."}],"artDirection":"..."}
+{"format":"single|carousel|video","platform":"both","caption":"...","hashtags":"#a #b ...","slides":[{"headline":"...","body":"...","imageDirection":"..."}],"artDirection":"..."}
 Rules for the JSON:
-- caption: the full post caption (hook, story/value, CTA). Top-notch. 60-150 words. Line breaks with \\n.
-- format: "carousel" for multi-point stories/teaching (use 4-7 slides), "single" for one punchy graphic (1 slide).
-- slides: for a carousel, slide 1 is the hook cover; each slide has a SHORT headline (<=6 words), a 1-2 sentence body, and imageDirection describing that slide's visual. For a single, exactly ONE slide.
-- artDirection: overall visual style for the designer/Canva: layout, imagery, mood, and how to use the brand (deep near-black background, gold #C9A227 accents, elegant serif headlines, clean sans body).
+- caption: the full post caption (hook, story/value, CTA). Top-notch. 60-150 words. Line breaks with \\n. For a video, this is the reel's posted caption.
+- format: one of "single", "carousel", "video" per the FORMAT rules above.
+- slides: SINGLE = exactly ONE slide. CAROUSEL = 4-7 slides, slide 1 the hook cover, each with a SHORT headline (<=6 words), a 1-2 sentence body, and imageDirection for that slide's visual. VIDEO = 3-6 script beats where headline = on-screen text (<=6 words), body = the spoken line for that beat, imageDirection = the shot / b-roll.
+- artDirection: for single/carousel, the visual style for the designer/Canva (deep near-black background, gold #C9A227 accents, elegant serif headlines, clean sans body). For video, give pacing, target length (aim 20-40 seconds), music vibe, setting, and caption/text-overlay style.
 - hashtags: 8-15 relevant hashtags, real-estate + mindset + local-agnostic.`
 
 function taskFor(signal: ContentSignal): string {
   switch (signal.sourceType) {
     case 'member_win':
-      return `Create a WIN / social-proof post celebrating this member's real progress. Make the audience feel "that could be me." Facts:\n${JSON.stringify(signal.data, null, 2)}`
+      return `Create a WIN / social-proof post celebrating this member's real progress. Make the audience feel "that could be me." FORMAT LEAN: a single stat or milestone is usually best as a "single" bold graphic; reach for a "video" reel script only when the facts tell a real transformation worth hearing spoken. Facts:\n${JSON.stringify(signal.data, null, 2)}`
     case 'community':
-      return `Create a COMMUNITY roundup post using these aggregate results from The Circle this period. Big-number social proof, community energy. Facts:\n${JSON.stringify(signal.data, null, 2)}`
+      return `Create a COMMUNITY roundup post using these aggregate results from The Circle this period. Big-number social proof, community energy. FORMAT LEAN: a "single" big-number graphic, or a short "carousel" if there are several numbers to walk through. Facts:\n${JSON.stringify(signal.data, null, 2)}`
     case 'takeaway':
-      return `Turn this member's real takeaway/lesson into a value + quote post that teaches and inspires. Facts:\n${JSON.stringify(signal.data, null, 2)}`
+      return `Turn this member's real takeaway/lesson into a value + quote post that teaches and inspires. FORMAT LEAN: a "single" quote graphic, or a "video" reel of the lesson spoken to camera. Facts:\n${JSON.stringify(signal.data, null, 2)}`
     case 'educational':
-      return `Create an EDUCATIONAL post teaching Gogo's principle on this theme, motivated by the fact that members are achieving it right now. Lead with the teaching, close with the invitation. Theme: ${signal.theme}. Context:\n${JSON.stringify(signal.data, null, 2)}`
+      return `Create an EDUCATIONAL post teaching Gogo's principle on this theme, motivated by the fact that members are achieving it right now. Lead with the teaching, close with the invitation. FORMAT LEAN: usually a "carousel" teaching sequence, or a "video" reel if the principle lands harder spoken. Theme: ${signal.theme}. Context:\n${JSON.stringify(signal.data, null, 2)}`
   }
 }
 
@@ -146,7 +155,7 @@ Write the post by viewing the observed activity THROUGH the lens of the Brain ab
   }
 
   // Normalize + enforce brand rules.
-  const slides = Array.isArray(parsed.slides) && parsed.slides.length
+  let slides = Array.isArray(parsed.slides) && parsed.slides.length
     ? parsed.slides.map((s) => ({
         headline: banDashes(String(s.headline ?? '')),
         body: banDashes(String(s.body ?? '')),
@@ -154,8 +163,13 @@ Write the post by viewing the observed activity THROUGH the lens of the Brain ab
       }))
     : [{ headline: '', body: '', imageDirection: '' }]
 
+  const format: ContentFormat =
+    parsed.format === 'single' ? 'single' : parsed.format === 'video' ? 'video' : 'carousel'
+  // A single is exactly one graphic; keep only the first slide if the model over-produced.
+  if (format === 'single') slides = [slides[0]]
+
   return {
-    format: parsed.format === 'single' ? 'single' : 'carousel',
+    format,
     platform: 'both',
     caption: banDashes(String(parsed.caption ?? '')),
     hashtags: String(parsed.hashtags ?? ''),

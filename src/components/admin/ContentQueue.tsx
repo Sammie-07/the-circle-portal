@@ -13,7 +13,7 @@ export interface ContentPost {
   id: string
   source_type: 'member_win' | 'community' | 'takeaway' | 'educational'
   trigger_summary: string
-  format: 'single' | 'carousel'
+  format: 'single' | 'carousel' | 'video'
   platform: string
   caption: string
   hashtags: string
@@ -228,7 +228,7 @@ function PostCard({
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-[var(--border-color)]">
         <Badge tone="gold">{SOURCE_LABEL[post.source_type]}</Badge>
-        <Badge>{post.format === 'carousel' ? `Carousel · ${slideCount}` : 'Single'}</Badge>
+        <Badge>{post.format === 'carousel' ? `Carousel · ${slideCount}` : post.format === 'video' ? `Reel · ${slideCount} beats` : 'Single'}</Badge>
         <Badge>{post.platform === 'both' ? 'IG + FB' : post.platform}</Badge>
         <Badge tone={statusTone}>{post.status}</Badge>
         <span className="text-[var(--text-3)] text-sm ml-1 truncate">{post.trigger_summary}</span>
@@ -237,37 +237,57 @@ function PostCard({
       <div className="p-5 flex flex-col lg:flex-row gap-6">
         {/* Slides */}
         <div className="lg:w-[46%] shrink-0">
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {Array.from({ length: slideCount }).map((_, i) => (
-              <div key={i} className="shrink-0 w-44">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/api/content/${post.id}/image?i=${i}`}
-                  alt={`Slide ${i + 1}`}
-                  width={176}
-                  height={176}
-                  loading="lazy"
-                  className="w-44 h-44 rounded-lg border border-[var(--border-color)] object-cover"
-                />
-                <a
-                  href={`/api/content/${post.id}/image?i=${i}`}
-                  download={`circle-${post.id.slice(0, 6)}-${i + 1}.png`}
-                  className="block text-center text-xs text-[var(--text-3)] hover:text-[#C9A227] mt-1.5"
-                >
-                  ↓ Download {slideCount > 1 ? `slide ${i + 1}` : 'image'}
-                </a>
-              </div>
-            ))}
-          </div>
+          {post.format === 'video' ? (
+            /* Reel script — a shot-by-shot storyboard for a human to film. */
+            <ol className="space-y-2.5">
+              {post.slides.map((s, i) => {
+                const label = i === 0 ? 'Hook · first 2s' : i === slideCount - 1 ? 'CTA beat' : `Beat ${i + 1}`
+                return (
+                  <li key={i} className="rounded-lg border border-[var(--border-color)] p-3 bg-[var(--bg)]">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{ background: 'var(--gold-soft)', color: GOLD, border: `1px solid ${GOLD}` }}>{i + 1}</span>
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-3)]">{label}</span>
+                    </div>
+                    {s.headline ? <p className="text-[12.5px] text-[var(--text)]"><span className="text-[var(--text-3)]">On-screen:</span> {s.headline}</p> : null}
+                    {s.body ? <p className="text-[13px] text-[var(--text)] mt-1"><span style={{ color: GOLD }}>Say:</span> {s.body}</p> : null}
+                    {s.imageDirection ? <p className="text-[12px] text-[var(--text-3)] mt-1">Shot: {s.imageDirection}</p> : null}
+                  </li>
+                )
+              })}
+            </ol>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {Array.from({ length: slideCount }).map((_, i) => (
+                <div key={i} className="shrink-0 w-44">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/api/content/${post.id}/image?i=${i}`}
+                    alt={`Slide ${i + 1}`}
+                    width={176}
+                    height={176}
+                    loading="lazy"
+                    className="w-44 h-44 rounded-lg border border-[var(--border-color)] object-cover"
+                  />
+                  <a
+                    href={`/api/content/${post.id}/image?i=${i}`}
+                    download={`circle-${post.id.slice(0, 6)}-${i + 1}.png`}
+                    className="block text-center text-xs text-[var(--text-3)] hover:text-[#C9A227] mt-1.5"
+                  >
+                    ↓ Download {slideCount > 1 ? `slide ${i + 1}` : 'image'}
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
           {post.art_direction ? (
             <button onClick={() => setShowBrief((v) => !v)} className="text-xs text-[var(--text-3)] hover:text-[#C9A227] mt-1">
-              {showBrief ? '▾ Hide' : '▸ Show'} visual / Canva brief
+              {showBrief ? '▾ Hide' : '▸ Show'} {post.format === 'video' ? 'reel notes (pacing / music / setting)' : 'visual / Canva brief'}
             </button>
           ) : null}
           {showBrief ? (
             <p className="text-[var(--text-2)] text-xs leading-relaxed mt-2 whitespace-pre-wrap border-l-2 border-[var(--border-color)] pl-3">
               {post.art_direction}
-              {post.slides?.some((s) => s.imageDirection) ? (
+              {post.format !== 'video' && post.slides?.some((s) => s.imageDirection) ? (
                 <>
                   {'\n\n'}
                   {post.slides.map((s, i) => (s.imageDirection ? `Slide ${i + 1}: ${s.imageDirection}\n` : '')).join('')}
