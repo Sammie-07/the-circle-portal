@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { detectForMember, reconcileAchievementPostNotifications } from '@/lib/achievements'
 import { generateBatch } from '@/lib/content/generate-batch'
@@ -13,14 +14,24 @@ export const maxDuration = 60
 // homework-completion hook covers real-time task wins; this catches everything
 // time-based that no user action triggers.
 export async function GET(request: Request) {
-  if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   // One-time launch backfill: ?mode=backfill records everyone's CURRENT
   // achievements as already seen + emailed (no confetti, no email), so only new
   // milestones from now on celebrate. Run once right after the feature deploys.
   const backfill = new URL(request.url).searchParams.get('mode') === 'backfill'
+
+  // Auth: the Vercel cron secret, OR an owner/admin session (lets an owner run
+  // the one-time launch backfill from the browser, where there's no secret).
+  const cronAuthed = request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`
+  if (!cronAuthed) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    let ok = false
+    if (user) {
+      const { data: p } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      ok = ['owner', 'admin'].includes(p?.role ?? '')
+    }
+    if (!ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const admin = createAdminClient()
   const { data: members } = await admin
