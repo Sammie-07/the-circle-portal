@@ -1,8 +1,10 @@
+/* New portal design system (The Circle) — display + body faces. Kept first so
+   this remote @import precedes all rules (Tailwind's import inlines rules; a
+   later @import violates CSS and breaks the Turbopack dev build). */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/* New portal design system (The Circle) — display + body faces */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
