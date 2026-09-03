@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { detectForMember } from '@/lib/achievements'
+import { detectForMember, reconcileAchievementPostNotifications } from '@/lib/achievements'
 import { generateBatch } from '@/lib/content/generate-batch'
 import { NextResponse, after } from 'next/server'
 
@@ -71,11 +71,14 @@ export async function PATCH(request: Request, { params }: Params) {
   if (patch.completed === true && data?.member_id) {
     const memberId = data.member_id as string
     after(async () => {
-      const awarded = await detectForMember(createAdminClient(), memberId, { includeAi: false, email: true }).catch(() => [])
+      const admin = createAdminClient()
+      const awarded = await detectForMember(admin, memberId, { includeAi: false, email: true }).catch(() => [])
       // A milestone is postable — draft content for it (achievements now feed the
-      // content machine as member_win signals). Background, capped, never blocks.
+      // content machine as member_win signals), then log the "post drafted" admin
+      // notification. Background, capped, never blocks.
       if (awarded.some((a) => a.tier === 'milestone')) {
         await generateBatch({ memberId, force: true, cap: 2 }).catch(() => {})
+        await reconcileAchievementPostNotifications(admin).catch(() => {})
       }
     })
   }

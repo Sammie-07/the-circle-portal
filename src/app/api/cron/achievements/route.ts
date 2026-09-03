@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { detectForMember } from '@/lib/achievements'
+import { detectForMember, reconcileAchievementPostNotifications } from '@/lib/achievements'
 import { generateBatch } from '@/lib/content/generate-batch'
 
 export const runtime = 'nodejs'
@@ -63,6 +63,7 @@ export async function GET(request: Request) {
   let drafted = 0
   if (milestoneTotal > 0) {
     drafted = await generateBatch({ force: true, cap: 4 }).catch(() => 0)
+    await reconcileAchievementPostNotifications(admin).catch(() => {})
   }
 
   return NextResponse.json({ members: list.length, aiRan, awarded: awardedTotal, milestones: milestoneTotal, drafted })

@@ -406,6 +406,57 @@ async function awardCandidates(admin: SupabaseClient, memberId: string, candidat
   }))
 }
 
+// ── Admin notifications ───────────────────────────────────────────────────────
+// A running feed for admins: a member was celebrated, and (separately) a post
+// was drafted from a celebration. Both insert-ignore on dedupe_key so they're
+// written exactly once.
+async function writeCelebrationNotifications(admin: SupabaseClient, data: MemberData, awarded: AchievementRow[]) {
+  if (awarded.length === 0) return
+  const rows = awarded.map((a) => ({
+    type: 'celebration',
+    member_id: data.id,
+    member_name: data.name,
+    achievement_id: a.id,
+    emoji: a.emoji,
+    title: `${data.name} earned “${a.title}”`,
+    body: a.tier === 'milestone' ? 'Milestone reached' : 'Achievement earned',
+    dedupe_key: `celebrated:${a.id}`,
+  }))
+  await admin.from('admin_notifications').upsert(rows, { onConflict: 'dedupe_key', ignoreDuplicates: true })
+}
+
+// Scan recent achievement-driven content drafts and log a "post drafted" admin
+// notification for any that don't have one yet. Called after content generation.
+export async function reconcileAchievementPostNotifications(admin: SupabaseClient) {
+  const { data: posts } = await admin
+    .from('content_posts')
+    .select('id, member_id, dedupe_key, trigger_summary')
+    .like('dedupe_key', 'achv:%')
+    .order('created_at', { ascending: false })
+    .limit(40)
+  if (!posts || posts.length === 0) return
+
+  const { data: existing } = await admin
+    .from('admin_notifications')
+    .select('post_id')
+    .in('post_id', posts.map((p) => p.id))
+  const have = new Set((existing ?? []).map((e) => e.post_id))
+
+  const rows = posts
+    .filter((p) => !have.has(p.id))
+    .map((p) => ({
+      type: 'post_created',
+      member_id: p.member_id,
+      member_name: (p.trigger_summary as string | null)?.split(' · ')[0] ?? null,
+      post_id: p.id,
+      emoji: '📸',
+      title: p.trigger_summary ? `Post drafted — ${p.trigger_summary}` : 'Post drafted from a milestone',
+      body: 'Ready to review in Content.',
+      dedupe_key: `post:${p.id}`,
+    }))
+  if (rows.length > 0) await admin.from('admin_notifications').upsert(rows, { onConflict: 'dedupe_key', ignoreDuplicates: true })
+}
+
 // ── Milestone email (with per-member cooldown) ───────────────────────────────
 const EMAIL_COOLDOWN_DAYS = 2
 
@@ -494,8 +545,9 @@ export async function detectForMember(
 
   const awarded = await awardCandidates(admin, memberId, [...ruleCandidates, ...aiCandidates])
 
-  if (opts.email && awarded.length > 0) {
-    await maybeSendMilestoneEmail(admin, data, awarded)
+  if (awarded.length > 0) {
+    await writeCelebrationNotifications(admin, data, awarded)
+    if (opts.email) await maybeSendMilestoneEmail(admin, data, awarded)
   }
   return awarded
 }

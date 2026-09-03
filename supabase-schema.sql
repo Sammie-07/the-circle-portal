@@ -525,3 +525,25 @@ create policy "admins_manage_achievements" on achievements
   for all using (is_admin()) with check (is_admin());
 create policy "members_read_own_achievements" on achievements
   for select using (member_id in (select id from members where email = auth.email()));
+
+-- Admin activity feed for achievements: a member was celebrated, and a post was
+-- drafted from that celebration. Rendered as a bell + feed in the admin top bar.
+create table if not exists admin_notifications (
+  id             uuid primary key default gen_random_uuid(),
+  type           text not null check (type in ('celebration','post_created')),
+  member_id      uuid references members(id) on delete set null,
+  member_name    text,
+  achievement_id uuid references achievements(id) on delete set null,
+  post_id        uuid references content_posts(id) on delete set null,
+  emoji          text,
+  title          text not null,
+  body           text not null default '',
+  dedupe_key     text,
+  created_at     timestamptz not null default now(),
+  read_at        timestamptz
+);
+create index if not exists admin_notifications_created_idx on admin_notifications(created_at desc);
+create unique index if not exists admin_notifications_dedupe_uk on admin_notifications(dedupe_key);
+alter table admin_notifications enable row level security;
+create policy "admins_manage_admin_notifications" on admin_notifications
+  for all using (is_admin()) with check (is_admin());

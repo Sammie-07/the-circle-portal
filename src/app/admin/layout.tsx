@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Sidebar role="admin" memberName={profile?.full_name ?? user.email} />
       <main className="flex-1 overflow-auto pb-28">
         {/* Join button only on the actual meeting day — never a permanent link to the Zoom. */}
-        <PortalTopBar topline="The Circle · Admin" zoomLink={oh.isMeetingDayET ? oh.zoomLink : null} />
+        <PortalTopBar topline="The Circle · Admin" zoomLink={oh.isMeetingDayET ? oh.zoomLink : null} showNotifications />
         {children}
       </main>
       {/* Staff get their own persisted Ask Gogo chat (staff-keyed sessions). */}
