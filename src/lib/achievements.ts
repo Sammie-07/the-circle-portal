@@ -522,7 +522,8 @@ export async function detectForMember(
     const awarded = await awardCandidates(admin, memberId, ruleCandidates)
     if (awarded.length > 0) {
       const nowIso = new Date().toISOString()
-      await admin.from('achievements').update({ seen_at: nowIso, emailed_at: nowIso }).in('id', awarded.map((a) => a.id))
+      // Mark seen + emailed + backfilled so they never pop, email, or generate content.
+      await admin.from('achievements').update({ seen_at: nowIso, emailed_at: nowIso, backfilled: true }).in('id', awarded.map((a) => a.id))
     }
     return awarded
   }

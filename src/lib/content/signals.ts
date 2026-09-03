@@ -190,6 +190,7 @@ export async function scanRecentSignals(admin: SupabaseClient): Promise<ContentS
       .from('achievements')
       .select('member_id, achievement_key, title, body, created_at, members!inner ( name, is_internal, status )')
       .eq('tier', 'milestone')
+      .eq('backfilled', false) // launch-banked wins never generate content
       .gte('created_at', cutoff)
     for (const a of (achs ?? []) as unknown as AchievementSignalRow[]) {
       const mem = a.members

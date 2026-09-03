@@ -512,6 +512,7 @@ create table if not exists achievements (
   source          text not null default 'rule' check (source in ('rule','ai')),
   badge_key       text,
   metadata        jsonb not null default '{}'::jsonb,
+  backfilled      boolean not null default false,   -- launch-banked wins: no pop/email/content
   created_at      timestamptz not null default now(),
   seen_at         timestamptz,
   dismissed_at    timestamptz,
