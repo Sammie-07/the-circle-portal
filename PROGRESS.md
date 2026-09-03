@@ -161,6 +161,32 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-09-03
+- **Member achievements / milestone celebrations — LIVE (forward-only).** A full positive-reinforcement
+  system. New `achievements` table (award-once per `(member, achievement_key)`; `tier` small|milestone;
+  `seen/dismissed/emailed` stamps; `badge_key`/`metadata` reserved for a future badge collection;
+  `backfilled` flag). Detection engine `src/lib/achievements.ts`: deterministic **rules** (first homework,
+  homework totals 5/10/25/50/100, all-clear, first attendance, attendance streaks 4/8/12, attendance totals,
+  perfect months, comeback, questions, blueprint started/25/50/75/100%, survey first/totals/streaks, survey
+  financial wins via `highlightsBetween`, tenure 1/3/6/12mo) **plus an AI catch-all** (Claude, grounded, ≤2
+  extra/run, award-once, significance floor). Emojis are premium (🎯⚡🔥🏆👑 / 🏅 / 🗺️ / 🔗 / 🚀 / 🎖️ / ✨),
+  no checkmarks. **Celebration UI**: shared `Confetti` (full-screen ~5s fall, drift+spin, circles+streamers)
+  + `AchievementGate` (animated ray-burst medallion, pulsing glow, bouncing badge, shine sweep, gold-gradient
+  milestone titles, tier ribbon); auto-pops unseen on load, and replays a specific card on the
+  `achievements:show` window event. **Triggers**: instant per-member detection in an `after()` hook on
+  homework completion + a daily cron sweep (`/api/cron/achievements`, 15:00 UTC, rules for all + AI within a
+  time budget). **Emails**: milestone-tier only → `brandedEmail`/`sendEmail`, 2-day per-member cooldown.
+  **Member bell** (`MemberNotificationBell`, dashboard top bar): lights up for every sticker, lists history,
+  click re-opens the celebration; hidden until they have one. **Admin bell** (`NotificationBell`, admin top
+  bar): `admin_notifications` feed of 'celebration' + 'post_created' events; small (non-milestone) celebrations
+  get a **＋ Make post** button (`POST /api/admin/achievements/make-post`) — milestones auto-post, small ones
+  opt-in. **Content integration**: milestone achievements feed `scanRecentSignals` as `member_win` signals
+  (skipping survey-win/homework-total dupes and `backfilled` rows); milestones auto-draft into the content
+  queue. **Launch flag** `app_settings.achievements_live` gates everything for real members; `ACHIEVEMENT_TEST_EMAILS`
+  always experience it (used for the demo, with a tester-only Replay button). Launched via a one-time silent
+  backfill (`/api/cron/achievements?mode=backfill`, staff-session or cron-secret auth) that banked 48 existing
+  wins across 7 members as seen+emailed+backfilled, then flipped the flag. tsc + lint + build clean.
+
 ### 2026-09-02
 - **Portal-wide UI facelift — cloned the "The Circle Portal.dc.html" design across every member and
   admin surface (visual only; no features added or removed).** New dark design system driven by CSS
