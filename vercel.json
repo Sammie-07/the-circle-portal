@@ -34,7 +34,7 @@
     },
     {
       "path": "/api/cron/surveys",
-      "schedule": "0 13 * * *"
+      "schedule": "0 15 * * *"
     }
   ]
 }

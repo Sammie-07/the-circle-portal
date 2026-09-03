@@ -1,6 +1,6 @@
 # Circle Portal — Progress
 
-> **Canonical status doc.** Snapshot refreshed 2026-06-30 against the live code, schema, and
+> **Canonical status doc.** Snapshot refreshed 2026-09-03 against the live code, schema, and
 > deployment. Sections 1–8 below are the current state; **§9 Changelog** is the full dated
 > history of every change (newest first). README and CLAUDE.md are real docs now.
 >
@@ -162,6 +162,22 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-09-03
+- **Monthly survey automation — LIVE.** Scheduled `/api/cron/surveys` in `vercel.json` (daily `0 15 * * *`
+  = 11am ET). The route self-guards: it opens the month's survey + emails all active members on the **first
+  Monday**, and re-nudges the unfinished on **Wed/Fri/Sun** of that week; idempotent via `survey_periods`.
+  Gated behind `SURVEYS_CRON_ENABLED=true` (set in Vercel Production). Moved off the crowded 9am slot to
+  11am ET. No `survey_allowlist` set, so it's open to every active member.
+- **Content machine — dynamic format + varied carousel design.** `src/lib/content/generate.ts` now chooses
+  `single` vs `carousel` per signal (per-source-type format leans; a `video` reel-script mode is built but
+  **disabled for now** — normalization maps video→carousel, scaffolding kept dormant in prompt/DB/UI). The
+  slide renderer (`/api/content/[id]/image`) was rewritten with **5 distinct visual skins** (noir glow, gold
+  band, editorial rail, cream/light, spotlight ring) picked per-post by an id hash, plus role-aware sizing
+  (cover/point/CTA), so carousels no longer look identical post-to-post. `content_posts.format` check now
+  allows `video` (dormant); admin queue renders a shot-by-shot storyboard when a post is video.
+- **Portal facelift — complete + live.** Cloned the Claude Design mockup across the whole portal (login,
+  shell with glowing gold active-nav + sticky top bar + tc-rise/tc-pulse motion, dashboard hero, homework,
+  blueprint, reports, and bespoke Calls featured-player / Documents unified-list / redesigned Notes). Visual
+  only — every feature preserved. Top-bar "Join office hours" now shows only on the actual meeting day.
 - **Member achievements / milestone celebrations — LIVE (forward-only).** A full positive-reinforcement
   system. New `achievements` table (award-once per `(member, achievement_key)`; `tier` small|milestone;
   `seen/dismissed/emailed` stamps; `badge_key`/`metadata` reserved for a future badge collection;

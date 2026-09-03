@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { createClient as createServerClient } from '@/lib/supabase/server'
 import { brandedEmail, sendEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 import { etParts, firstMondayDay, windowForMonth } from '@/lib/survey'
@@ -9,25 +8,15 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
-const STAFF = ['owner', 'admin', 'manager', 'support', 'tech']
 
 // Daily cron. On the first Monday of the month it opens the monthly progress
 // survey and emails every active member; on the Wednesday, Friday and Sunday of
 // that same week it re-nudges anyone who still hasn't completed it (every 2 days
 // through the end of the send week). Idempotent via the survey_periods row.
 export async function GET(request: Request) {
-  // Auth: the Vercel cron secret, OR a staff session (so an admin can verify the
-  // schedule is armed from the browser). On a non-send day this is a safe no-op.
-  const cronAuthed = request.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`
-  if (!cronAuthed) {
-    const sb = await createServerClient()
-    const { data: { user } } = await sb.auth.getUser()
-    let ok = false
-    if (user) {
-      const { data: p } = await sb.from('profiles').select('role').eq('id', user.id).single()
-      ok = STAFF.includes(p?.role ?? '')
-    }
-    if (!ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = request.headers.get('authorization')
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Automated sending is intentionally OFF while the survey is under review.
