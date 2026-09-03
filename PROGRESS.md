@@ -161,6 +161,39 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-09-02
+- **Portal-wide UI facelift — cloned the "The Circle Portal.dc.html" design across every member and
+  admin surface (visual only; no features added or removed).** New dark design system driven by CSS
+  variables in `globals.css` (bg `#090909`, surface `#0E0E0E`, gold `#C9A227` / gold-text `#E8CF7A`,
+  red `#CC1F1F` / red-text; `--gold-soft`/`--gold-line`/`--border-2`/`--tile`/`--surface-2` tokens),
+  Playfair Display headings + DM Sans body, and two motion keyframes (`tcrise` fade-up = `.tc-rise`,
+  `tcpulse` = `.tc-pulse`). Because the palette is token-driven, updating the variables reskinned all
+  var-based components at once. Specific work:
+  - **Login** — rebuilt as the two-column design (4-dot CircleMark network, Playfair headline,
+    passwords notice, show/hide toggle); same `signInWithPassword` logic.
+  - **Shell** — `Sidebar` moved to Lucide icons + glowing gold active-nav (gold-soft gradient +
+    inset gold bar + soft glow) + user card; new sticky `PortalTopBar` (context line + "Ask Gogo"
+    button that fires a `window` event to the existing `ChatBubble`, plus "Join office hours").
+  - **Dashboard** — cloned exactly to the mockup: welcome hero folds attendance + homework stats +
+    avatar; office-hours hero (`OfficeHoursCard`, radial glow, `tc-pulse` live dot, all states kept);
+    deadline alert; blueprint/report cards; new **RecentReplays** (inline modal video player,
+    YouTube/Drive/Loom/Vimeo); community card.
+  - **My Homework / My Blueprint / My Reports** — cloned to their design treatments (eyebrow +
+    Playfair 38 headers, count chips, 18px cards, report grid with latest=gold).
+  - **My Calls** — new `CallsScreen`: featured 16:9 player + side card (uses stored call notes, no
+    invented chapter data), "Office Hours Replay" tile grid, "Clarity Call Replay" compact rows;
+    all tiles play inline in a modal. Replaces the old `ClarityCallsList` on the page.
+  - **My Documents** — single unified 18px container with divided rows: file-kind icon box
+    (image thumbnail preserved), name/type/date, gold "Download ↓".
+  - **My Notes** — no design in the file, so built to match the system: polished two-column journal
+    (gold-soft active note with inset gold bar, serif title editor, autosave-on-blur footer). All
+    create/save/delete logic unchanged.
+  - **Join office hours button (top bar)** — now only renders on `isMeetingDayET` (matches the
+    dashboard `OfficeHoursCard`); it is no longer a permanent link to Gogo's Zoom. Appears on the
+    actual meeting day (Tuesday, or a rescheduled day) and disappears otherwise.
+  - All remaining member + admin pages received the shared card language (gold eyebrow, Playfair
+    38 titles, 18px cards) via a bulk transform. tsc + lint + build clean; deployed (`0b4739d`).
+
 ### 2026-08-31
 - **Import call activity from a Fathom link (Log This Week) + auto-suggested homework.** New "Import
   from Fathom" panel on the Log This Week tab: paste a Fathom share link and it reads the call
