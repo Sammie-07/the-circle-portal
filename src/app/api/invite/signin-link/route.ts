@@ -17,7 +17,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
 
-  const { email } = await request.json()
+  const { email: rawEmail } = await request.json()
+  const email = String(rawEmail ?? '').trim().toLowerCase()
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
   // The address MUST belong to a member. Generating a link for an arbitrary email

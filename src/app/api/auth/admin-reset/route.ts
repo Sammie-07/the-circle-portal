@@ -19,7 +19,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
 
-  const { email } = await request.json()
+  const { email: rawEmail } = await request.json()
+  const email = String(rawEmail ?? '').trim().toLowerCase()
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
   const { data: member } = await supabase.from('members').select('name').eq('email', email).maybeSingle()

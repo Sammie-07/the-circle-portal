@@ -11,7 +11,8 @@ export async function POST(request: Request) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Admin only' }, { status: 403 })
 
-  const { name, email, cohort } = await request.json()
+  const { name, email: rawEmail, cohort } = await request.json()
+  const email = String(rawEmail ?? '').trim().toLowerCase()
   if (!name || !email) return NextResponse.json({ error: 'name and email required' }, { status: 400 })
 
   const { data: existing } = await supabase.from('members').select('id').eq('email', email).single()

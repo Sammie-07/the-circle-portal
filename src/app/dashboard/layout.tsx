@@ -69,8 +69,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: member } = await supabase
     .from('members')
     .select('name, status, cohort, join_date')
-    .eq('email', user.email)
-    .single()
+    .eq('email', (user.email ?? '').toLowerCase())
+    .maybeSingle()
 
   // Deactivation gate — block portal access when a member's status is paused.
   // Staff users (no member record) are unaffected since they redirect above.

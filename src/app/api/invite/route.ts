@@ -15,7 +15,8 @@ export async function POST(request: Request) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (!['owner', 'admin', 'manager'].includes(profile?.role ?? '')) return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
 
-  const { email } = await request.json()
+  const { email: rawEmail } = await request.json()
+  const email = String(rawEmail ?? '').trim().toLowerCase()
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
   const { data: member } = await supabase.from('members').select('id, name, invited_at').eq('email', email).single()

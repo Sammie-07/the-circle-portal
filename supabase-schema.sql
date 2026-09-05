@@ -47,6 +47,22 @@ alter table members add column if not exists invited_at timestamptz;
 -- (excluded from the weekly team digest).
 alter table members add column if not exists is_internal boolean not null default false;
 
+-- Members are matched to their login by email = auth.email(), and Supabase
+-- lowercases auth emails. Guarantee the stored member email is always lowercase
+-- so the match can never miss on case (e.g. "Krystal@" vs "krystal@").
+create or replace function lowercase_member_email() returns trigger as $$
+begin
+  if new.email is not null then
+    new.email := lower(new.email);
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+drop trigger if exists members_lowercase_email on members;
+create trigger members_lowercase_email
+  before insert or update of email on members
+  for each row execute function lowercase_member_email();
+
 -- Weekly activity logs
 create table if not exists weekly_logs (
   id uuid default gen_random_uuid() primary key,
@@ -120,9 +136,10 @@ $$ language sql security definer;
 create policy "Admins can view all members"
   on members for select using (is_admin());
 
+-- Case-insensitive on both sides so email case can never gate a member's access.
 create policy "Members can view own record"
   on members for select using (
-    email = (select email from auth.users where id = auth.uid())
+    lower(email) = lower(auth.email())
   );
 
 create policy "Admins can insert members"

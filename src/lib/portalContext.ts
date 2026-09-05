@@ -78,10 +78,12 @@ export async function resolvePortalContext(): Promise<PortalContext> {
   }
 
   // Normal path: cookie client + RLS, own member by email (may be null for staff).
+  // Email match is case-insensitive on both sides — member emails are stored
+  // lowercase and auth emails are lowercase, but never let case gate access.
   const { data: member } = await cookieClient
     .from('members')
     .select('*')
-    .eq('email', user.email)
+    .eq('email', (user.email ?? '').toLowerCase())
     .maybeSingle()
 
   return {
