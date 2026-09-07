@@ -46,7 +46,7 @@ interface Skin {
   eyebrow: string
   accent: string // primary metallic
   ground: 'dark' | 'light'
-  motif: 'frame' | 'medallion' | 'rule'
+  motif: 'frame' | 'medallion' | 'rule' | 'rays'
   redAccent: boolean
 }
 
@@ -118,6 +118,11 @@ export async function renderSlideImage(opts: {
       <div style={{ width: '1080px', height: '1080px', display: 'flex', background: skin.bg, position: 'relative', fontFamily: SANS }}>
         {/* soft glow — radial fade (Satori can't blur, so gradient to transparent) */}
         <div style={{ position: 'absolute', top: '-260px', right: '-180px', width: '640px', height: '640px', borderRadius: '9999px', background: 'radial-gradient(closest-side, rgba(201,162,39,0.20), rgba(201,162,39,0))', display: 'flex' }} />
+
+        {/* gold ray burst behind the type */}
+        {skin.motif === 'rays' ? (
+          <div style={{ position: 'absolute', top: '-360px', left: '50%', marginLeft: '-500px', width: '1000px', height: '1000px', borderRadius: '9999px', display: 'flex', opacity: 0.42, background: 'repeating-conic-gradient(from 0deg, rgba(201,162,39,0.5) 0deg 1.6deg, rgba(0,0,0,0) 1.6deg 15deg)', maskImage: 'radial-gradient(closest-side, transparent 40%, #000 52%, transparent 74%)', WebkitMaskImage: 'radial-gradient(closest-side, transparent 40%, #000 52%, transparent 74%)' }} />
+        ) : null}
 
         {/* inset luxury frame */}
         {skin.motif === 'frame' ? (
