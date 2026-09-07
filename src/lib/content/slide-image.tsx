@@ -57,11 +57,10 @@ const SKINS: Skin[] = [
   { bg: 'linear-gradient(160deg, #1C0B0B 0%, #0A0706 60%)', headline: IVORY, body: '#C6B8B2', eyebrow: GOLD_LT, accent: GOLD, ground: 'dark', motif: 'rule', redAccent: true },
   // Spotlight medallion — concentric-ring emblem, centered.
   { bg: 'radial-gradient(120% 90% at 50% 22%, #1A150C 0%, #0A0908 62%)', headline: IVORY, body: '#CBC4B6', eyebrow: GOLD_LT, accent: GOLD_LT, ground: 'dark', motif: 'medallion', redAccent: false },
-  // Ivory: light luxury, black serif.
-  { bg: 'linear-gradient(160deg, #F7F3EA 0%, #EFE8DA 100%)', headline: '#141210', body: '#5A544A', eyebrow: '#9A7B12', accent: '#9A7B12', ground: 'light', motif: 'rule', redAccent: true },
-  // Onyx, framed.
-  { bg: 'linear-gradient(160deg, #100E0A 0%, #0A0908 60%)', headline: IVORY, body: '#B9B2A4', eyebrow: GOLD_LT, accent: GOLD, ground: 'dark', motif: 'frame', redAccent: false },
+  // Onyx rays, red-forward.
+  { bg: 'linear-gradient(160deg, #100E0A 0%, #0A0908 60%)', headline: IVORY, body: '#B9B2A4', eyebrow: GOLD_LT, accent: GOLD, ground: 'dark', motif: 'rays', redAccent: true },
 ]
+// NOTE: brand is strictly black + gold + hint of red. No light/ivory grounds.
 
 function hashStr(s: string): number {
   let h = 0
