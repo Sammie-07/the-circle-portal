@@ -90,7 +90,8 @@ FORMAT — choose the ONE that fits THIS post. Do NOT default to carousel, genui
 - A single stat/quote/milestone is usually a "single"; a multi-step lesson or a story that unfolds is a "carousel". Mix them across posts.
 
 NEVER SAY (hard bans, even if the Brain excerpts mention them):
-- Do NOT reference limited seats, a seat count, or a once-a-year / annual opening. Never write "20 seats", "only 20 spots", "opens once a year", "doors open once a year", or any fixed cap. The Circle ⭕️ is actively expanding, so never imply scarcity, a waitlist, or a closing deadline. The CTA is always the open invitation to comment CIRCLE.
+- Do NOT reference a seat count or a once-a-year / annual opening. Never write "20 seats", "only 20 spots", "opens once a year", "doors open once a year", "enrollment closes", a countdown, or any fixed number of spots. The Circle ⭕️ is actively expanding, so never imply an annual-only window, a waitlist, or a closing deadline.
+- Premium positioning IS allowed (it just cannot be a number or a date): describing The Circle ⭕️ as a small, handpicked, intimate coaching room is fine. The CTA stays the open invitation to comment CIRCLE.
 
 BRAND: real estate, coaching, The Circle ⭕️ 12-month program, #teamgogo.
 
