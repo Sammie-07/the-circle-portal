@@ -89,6 +89,9 @@ FORMAT — choose the ONE that fits THIS post. Do NOT default to carousel, genui
 - "carousel": a 6 to 9 slide story or teaching sequence. Hook slide, then value slides with ONE idea each (bold, high-contrast, never a wall of text), then the CTA slide.
 - A single stat/quote/milestone is usually a "single"; a multi-step lesson or a story that unfolds is a "carousel". Mix them across posts.
 
+NEVER SAY (hard bans, even if the Brain excerpts mention them):
+- Do NOT reference limited seats, a seat count, or a once-a-year / annual opening. Never write "20 seats", "only 20 spots", "opens once a year", "doors open once a year", or any fixed cap. The Circle ⭕️ is actively expanding, so never imply scarcity, a waitlist, or a closing deadline. The CTA is always the open invitation to comment CIRCLE.
+
 BRAND: real estate, coaching, The Circle ⭕️ 12-month program, #teamgogo.
 
 OUTPUT: Return ONLY valid minified JSON, no markdown, no code fence, matching exactly:
