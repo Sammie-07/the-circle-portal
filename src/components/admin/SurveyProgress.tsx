@@ -93,8 +93,6 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
   const withData = members.filter((m) => m.responses.length > 0)
   const [selectedId, setSelectedId] = useState<string>(withData[0]?.id ?? members[0]?.id ?? '')
   const selected = members.find((m) => m.id === selectedId) ?? null
-  // Which month's written reflections to show (null = latest available).
-  const [reflMonth, setReflMonth] = useState<string | null>(null)
 
   // Columns = optional intake baseline + each completed month (oldest → newest).
   const columns = useMemo(() => {
@@ -120,23 +118,19 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
     return out.reverse()
   }, [selected, columns])
 
-  // The numeric/short comparison table shows only quantitative questions. All
-  // long-form written answers are pulled out into the Reflections section below,
-  // so prose never gets crammed (and truncated) into a right-aligned table cell.
+  // The numeric/short comparison table shows only quantitative questions. The
+  // long-form written answers get their OWN comparison table below, with cells
+  // that WRAP (the numeric table's nowrap right-align was truncating prose).
   const tableQuestions = SURVEY_QUESTIONS.filter((q) => q.type !== 'longtext')
   const reflectionQs = SURVEY_QUESTIONS.filter((q) => q.type === 'longtext')
 
-  // Months that actually contain at least one written reflection, oldest → newest.
-  const reflectionResponses = selected
-    ? selected.responses.filter((r) => reflectionQs.some((q) => {
-        const v = r.answers[q.key]
-        return typeof v === 'string' && v.trim() !== ''
-      }))
-    : []
-  const activeReflMonth = reflMonth && reflectionResponses.some((r) => r.periodMonth === reflMonth)
-    ? reflMonth
-    : reflectionResponses[reflectionResponses.length - 1]?.periodMonth ?? null
-  const activeReflResponse = reflectionResponses.find((r) => r.periodMonth === activeReflMonth) ?? null
+  // Reflection columns = each completed month, oldest → newest (no intake, which
+  // never captured written answers).
+  const reflectionCols = selected ? selected.responses.map((r) => ({ periodMonth: r.periodMonth, answers: r.answers })) : []
+  const hasReflections = reflectionCols.some((c) => reflectionQs.some((q) => {
+    const v = c.answers[q.key]
+    return typeof v === 'string' && v.trim() !== ''
+  }))
 
   if (members.length === 0) {
     return <p className="text-[var(--text-3)] text-sm">No members yet.</p>
@@ -355,49 +349,68 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
               </div>
             </div>
 
-            {/* Written reflections — one month at a time, full text, no scroll */}
-            {activeReflResponse && (
+            {/* Written reflections — same month-by-month comparison as the metrics
+                table, but cells WRAP so long answers read in full, side by side. */}
+            {hasReflections && (
               <div>
-                <div className="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+                <div className="flex items-baseline justify-between mb-3">
                   <h3 className="font-serif text-lg text-[var(--text)]">Reflections</h3>
-                  {reflectionResponses.length > 1 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {reflectionResponses.map((r) => {
-                        const on = r.periodMonth === activeReflMonth
-                        return (
-                          <button
-                            key={r.periodMonth}
-                            onClick={() => setReflMonth(r.periodMonth)}
-                            className="rounded-full px-3 py-1 text-xs transition-colors border"
-                            style={on
-                              ? { background: 'rgba(201,162,39,0.12)', borderColor: 'rgba(201,162,39,0.5)', color: GOLD }
-                              : { borderColor: 'var(--border-color)', color: 'var(--text-3)' }}
-                          >
-                            {monthShort(r.periodMonth)}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
+                  <span className="text-[var(--text-3)] text-xs">Compare written answers month to month</span>
                 </div>
-                <p className="text-[var(--text-3)] text-xs mb-3">{monthLong(activeReflMonth!)}</p>
-                <div className="flex flex-col gap-3">
-                  {reflectionQs.map((q) => {
-                    const v = activeReflResponse.answers[q.key]
-                    const answered = typeof v === 'string' && v.trim() !== ''
-                    return (
-                      <div key={q.key} className="rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-4">
-                        <p className="text-[var(--text-3)] text-xs mb-1.5">{q.label}</p>
-                        {answered ? (
-                          <p className="text-[var(--text)] text-sm leading-relaxed whitespace-pre-wrap" style={{ overflowWrap: 'anywhere' }}>
-                            {String(v)}
-                          </p>
-                        ) : (
-                          <p className="text-[var(--text-4)] text-sm italic">Not answered</p>
-                        )}
-                      </div>
-                    )
-                  })}
+                <div className="border border-[var(--border-color)] rounded-xl overflow-x-auto">
+                  <table className="text-sm" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                    <thead>
+                      <tr className="bg-[var(--surface-2)]">
+                        <th className="text-left align-bottom font-medium text-[var(--text-3)] px-5 py-3.5 sticky left-0 bg-[var(--surface-2)]" style={{ width: 220, minWidth: 220 }}>
+                          Question
+                        </th>
+                        {reflectionCols.map((c, i) => {
+                          const isLatest = i === reflectionCols.length - 1
+                          return (
+                            <th
+                              key={c.periodMonth}
+                              className="text-left align-bottom font-medium px-5 py-3.5 whitespace-nowrap"
+                              style={{ width: 300, minWidth: 300, color: isLatest ? GOLD : 'var(--text-2)', background: isLatest ? 'rgba(201,162,39,0.06)' : undefined }}
+                            >
+                              {isLatest ? (
+                                <span className="inline-flex items-center gap-1.5">
+                                  {monthShort(c.periodMonth)}
+                                  <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#090909', background: GOLD }}>Latest</span>
+                                </span>
+                              ) : monthShort(c.periodMonth)}
+                            </th>
+                          )
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reflectionQs.map((q, rowIdx) => (
+                        <tr key={q.key} className="border-t border-[var(--border-color)]" style={rowIdx % 2 === 1 ? { background: 'var(--surface-2)' } : undefined}>
+                          <td className="px-5 py-3.5 align-top text-[var(--text-2)] sticky left-0" style={{ lineHeight: 1.4, width: 220, minWidth: 220, background: 'inherit' }}>
+                            {q.label}
+                          </td>
+                          {reflectionCols.map((c, i) => {
+                            const v = c.answers[q.key]
+                            const answered = typeof v === 'string' && v.trim() !== ''
+                            const isLatest = i === reflectionCols.length - 1
+                            return (
+                              <td
+                                key={c.periodMonth}
+                                className="px-5 py-3.5 align-top"
+                                style={{ width: 300, minWidth: 300, background: isLatest ? 'rgba(201,162,39,0.04)' : undefined, overflowWrap: 'anywhere' }}
+                              >
+                                {answered ? (
+                                  <span className="text-[var(--text)] leading-relaxed whitespace-pre-wrap">{String(v)}</span>
+                                ) : (
+                                  <span className="text-[var(--text-4)] italic">—</span>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
