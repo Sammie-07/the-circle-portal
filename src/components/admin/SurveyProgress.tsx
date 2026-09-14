@@ -93,6 +93,8 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
   const withData = members.filter((m) => m.responses.length > 0)
   const [selectedId, setSelectedId] = useState<string>(withData[0]?.id ?? members[0]?.id ?? '')
   const selected = members.find((m) => m.id === selectedId) ?? null
+  // Which month's written reflections to show (null = latest available).
+  const [reflMonth, setReflMonth] = useState<string | null>(null)
 
   // Columns = optional intake baseline + each completed month (oldest → newest).
   const columns = useMemo(() => {
@@ -118,8 +120,23 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
     return out.reverse()
   }, [selected, columns])
 
-  // Metric rows shown in the table (takeaway is pulled out into its own block).
-  const tableQuestions = SURVEY_QUESTIONS.filter((q) => q.key !== 'takeaway')
+  // The numeric/short comparison table shows only quantitative questions. All
+  // long-form written answers are pulled out into the Reflections section below,
+  // so prose never gets crammed (and truncated) into a right-aligned table cell.
+  const tableQuestions = SURVEY_QUESTIONS.filter((q) => q.type !== 'longtext')
+  const reflectionQs = SURVEY_QUESTIONS.filter((q) => q.type === 'longtext')
+
+  // Months that actually contain at least one written reflection, oldest → newest.
+  const reflectionResponses = selected
+    ? selected.responses.filter((r) => reflectionQs.some((q) => {
+        const v = r.answers[q.key]
+        return typeof v === 'string' && v.trim() !== ''
+      }))
+    : []
+  const activeReflMonth = reflMonth && reflectionResponses.some((r) => r.periodMonth === reflMonth)
+    ? reflMonth
+    : reflectionResponses[reflectionResponses.length - 1]?.periodMonth ?? null
+  const activeReflResponse = reflectionResponses.find((r) => r.periodMonth === activeReflMonth) ?? null
 
   if (members.length === 0) {
     return <p className="text-[var(--text-3)] text-sm">No members yet.</p>
@@ -338,41 +355,49 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
               </div>
             </div>
 
-            {/* Monthly takeaways */}
-            {selected.responses.some((r) => {
-              const t = r.answers['takeaway']
-              return typeof t === 'string' && t.trim() !== ''
-            }) && (
+            {/* Written reflections — one month at a time, full text, no scroll */}
+            {activeReflResponse && (
               <div>
-                <h3 className="font-serif text-lg text-[var(--text)] mb-3">Monthly takeaways</h3>
-                <div className="flex flex-col gap-3">
-                  {selected.responses
-                    .slice()
-                    .reverse()
-                    .map((r, idx) => {
-                      const t = r.answers['takeaway']
-                      if (typeof t !== 'string' || t.trim() === '') return null
-                      const isLatest = idx === 0
-                      return (
-                        <div
-                          key={r.periodMonth}
-                          className="rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-4"
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[var(--text-3)] text-xs uppercase tracking-wider">{monthLong(r.periodMonth)}</span>
-                            {isLatest && (
-                              <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#090909', background: GOLD }}>Latest</span>
-                            )}
-                          </div>
-                          <p
-                            className="text-[var(--text-2)] text-sm italic leading-relaxed"
-                            style={{ borderLeft: `2px solid ${isLatest ? GOLD : 'var(--border-color)'}`, paddingLeft: 12 }}
+                <div className="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+                  <h3 className="font-serif text-lg text-[var(--text)]">Reflections</h3>
+                  {reflectionResponses.length > 1 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {reflectionResponses.map((r) => {
+                        const on = r.periodMonth === activeReflMonth
+                        return (
+                          <button
+                            key={r.periodMonth}
+                            onClick={() => setReflMonth(r.periodMonth)}
+                            className="rounded-full px-3 py-1 text-xs transition-colors border"
+                            style={on
+                              ? { background: 'rgba(201,162,39,0.12)', borderColor: 'rgba(201,162,39,0.5)', color: GOLD }
+                              : { borderColor: 'var(--border-color)', color: 'var(--text-3)' }}
                           >
-                            &ldquo;{t}&rdquo;
+                            {monthShort(r.periodMonth)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+                <p className="text-[var(--text-3)] text-xs mb-3">{monthLong(activeReflMonth!)}</p>
+                <div className="flex flex-col gap-3">
+                  {reflectionQs.map((q) => {
+                    const v = activeReflResponse.answers[q.key]
+                    const answered = typeof v === 'string' && v.trim() !== ''
+                    return (
+                      <div key={q.key} className="rounded-xl border border-[var(--border-color)] bg-[var(--surface)] p-4">
+                        <p className="text-[var(--text-3)] text-xs mb-1.5">{q.label}</p>
+                        {answered ? (
+                          <p className="text-[var(--text)] text-sm leading-relaxed whitespace-pre-wrap" style={{ overflowWrap: 'anywhere' }}>
+                            {String(v)}
                           </p>
-                        </div>
-                      )
-                    })}
+                        ) : (
+                          <p className="text-[var(--text-4)] text-sm italic">Not answered</p>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
