@@ -46,6 +46,8 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [fathomUrl, setFathomUrl] = useState('')
+  const [pastedTranscript, setPastedTranscript] = useState('')
+  const [showPaste, setShowPaste] = useState(false)
   const [importing, setImporting] = useState(false)
   // Member IDs whose row was just pre-filled from a Fathom import. Used to make
   // those rows visibly "light up" so the admin notices what to review. A row's
@@ -66,14 +68,16 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
   // what they raised). Everything stays editable, nothing saves until the admin
   // clicks Save.
   async function importFromFathom() {
-    if (!fathomUrl.trim()) { toast('Paste a Fathom share link first', 'error'); return }
+    const pasted = pastedTranscript.trim()
+    if (!pasted && !fathomUrl.trim()) { toast('Paste a Fathom link or a transcript first', 'error'); return }
     setImporting(true)
     setError('')
     try {
       const res = await fetch('/api/logs/from-fathom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: fathomUrl.trim() }),
+        // Pasted transcript wins when present (works for Fyxer or any tool).
+        body: JSON.stringify(pasted ? { transcript: pasted } : { url: fathomUrl.trim() }),
       })
       const data = await res.json()
       if (!res.ok) { toast(data.error ?? 'Could not process the call', 'error'); return }
@@ -230,20 +234,22 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
         </div>
       </div>
 
-      {/* Import from Fathom */}
+      {/* Import from a call — Fathom link or a pasted transcript */}
       <div className="bg-[#0E0E0E] border border-[#1A1A1A] rounded p-4 mb-6">
-        <p className="text-[#C9A227] text-xs uppercase tracking-wider mb-2">Import from Fathom</p>
+        <p className="text-[#C9A227] text-xs uppercase tracking-wider mb-2">Import from a call</p>
         <p className="text-[#666] text-xs mb-3 leading-relaxed">
-          Paste the call recording link. It reads the transcript and pre-fills Showed Up, Questions,
-          and Notes for each member. Everything stays editable, nothing saves until you click Save below.
+          Paste a Fathom share link, or paste a transcript from any tool (Fyxer, Zoom, etc.). It reads
+          the transcript and pre-fills Showed Up, Questions, and Notes for each member. Everything stays
+          editable, nothing saves until you click Save below.
         </p>
         <div className="flex gap-2">
           <input
             type="url"
             value={fathomUrl}
             onChange={e => setFathomUrl(e.target.value)}
+            disabled={!!pastedTranscript.trim()}
             placeholder="https://fathom.video/share/..."
-            className="flex-1 bg-[#090909] border border-[#1A1A1A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
+            className="flex-1 bg-[#090909] border border-[#1A1A1A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227] disabled:opacity-40"
           />
           <button
             onClick={importFromFathom}
@@ -253,6 +259,38 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
             {importing ? 'Processing…' : 'Process call'}
           </button>
         </div>
+
+        {/* Paste-transcript fallback (for Fyxer and anything that isn't a Fathom link) */}
+        {!showPaste ? (
+          <button
+            onClick={() => setShowPaste(true)}
+            className="text-[#888] hover:text-[#C9A227] text-xs mt-3 transition-colors"
+          >
+            No Fathom link? Paste a transcript instead →
+          </button>
+        ) : (
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[#888] text-xs">Paste transcript</label>
+              <button
+                onClick={() => { setShowPaste(false); setPastedTranscript('') }}
+                className="text-[#555] hover:text-[#888] text-xs transition-colors"
+              >
+                Use a Fathom link instead
+              </button>
+            </div>
+            <textarea
+              value={pastedTranscript}
+              onChange={e => setPastedTranscript(e.target.value)}
+              rows={5}
+              placeholder="Paste the full call transcript here (speaker names help attribution, e.g. 'Krystal: ...'). Then click Process call."
+              className="w-full bg-[#090909] border border-[#1A1A1A] text-white rounded px-3 py-2 text-xs leading-relaxed resize-y focus:outline-none focus:border-[#C9A227]"
+            />
+            {pastedTranscript.trim() && (
+              <p className="text-[#555] text-xs mt-1.5">Using the pasted transcript. The Fathom link is ignored while this has text.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Summary bar */}

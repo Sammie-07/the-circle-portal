@@ -33,11 +33,24 @@ export async function POST(request: Request) {
     }
     const userId = user.id
 
-    let body: { url?: string } = {}
+    let body: { url?: string; transcript?: string } = {}
     try { body = await request.json() } catch { /* handled below */ }
-    if (!body.url) return NextResponse.json({ error: 'Paste a Fathom share link first.' }, { status: 400 })
 
-    const transcript = await fetchFathomTranscript(body.url)
+    // Two ways in: a Fathom share link we fetch, OR a transcript pasted directly
+    // (works for Fyxer or any other tool). Pasted text wins if both are present.
+    const pasted = (body.transcript ?? '').trim()
+    let transcript: { title: string; speakers: string[]; text: string }
+    if (pasted) {
+      if (pasted.length < 40) {
+        return NextResponse.json({ error: 'That transcript looks too short to process. Paste the full call transcript.' }, { status: 400 })
+      }
+      const capped = pasted.length > 120_000 ? pasted.slice(0, 120_000) + '\n...[transcript truncated]' : pasted
+      transcript = { title: 'Pasted transcript', speakers: [], text: capped }
+    } else if (body.url && body.url.trim()) {
+      transcript = await fetchFathomTranscript(body.url.trim())
+    } else {
+      return NextResponse.json({ error: 'Paste a Fathom share link, or paste a transcript.' }, { status: 400 })
+    }
 
     // Real, active members only. Internal/staff accounts (Gogo, Kristy, Ferny,
     // Adriana, test profiles) also appear as speakers on the call but must never
