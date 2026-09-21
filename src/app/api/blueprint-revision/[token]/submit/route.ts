@@ -49,10 +49,10 @@ export async function POST(
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
-  // Regenerate the blueprint, THEN notify admins — after the member's response.
+  // Edit the blueprint into a DRAFT, THEN notify admins — after the member's response.
   after(async () => {
     try {
-      await applyRevisionAndNotify(supabase, revision.member_id, answers)
+      await applyRevisionAndNotify(supabase, revision.member_id, revision.id, answers)
     } catch (err) {
       console.error('[Revision] background apply failed:', err instanceof Error ? err.message : String(err))
     }
@@ -61,17 +61,18 @@ export async function POST(
   return NextResponse.json({ success: true })
 }
 
-// Edit the member's existing blueprint to accommodate their new direction
-// (archiving the current version first), then notify admins that the updated
-// draft is ready to review and send.
+// Edit the member's existing blueprint to accommodate their new direction and
+// store the result as a DRAFT (leaving the live blueprint untouched so the member
+// sees no gap), then notify admins that a draft is ready to review and publish.
 async function applyRevisionAndNotify(
   supabase: SupabaseClient,
   memberId: string,
+  revisionId: string,
   answers: Answer[]
 ) {
   const { data: member } = await supabase
     .from('members')
-    .select('name, blueprint_html, blueprint_data, blueprint_generated_at, blueprint_sent_to_member_at, blueprint_share_token')
+    .select('name, blueprint_html')
     .eq('id', memberId)
     .single()
 
@@ -80,34 +81,21 @@ async function applyRevisionAndNotify(
 
   if (member?.blueprint_html) {
     try {
-      // Archive the current blueprint before editing, so history is never lost.
-      await supabase.from('blueprint_versions').insert({
-        member_id: memberId,
-        html: member.blueprint_html,
-        data: member.blueprint_data ?? null,
-        source: 'revision',
-        generated_at: member.blueprint_generated_at ?? null,
-        sent_to_member_at: member.blueprint_sent_to_member_at ?? null,
-      })
-
       const newHtml = await editBlueprintForRevision({
         existingHtml: member.blueprint_html,
         memberName,
         answers,
       })
 
-      const shareToken = member.blueprint_share_token ?? crypto.randomUUID()
-
-      // The edited blueprint becomes a fresh draft — nulling the sent timestamps
-      // means an admin must review and re-send it before it goes live again.
+      // Store as a draft only — the live blueprint stays exactly as-is until an
+      // admin publishes the draft. No archiving here; that happens at publish,
+      // when the live version is actually replaced.
       await supabase
         .from('members')
         .update({
-          blueprint_html: newHtml,
-          blueprint_generated_at: new Date().toISOString(),
-          blueprint_share_token: shareToken,
-          blueprint_sent_to_gogo_at: null,
-          blueprint_sent_to_member_at: null,
+          blueprint_draft_html: newHtml,
+          blueprint_draft_generated_at: new Date().toISOString(),
+          blueprint_draft_revision_id: revisionId,
         })
         .eq('id', memberId)
 
@@ -129,10 +117,10 @@ async function notifyAdmins(
   applied: boolean
 ) {
   const title = applied
-    ? `${memberName}'s blueprint was updated from a revision`
+    ? `${memberName}'s revised blueprint draft is ready`
     : `${memberName} submitted a blueprint revision`
   const bellBody = applied
-    ? 'Review the updated draft and send it when you’re happy with it.'
+    ? 'Preview the draft, then publish it to make it live for them.'
     : 'Auto-update didn’t run — open their blueprint to regenerate.'
 
   // Bell notification (appears in the admin top-bar bell). Dedupe per member so
@@ -184,7 +172,7 @@ function esc(s: string): string {
 function buildNotificationEmail(memberName: string, answers: Answer[], applied: boolean): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
   const lead = applied
-    ? 'Their blueprint has already been updated to match. Review the draft and send it when ready.'
+    ? 'A revised draft of their blueprint is ready. Preview it in the portal, then publish it to make it live for them.'
     : 'The automatic update did not run, so open their blueprint and regenerate it from these answers.'
 
   const answersHtml = answers.map(a => `

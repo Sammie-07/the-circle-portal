@@ -616,3 +616,10 @@ create index if not exists blueprint_versions_member_idx on blueprint_versions(m
 alter table blueprint_versions enable row level security;
 create policy "admins_manage_blueprint_versions" on blueprint_versions
   for all using (is_admin()) with check (is_admin());
+
+-- A revision edits the blueprint into a DRAFT stored on these columns, leaving the
+-- live blueprint_html untouched so the member keeps seeing their current blueprint
+-- with no gap. On publish, the draft is promoted to blueprint_html and sent.
+alter table members add column if not exists blueprint_draft_html text;
+alter table members add column if not exists blueprint_draft_generated_at timestamptz;
+alter table members add column if not exists blueprint_draft_revision_id uuid;

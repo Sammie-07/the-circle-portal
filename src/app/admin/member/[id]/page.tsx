@@ -229,6 +229,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           blueprintShareToken={member.blueprint_share_token ?? null}
           blueprintTranscript={member.blueprint_transcript ?? null}
           pendingRevision={pendingRevision ?? null}
+          blueprintDraftHtml={member.blueprint_draft_html ?? null}
           blueprintVersions={blueprintVersions ?? []}
         />
       </div>

@@ -31,6 +31,7 @@ interface BlueprintPanelProps {
   blueprintShareToken: string | null
   blueprintTranscript: string | null
   pendingRevision?: PendingRevision | null
+  blueprintDraftHtml?: string | null
   blueprintVersions?: BlueprintVersion[]
 }
 
@@ -51,6 +52,7 @@ export default function BlueprintPanel({
   blueprintShareToken: initialToken,
   blueprintTranscript: initialTranscript,
   pendingRevision: initialPendingRevision = null,
+  blueprintDraftHtml: initialDraftHtml = null,
   blueprintVersions = [],
 }: BlueprintPanelProps) {
   const [html, setHtml] = useState(initialHtml)
@@ -71,7 +73,9 @@ export default function BlueprintPanel({
 
   // Blueprint revision (member-submitted new direction) + version history
   const [pendingRevision, setPendingRevision] = useState<PendingRevision | null>(initialPendingRevision)
+  const [draftHtml, setDraftHtml] = useState<string | null>(initialDraftHtml)
   const [resolvingRevision, setResolvingRevision] = useState(false)
+  const [showDraftPreview, setShowDraftPreview] = useState(false)
   const [showVersions, setShowVersions] = useState(false)
 
   // Upload existing blueprint (.html / .pdf)
@@ -237,25 +241,55 @@ export default function BlueprintPanel({
     return false
   }
 
-  // The blueprint is edited automatically when the member submits, so the admin's
-  // job here is just to acknowledge the request (clearing the banner). Approving
-  // records it as reviewed; dismissing marks it declined. Neither changes the
-  // blueprint — the draft is already updated and goes live via "Send to member".
-  async function handleResolveRevision(action: 'approve' | 'reject') {
+  // Publish the revised draft: it replaces the live blueprint and is emailed to
+  // the member. Until this runs, the member keeps seeing their current blueprint.
+  async function handlePublishRevision() {
     if (!pendingRevision || resolvingRevision) return
-    if (action === 'reject' && !confirm('Dismiss this revision request?')) return
+    if (!confirm(`Publish the revised blueprint to ${memberName}? This replaces their current blueprint and emails them the update.`)) return
+    setResolvingRevision(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/blueprints/revision/${pendingRevision.id}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Publish failed')
+      } else {
+        setHtml(data.blueprint_html ?? html)
+        setShareToken(data.share_token ?? shareToken ?? null)
+        setGeneratedAt(new Date().toISOString())
+        setSentMemberAt(new Date().toISOString())
+        setDraftHtml(null)
+        setShowDraftPreview(false)
+        setPendingRevision(null)
+      }
+    } catch {
+      setError('Publish failed. Please try again.')
+    }
+    setResolvingRevision(false)
+  }
+
+  // Discard the revised draft — the member keeps their current blueprint.
+  async function handleDiscardRevision() {
+    if (!pendingRevision || resolvingRevision) return
+    if (!confirm('Discard this revised draft? The member keeps their current blueprint.')) return
     setResolvingRevision(true)
     setError('')
     try {
       const res = await fetch(`/api/blueprints/revision/${pendingRevision.id}/resolve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action: 'reject' }),
       })
-      if (res.ok) setPendingRevision(null)
-      else { const d = await res.json(); setError(d.error ?? 'Could not update') }
+      if (res.ok) {
+        setDraftHtml(null)
+        setShowDraftPreview(false)
+        setPendingRevision(null)
+      } else { const d = await res.json(); setError(d.error ?? 'Could not discard') }
     } catch {
-      setError('Could not update. Please try again.')
+      setError('Could not discard. Please try again.')
     }
     setResolvingRevision(false)
   }
@@ -603,7 +637,9 @@ export default function BlueprintPanel({
 
             <div className="px-4 py-4 space-y-3">
               <p className="text-[var(--text-3)] text-xs">
-                {memberName} submitted a new direction, and the blueprint below has already been updated to match (the previous version is archived). Review the draft, then hit &ldquo;Send to {memberName}&rdquo; to make it live.
+                {memberName} submitted a new direction{draftHtml ? ', and a revised draft is ready' : ''}. {draftHtml
+                  ? 'Preview it, then publish to replace their current blueprint. Until you publish, they keep seeing their current one, no gap.'
+                  : 'The draft is still being prepared, or auto-update didn’t run, use Regenerate below if it doesn’t appear.'}
               </p>
 
               <div className="space-y-3">
@@ -616,24 +652,43 @@ export default function BlueprintPanel({
               </div>
 
               <div className="flex flex-wrap gap-3 pt-1">
+                {draftHtml && (
+                  <>
+                    <button
+                      onClick={handlePublishRevision}
+                      disabled={resolvingRevision}
+                      className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {resolvingRevision ? 'Publishing…' : `✦ Publish to ${memberName}`}
+                    </button>
+                    <button
+                      onClick={() => setShowDraftPreview(v => !v)}
+                      disabled={resolvingRevision}
+                      className="border border-[#C9A227]/40 text-[#C9A227] text-sm px-4 py-2.5 rounded hover:bg-[#C9A227]/10 transition-colors disabled:opacity-40"
+                    >
+                      {showDraftPreview ? 'Hide draft' : 'Preview draft'}
+                    </button>
+                  </>
+                )}
                 <button
-                  onClick={() => handleResolveRevision('approve')}
-                  disabled={resolvingRevision}
-                  className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {resolvingRevision ? 'Saving…' : '✓ Mark as reviewed'}
-                </button>
-                <button
-                  onClick={() => handleResolveRevision('reject')}
+                  onClick={handleDiscardRevision}
                   disabled={resolvingRevision}
                   className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Dismiss
+                  {draftHtml ? 'Discard draft' : 'Dismiss'}
                 </button>
               </div>
-              <p className="text-[var(--text-4)] text-[11px]">
-                The updated blueprint is a <span className="text-[var(--text-3)]">draft</span> until you send it. &ldquo;Mark as reviewed&rdquo; just clears this notice.
-              </p>
+
+              {showDraftPreview && draftHtml && (
+                <div className="mt-2 border border-[#C9A227]/30 rounded overflow-hidden">
+                  <div className="bg-[var(--surface-2)] px-4 py-2 border-b border-[#C9A227]/20">
+                    <p className="text-[#C9A227] text-xs">Revised draft preview — not live yet</p>
+                  </div>
+                  <div className="max-h-[500px] overflow-y-auto bg-[var(--bg)]">
+                    <iframe srcDoc={draftHtml} className="w-full" style={{ height: '500px', border: 'none' }} title="Revised draft preview" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
