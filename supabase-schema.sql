@@ -565,3 +565,54 @@ create unique index if not exists admin_notifications_dedupe_uk on admin_notific
 alter table admin_notifications enable row level security;
 create policy "admins_manage_admin_notifications" on admin_notifications
   for all using (is_admin()) with check (is_admin());
+
+-- Blueprint revision questionnaires (2026-09-21)
+-- A member's blueprint isn't frozen. An admin generates a tokenized revision
+-- questionnaire link for a member; the member fills in their new idea/direction;
+-- it comes back for admin approval; on approve the blueprint is regenerated (with
+-- the previous version archived to blueprint_versions) and re-sent to go live.
+-- Widen the notification type check so submissions can raise an admin notification.
+alter table admin_notifications drop constraint if exists admin_notifications_type_check;
+alter table admin_notifications add constraint admin_notifications_type_check
+  check (type in ('celebration','post_created','revision_submitted'));
+
+create table if not exists blueprint_revisions (
+  id           uuid primary key default gen_random_uuid(),
+  member_id    uuid not null references members(id) on delete cascade,
+  token        uuid not null unique default gen_random_uuid(),
+  -- 'sent' (link created) → 'submitted' (member filled it) → 'approved' | 'rejected'
+  status       text not null default 'sent'
+                 check (status in ('sent','submitted','approved','rejected')),
+  answers      jsonb,          -- [{ question, answer }] captured on submit
+  submitted_at timestamptz,
+  reviewed_at  timestamptz,
+  reviewed_by  uuid,
+  created_by   uuid,
+  created_at   timestamptz not null default now()
+);
+create index if not exists blueprint_revisions_member_idx on blueprint_revisions(member_id, created_at desc);
+create index if not exists blueprint_revisions_status_idx on blueprint_revisions(status);
+alter table blueprint_revisions enable row level security;
+-- Admins manage all. There is intentionally NO public policy: the public
+-- questionnaire page/submit route reach this table via the service-role client,
+-- authenticated by the unguessable token only (same pattern as weekly_checkins).
+create policy "admins_manage_blueprint_revisions" on blueprint_revisions
+  for all using (is_admin()) with check (is_admin());
+
+-- Archived prior blueprint versions. A snapshot is written whenever a member's
+-- blueprint is regenerated (manual refine OR an approved revision), so history is
+-- never lost and an admin can reopen any previous version.
+create table if not exists blueprint_versions (
+  id                uuid primary key default gen_random_uuid(),
+  member_id         uuid not null references members(id) on delete cascade,
+  html              text not null,
+  data              jsonb,
+  source            text,        -- 'regenerate' | 'revision' | 'manual'
+  generated_at      timestamptz, -- when the archived version was originally generated
+  sent_to_member_at timestamptz, -- whether that archived version had gone live
+  archived_at       timestamptz not null default now()
+);
+create index if not exists blueprint_versions_member_idx on blueprint_versions(member_id, archived_at desc);
+alter table blueprint_versions enable row level security;
+create policy "admins_manage_blueprint_versions" on blueprint_versions
+  for all using (is_admin()) with check (is_admin());

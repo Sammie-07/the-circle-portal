@@ -4,6 +4,22 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DateField from '@/components/shared/DateField'
 
+interface RevisionAnswer { question: string; answer: string }
+
+interface PendingRevision {
+  id: string
+  answers: RevisionAnswer[] | null
+  submitted_at: string | null
+}
+
+interface BlueprintVersion {
+  id: string
+  source: string | null
+  generated_at: string | null
+  sent_to_member_at: string | null
+  archived_at: string
+}
+
 interface BlueprintPanelProps {
   memberId: string
   memberName: string
@@ -14,6 +30,8 @@ interface BlueprintPanelProps {
   blueprintSentToMemberAt: string | null
   blueprintShareToken: string | null
   blueprintTranscript: string | null
+  pendingRevision?: PendingRevision | null
+  blueprintVersions?: BlueprintVersion[]
 }
 
 interface IntakeData {
@@ -32,6 +50,8 @@ export default function BlueprintPanel({
   blueprintSentToMemberAt: initialSentMember,
   blueprintShareToken: initialToken,
   blueprintTranscript: initialTranscript,
+  pendingRevision: initialPendingRevision = null,
+  blueprintVersions = [],
 }: BlueprintPanelProps) {
   const [html, setHtml] = useState(initialHtml)
   const [generatedAt, setGeneratedAt] = useState(initialGeneratedAt)
@@ -48,6 +68,11 @@ export default function BlueprintPanel({
   const [sendingGogo, setSendingGogo] = useState(false)
   const [sendingMember, setSendingMember] = useState(false)
   const [error, setError] = useState('')
+
+  // Blueprint revision (member-submitted new direction) + version history
+  const [pendingRevision, setPendingRevision] = useState<PendingRevision | null>(initialPendingRevision)
+  const [resolvingRevision, setResolvingRevision] = useState(false)
+  const [showVersions, setShowVersions] = useState(false)
 
   // Upload existing blueprint (.html / .pdf)
   const [uploading, setUploading] = useState(false)
@@ -143,10 +168,10 @@ export default function BlueprintPanel({
     e.target.value = ''
   }
 
-  async function handleGenerate(feedback?: string) {
+  async function handleGenerate(feedback?: string, source?: string): Promise<boolean> {
     if (!feedback && !intake.transcript.trim()) {
       setError('Please paste or upload the clarity call transcript before generating.')
-      return
+      return false
     }
     setShowIntake(false)
     setShowRefine(false)
@@ -167,6 +192,7 @@ export default function BlueprintPanel({
           // If refining, send no transcript (server uses the saved one); if fresh, send the new transcript
           ...(feedback ? {} : { transcript: intake.transcript }),
           ...(feedback ? { feedback } : {}),
+          ...(source ? { source } : {}),
         }),
         signal: controller.signal,
       })
@@ -181,7 +207,7 @@ export default function BlueprintPanel({
         setError(`Server error ${res.status}: ${text.slice(0, 200)}`)
         setGenerating(false)
         setProgress(0)
-        return
+        return false
       }
       if (!res.ok) {
         setError(data.error ?? 'Generation failed')
@@ -196,7 +222,7 @@ export default function BlueprintPanel({
           setSentMemberAt(null)
           setGenerating(false)
         }, 400)
-        return
+        return true
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {
@@ -208,6 +234,30 @@ export default function BlueprintPanel({
 
     setGenerating(false)
     setProgress(0)
+    return false
+  }
+
+  // The blueprint is edited automatically when the member submits, so the admin's
+  // job here is just to acknowledge the request (clearing the banner). Approving
+  // records it as reviewed; dismissing marks it declined. Neither changes the
+  // blueprint — the draft is already updated and goes live via "Send to member".
+  async function handleResolveRevision(action: 'approve' | 'reject') {
+    if (!pendingRevision || resolvingRevision) return
+    if (action === 'reject' && !confirm('Dismiss this revision request?')) return
+    setResolvingRevision(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/blueprints/revision/${pendingRevision.id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      if (res.ok) setPendingRevision(null)
+      else { const d = await res.json(); setError(d.error ?? 'Could not update') }
+    } catch {
+      setError('Could not update. Please try again.')
+    }
+    setResolvingRevision(false)
   }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -538,6 +588,56 @@ export default function BlueprintPanel({
           )}
         </div>
 
+        {/* ─── Pending revision request ─── */}
+        {pendingRevision && (
+          <div className="mb-5 rounded-lg border border-[#C9A227]/40 bg-[#C9A227]/[0.06] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#C9A227]/20 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base leading-none">📝</span>
+                <p className="text-[#C9A227] text-xs font-semibold tracking-wide uppercase">Revision requested</p>
+              </div>
+              {pendingRevision.submitted_at && (
+                <span className="text-[var(--text-4)] text-[11px]">Submitted {fmtDate(pendingRevision.submitted_at)}</span>
+              )}
+            </div>
+
+            <div className="px-4 py-4 space-y-3">
+              <p className="text-[var(--text-3)] text-xs">
+                {memberName} submitted a new direction, and the blueprint below has already been updated to match (the previous version is archived). Review the draft, then hit &ldquo;Send to {memberName}&rdquo; to make it live.
+              </p>
+
+              <div className="space-y-3">
+                {(pendingRevision.answers ?? []).filter(a => a?.answer?.trim()).map((a, i) => (
+                  <div key={i}>
+                    <p className="text-[#C9A227] text-[10px] tracking-[0.15em] uppercase mb-1">{a.question}</p>
+                    <p className="text-[var(--text-2)] text-sm leading-relaxed whitespace-pre-wrap">{a.answer.trim()}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-1">
+                <button
+                  onClick={() => handleResolveRevision('approve')}
+                  disabled={resolvingRevision}
+                  className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {resolvingRevision ? 'Saving…' : '✓ Mark as reviewed'}
+                </button>
+                <button
+                  onClick={() => handleResolveRevision('reject')}
+                  disabled={resolvingRevision}
+                  className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Dismiss
+                </button>
+              </div>
+              <p className="text-[var(--text-4)] text-[11px]">
+                The updated blueprint is a <span className="text-[var(--text-3)]">draft</span> until you send it. &ldquo;Mark as reviewed&rdquo; just clears this notice.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Status */}
         {html ? (
           <div className="space-y-2 mb-5">
@@ -758,6 +858,40 @@ export default function BlueprintPanel({
                 title="Blueprint preview"
               />
             </div>
+          </div>
+        )}
+
+        {/* Version history — archived prior blueprints */}
+        {blueprintVersions.length > 0 && (
+          <div className="mt-5 border-t border-[var(--border-color)] pt-4">
+            <button
+              type="button"
+              onClick={() => setShowVersions(v => !v)}
+              className="text-[var(--text-3)] text-xs hover:text-[var(--text-2)] transition-colors"
+            >
+              {showVersions ? '▲ Hide version history' : `▼ Version history (${blueprintVersions.length} archived)`}
+            </button>
+            {showVersions && (
+              <ul className="mt-3 space-y-1.5">
+                {blueprintVersions.map(v => (
+                  <li key={v.id} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="text-[var(--text-3)]">
+                      Archived {fmtDate(v.archived_at)}
+                      {v.source && <span className="text-[var(--text-4)]"> · {v.source}</span>}
+                      {v.sent_to_member_at && <span className="text-green-400/80"> · was live</span>}
+                    </span>
+                    <a
+                      href={`/api/blueprints/versions/${v.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 text-[var(--text-3)] hover:text-[#C9A227] transition-colors"
+                    >
+                      Open ↗
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

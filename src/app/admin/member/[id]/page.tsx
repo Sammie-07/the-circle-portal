@@ -12,6 +12,7 @@ import MemberPaymentsPanel from '@/components/admin/MemberPaymentsPanel'
 import HomeworkPanel from '@/components/admin/HomeworkPanel'
 import SendInviteButton from '@/components/admin/SendInviteButton'
 import CheckinLinkButton from '@/components/admin/CheckinLinkButton'
+import RevisionLinkButton from '@/components/admin/RevisionLinkButton'
 import SigninLinkButton from '@/components/admin/SigninLinkButton'
 import SendResetButton from '@/components/admin/SendResetButton'
 import EditMemberButton from '@/components/admin/EditMemberButton'
@@ -65,6 +66,23 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     .from('homework')
     .select('id, completed')
     .eq('member_id', id)
+
+  // Blueprint revision: the latest submitted (awaiting-approval) questionnaire,
+  // plus archived prior versions for the history list.
+  const { data: pendingRevision } = await supabase
+    .from('blueprint_revisions')
+    .select('id, answers, submitted_at')
+    .eq('member_id', id)
+    .eq('status', 'submitted')
+    .order('submitted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { data: blueprintVersions } = await supabase
+    .from('blueprint_versions')
+    .select('id, source, generated_at, sent_to_member_at, archived_at')
+    .eq('member_id', id)
+    .order('archived_at', { ascending: false })
 
   const allLogs = logs ?? []
   const total = allLogs.length
@@ -123,6 +141,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 <SendInviteButton email={member.email} memberName={member.name} />
               )}
               <CheckinLinkButton memberId={id} />
+              <RevisionLinkButton memberId={id} />
               {member.email && <SigninLinkButton email={member.email} />}
               {member.email && <SendResetButton email={member.email} memberName={member.name} />}
               <EditMemberButton
@@ -209,6 +228,8 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           blueprintSentToMemberAt={member.blueprint_sent_to_member_at ?? null}
           blueprintShareToken={member.blueprint_share_token ?? null}
           blueprintTranscript={member.blueprint_transcript ?? null}
+          pendingRevision={pendingRevision ?? null}
+          blueprintVersions={blueprintVersions ?? []}
         />
       </div>
 

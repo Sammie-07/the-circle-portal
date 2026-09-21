@@ -198,13 +198,13 @@ export async function POST(request: Request) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Admin only' }, { status: 403 })
 
-  let body: { member_id?: string; transcript?: string; call_date?: string; fathom_link?: string; feedback?: string }
+  let body: { member_id?: string; transcript?: string; call_date?: string; fathom_link?: string; feedback?: string; source?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { member_id, transcript, call_date, fathom_link, feedback } = body
+  const { member_id, transcript, call_date, fathom_link, feedback, source } = body
 
   if (!member_id) return NextResponse.json({ error: 'member_id required' }, { status: 400 })
 
@@ -431,6 +431,21 @@ RULES: Every word from transcript or Brain. Gogo's voice, direct, warm, personal
 
   // Get or generate share token
   const shareToken = member.blueprint_share_token ?? crypto.randomUUID()
+
+  // Archive the outgoing blueprint before we overwrite it, so history is never
+  // lost (an admin can reopen any prior version). Best-effort — a failed archive
+  // must not block regeneration.
+  if (member.blueprint_html) {
+    const { error: archiveError } = await supabase.from('blueprint_versions').insert({
+      member_id,
+      html: member.blueprint_html,
+      data: member.blueprint_data ?? null,
+      source: source ?? (feedback ? 'refine' : 'manual'),
+      generated_at: member.blueprint_generated_at ?? null,
+      sent_to_member_at: member.blueprint_sent_to_member_at ?? null,
+    })
+    if (archiveError) console.error('[Blueprint] version archive failed (non-fatal):', archiveError.message)
+  }
 
   const { error: dbError } = await supabase
     .from('members')

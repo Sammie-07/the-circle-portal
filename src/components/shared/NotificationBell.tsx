@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 interface Notif {
   id: string
-  type: 'celebration' | 'post_created'
+  type: 'celebration' | 'post_created' | 'revision_submitted'
   emoji: string | null
   title: string
   body: string
@@ -135,6 +135,9 @@ export default function NotificationBell() {
                         <span className="text-[11px] text-[var(--text-4)]">{timeAgo(n.created_at)}</span>
                         {n.type === 'post_created' && (
                           <Link href="/admin/content" onClick={() => setOpen(false)} className="text-[11px] text-[var(--gold-text)] hover:text-[var(--gold)]">Review in Content →</Link>
+                        )}
+                        {n.type === 'revision_submitted' && n.member_id && (
+                          <Link href={`/admin/member/${n.member_id}`} onClick={() => setOpen(false)} className="text-[11px] text-[var(--gold-text)] hover:text-[var(--gold)]">Review & approve →</Link>
                         )}
                         {n.type === 'celebration' && n.canMakePost && (
                           <button
