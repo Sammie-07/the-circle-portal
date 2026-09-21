@@ -14,7 +14,7 @@ const QUESTIONS: { key: string; question: string; placeholder: string; note?: st
     key: 'direction',
     question: "What's the new idea or direction you want to build into your blueprint?",
     placeholder: 'Describe the one or two big things you want to focus on…',
-    note: "To stay effective, you can't take on more than two big ideas in a year, any more than that is how burnout happens. Pick the one or two that matter most.",
+    note: 'Remember: two big ideas at most. Focus on the one or two that matter most right now.',
   },
   {
     key: 'why_now',
@@ -113,6 +113,14 @@ export default function RevisionForm({ token, memberName, alreadySubmitted }: Re
           <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Blueprint Revision</p>
           <h1 className="text-white font-serif text-[38px] mb-1 leading-tight">{memberName.split(' ')[0]}&rsquo;s New Direction</h1>
           <p className="text-[#555] text-sm">Tell us what&rsquo;s changed, and we&rsquo;ll rebuild your blueprint around it.</p>
+        </div>
+
+        {/* The two-ideas rule — the most important note, up top */}
+        <div className="bg-[#C9A227]/[0.06] border border-[#C9A227]/30 border-l-[3px] border-l-[#C9A227] rounded px-4 py-3 mb-4">
+          <p className="text-[#C9A227] text-[10px] tracking-[0.18em] uppercase mb-1.5">Before you start</p>
+          <p className="text-[#e6e6e6] text-xs leading-relaxed">
+            You can only have <span className="text-[#C9A227] font-semibold">two big ideas going at once.</span> To stay efficient, don&rsquo;t try to get more than two done in a year, any more than that and you&rsquo;ll burn out. Pick the one or two that matter most right now.
+          </p>
         </div>
 
         {/* Accountability note */}
