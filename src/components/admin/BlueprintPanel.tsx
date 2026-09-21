@@ -74,6 +74,7 @@ export default function BlueprintPanel({
   // Blueprint revision (member-submitted new direction) + version history
   const [pendingRevision, setPendingRevision] = useState<PendingRevision | null>(initialPendingRevision)
   const [draftHtml, setDraftHtml] = useState<string | null>(initialDraftHtml)
+  const [generatingDraft, setGeneratingDraft] = useState(false)
   const [resolvingRevision, setResolvingRevision] = useState(false)
   const [showDraftPreview, setShowDraftPreview] = useState(false)
   const [showVersions, setShowVersions] = useState(false)
@@ -241,7 +242,31 @@ export default function BlueprintPanel({
     return false
   }
 
-  // Publish the revised draft: it replaces the live blueprint and is emailed to
+  // Step 1 of the revision: generate the updated blueprint (a draft). The live
+  // blueprint is left untouched; the draft is shown for preview before publishing.
+  async function handleGenerateDraft() {
+    if (!pendingRevision || generatingDraft) return
+    setGeneratingDraft(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/blueprints/revision/${pendingRevision.id}/generate-draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Could not generate the updated blueprint')
+      } else {
+        setDraftHtml(data.draft_html ?? null)
+        setShowDraftPreview(true)
+      }
+    } catch {
+      setError('Could not generate the updated blueprint. Please try again.')
+    }
+    setGeneratingDraft(false)
+  }
+
+  // Step 2: publish the draft. It replaces the live blueprint and is emailed to
   // the member. Until this runs, the member keeps seeing their current blueprint.
   async function handlePublishRevision() {
     if (!pendingRevision || resolvingRevision) return
@@ -635,28 +660,54 @@ export default function BlueprintPanel({
               )}
             </div>
 
-            <div className="px-4 py-4 space-y-3">
-              <p className="text-[var(--text-3)] text-xs">
-                {memberName} submitted a new direction{draftHtml ? ', and a revised draft is ready' : ''}. {draftHtml
-                  ? 'Preview it, then publish to replace their current blueprint. Until you publish, they keep seeing their current one, no gap.'
-                  : 'The draft is still being prepared, or auto-update didn’t run, use Regenerate below if it doesn’t appear.'}
-              </p>
-
-              <div className="space-y-3">
-                {(pendingRevision.answers ?? []).filter(a => a?.answer?.trim()).map((a, i) => (
-                  <div key={i}>
-                    <p className="text-[#C9A227] text-[10px] tracking-[0.15em] uppercase mb-1">{a.question}</p>
-                    <p className="text-[var(--text-2)] text-sm leading-relaxed whitespace-pre-wrap">{a.answer.trim()}</p>
-                  </div>
-                ))}
+            <div className="px-4 py-4 space-y-4">
+              {/* What the member asked for */}
+              <div>
+                <p className="text-[var(--text-3)] text-xs mb-2">{memberName} asked for these changes:</p>
+                <div className="space-y-3">
+                  {(pendingRevision.answers ?? []).filter(a => a?.answer?.trim()).map((a, i) => (
+                    <div key={i}>
+                      <p className="text-[#C9A227] text-[10px] tracking-[0.15em] uppercase mb-1">{a.question}</p>
+                      <p className="text-[var(--text-2)] text-sm leading-relaxed whitespace-pre-wrap">{a.answer.trim()}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 pt-1">
-                {draftHtml && (
-                  <>
+              {!draftHtml ? (
+                /* Step 1 — generate the updated draft */
+                <div className="rounded-md bg-[var(--bg)] border border-[var(--border-color)] px-4 py-3.5 space-y-3">
+                  <p className="text-[var(--text-2)] text-sm leading-relaxed">
+                    <span className="text-[#C9A227] font-semibold">Step 1.</span> Generate the updated blueprint from their answers. Only the parts their new direction affects will change, everything else stays the same.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={handleGenerateDraft}
+                      disabled={generatingDraft}
+                      className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {generatingDraft ? 'Generating… (~1 min, keep this tab open)' : '✦ Generate updated blueprint'}
+                    </button>
+                    <button
+                      onClick={handleDiscardRevision}
+                      disabled={generatingDraft || resolvingRevision}
+                      className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Dismiss request
+                    </button>
+                  </div>
+                  <p className="text-[var(--text-4)] text-[11px]">Nothing changes for {memberName} yet, their current blueprint stays live until you publish.</p>
+                </div>
+              ) : (
+                /* Step 2 — preview & publish the draft */
+                <div className="rounded-md bg-[var(--bg)] border border-[#C9A227]/30 px-4 py-3.5 space-y-3">
+                  <p className="text-[var(--text-2)] text-sm leading-relaxed">
+                    <span className="text-[#C9A227] font-semibold">Step 2.</span> The updated draft is ready. Preview it, then publish to make it live for {memberName}.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handlePublishRevision}
-                      disabled={resolvingRevision}
+                      disabled={resolvingRevision || generatingDraft}
                       className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {resolvingRevision ? 'Publishing…' : `✦ Publish to ${memberName}`}
@@ -666,27 +717,35 @@ export default function BlueprintPanel({
                       disabled={resolvingRevision}
                       className="border border-[#C9A227]/40 text-[#C9A227] text-sm px-4 py-2.5 rounded hover:bg-[#C9A227]/10 transition-colors disabled:opacity-40"
                     >
-                      {showDraftPreview ? 'Hide draft' : 'Preview draft'}
+                      {showDraftPreview ? 'Hide preview' : 'Preview draft'}
                     </button>
-                  </>
-                )}
-                <button
-                  onClick={handleDiscardRevision}
-                  disabled={resolvingRevision}
-                  className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {draftHtml ? 'Discard draft' : 'Dismiss'}
-                </button>
-              </div>
+                    <button
+                      onClick={handleGenerateDraft}
+                      disabled={generatingDraft || resolvingRevision}
+                      className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {generatingDraft ? 'Regenerating…' : 'Regenerate'}
+                    </button>
+                    <button
+                      onClick={handleDiscardRevision}
+                      disabled={resolvingRevision || generatingDraft}
+                      className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Discard
+                    </button>
+                  </div>
+                  <p className="text-[var(--text-4)] text-[11px]">Publishing replaces {memberName}&rsquo;s current blueprint and emails them. Until then they keep seeing the current one, no gap.</p>
 
-              {showDraftPreview && draftHtml && (
-                <div className="mt-2 border border-[#C9A227]/30 rounded overflow-hidden">
-                  <div className="bg-[var(--surface-2)] px-4 py-2 border-b border-[#C9A227]/20">
-                    <p className="text-[#C9A227] text-xs">Revised draft preview — not live yet</p>
-                  </div>
-                  <div className="max-h-[500px] overflow-y-auto bg-[var(--bg)]">
-                    <iframe srcDoc={draftHtml} className="w-full" style={{ height: '500px', border: 'none' }} title="Revised draft preview" />
-                  </div>
+                  {showDraftPreview && draftHtml && (
+                    <div className="mt-1 border border-[#C9A227]/30 rounded overflow-hidden">
+                      <div className="bg-[var(--surface-2)] px-4 py-2 border-b border-[#C9A227]/20">
+                        <p className="text-[#C9A227] text-xs">Updated draft preview — not live yet</p>
+                      </div>
+                      <div className="max-h-[500px] overflow-y-auto bg-[var(--bg)]">
+                        <iframe srcDoc={draftHtml} className="w-full" style={{ height: '500px', border: 'none' }} title="Updated draft preview" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -803,7 +862,7 @@ export default function BlueprintPanel({
         )}
 
         {/* Upload existing blueprint */}
-        {!generating && (
+        {!generating && !pendingRevision && (
           <div className="border border-dashed border-[var(--border-color)] rounded p-4 mb-5">
             <p className="text-[#C9A227] text-[10px] tracking-[0.2em] uppercase mb-1.5">Already have a blueprint?</p>
             <p className="text-[var(--text-3)] text-xs mb-3">

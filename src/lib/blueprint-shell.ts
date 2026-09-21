@@ -207,12 +207,15 @@ OUTPUT: Return ONLY the full edited HTML body, every element from the opening <n
 
   const msg = await anthropic.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 32000,
+    max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
   })
 
   const edited = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
   if (!edited.trim()) throw new Error('The edit returned an empty document')
+  if (msg.stop_reason === 'max_tokens') {
+    throw new Error('The edited blueprint was too long to finish in one pass. Try again, or edit it manually.')
+  }
 
   return wrapWithShell(cleanBlueprintPart(edited), memberName)
 }

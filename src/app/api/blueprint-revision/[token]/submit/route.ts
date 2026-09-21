@@ -1,10 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { NextResponse, after } from 'next/server'
-import { editBlueprintForRevision } from '@/lib/blueprint-shell'
+import { NextResponse } from 'next/server'
 
-// The AI edit can take a while, so give the function room. `after()` runs the
-// edit + notification once the member already has their confirmation.
-export const maxDuration = 300
 export const runtime = 'nodejs'
 
 interface Answer { question: string; answer: string }
@@ -12,9 +8,9 @@ interface Answer { question: string; answer: string }
 // POST /api/blueprint-revision/[token]/submit
 // Public — authenticated by the unguessable token only (service-role client,
 // same pattern as the weekly check-in). The member submits their new
-// idea/direction; we save it and confirm immediately. Then, in the background,
-// we EDIT their existing blueprint to accommodate the changes and, once that's
-// done, notify admins to review the updated draft and send it live.
+// idea/direction; we save it, confirm instantly, and notify admins that a
+// revision has been requested. The admin then generates the updated blueprint
+// with one click from the member's page (a visible, reliable step).
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ token: string }> }
@@ -49,93 +45,30 @@ export async function POST(
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
-  // Edit the blueprint into a DRAFT, THEN notify admins — after the member's response.
-  after(async () => {
-    try {
-      await applyRevisionAndNotify(supabase, revision.member_id, revision.id, answers)
-    } catch (err) {
-      console.error('[Revision] background apply failed:', err instanceof Error ? err.message : String(err))
-    }
-  })
+  // Notify admins (best-effort — never fail the member's submission over it).
+  try {
+    await notifyAdmins(supabase, revision.member_id, answers)
+  } catch (err) {
+    console.error('[Revision] notify failed:', err instanceof Error ? err.message : String(err))
+  }
 
   return NextResponse.json({ success: true })
 }
 
-// Edit the member's existing blueprint to accommodate their new direction and
-// store the result as a DRAFT (leaving the live blueprint untouched so the member
-// sees no gap), then notify admins that a draft is ready to review and publish.
-async function applyRevisionAndNotify(
-  supabase: SupabaseClient,
-  memberId: string,
-  revisionId: string,
-  answers: Answer[]
-) {
-  const { data: member } = await supabase
-    .from('members')
-    .select('name, blueprint_html')
-    .eq('id', memberId)
-    .single()
-
+async function notifyAdmins(supabase: SupabaseClient, memberId: string, answers: Answer[]) {
+  const { data: member } = await supabase.from('members').select('name').eq('id', memberId).single()
   const memberName = member?.name ?? 'A member'
-  let applied = false
 
-  if (member?.blueprint_html) {
-    try {
-      const newHtml = await editBlueprintForRevision({
-        existingHtml: member.blueprint_html,
-        memberName,
-        answers,
-      })
-
-      // Store as a draft only — the live blueprint stays exactly as-is until an
-      // admin publishes the draft. No archiving here; that happens at publish,
-      // when the live version is actually replaced.
-      await supabase
-        .from('members')
-        .update({
-          blueprint_draft_html: newHtml,
-          blueprint_draft_generated_at: new Date().toISOString(),
-          blueprint_draft_revision_id: revisionId,
-        })
-        .eq('id', memberId)
-
-      applied = true
-    } catch (err) {
-      console.error('[Revision] blueprint edit failed:', err instanceof Error ? err.message : String(err))
-      applied = false
-    }
-  }
-
-  await notifyAdmins(supabase, memberName, memberId, answers, applied)
-}
-
-async function notifyAdmins(
-  supabase: SupabaseClient,
-  memberName: string,
-  memberId: string,
-  answers: Answer[],
-  applied: boolean
-) {
-  const title = applied
-    ? `${memberName}'s revised blueprint draft is ready`
-    : `${memberName} submitted a blueprint revision`
-  const bellBody = applied
-    ? 'Preview the draft, then publish it to make it live for them.'
-    : 'Auto-update didn’t run — open their blueprint to regenerate.'
-
-  // Bell notification (appears in the admin top-bar bell). Dedupe per member so
-  // repeat runs don't stack; the newest submission is what matters.
   await supabase.from('admin_notifications').insert({
     type: 'revision_submitted',
     member_id: memberId,
     member_name: memberName,
     emoji: '📝',
-    title,
-    body: bellBody,
+    title: `${memberName} requested a blueprint revision`,
+    body: 'Open their blueprint to generate the update, then publish it.',
     dedupe_key: `revision:${memberId}:${Date.now()}`,
   })
 
-  // Email admins
   const { data: teamProfiles } = await supabase
     .from('profiles')
     .select('email')
@@ -144,7 +77,7 @@ async function notifyAdmins(
   const adminEmails = (teamProfiles ?? []).map(p => p.email).filter(Boolean)
 
   if (adminEmails.length > 0 && process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
-    const html = buildNotificationEmail(memberName, answers, applied)
+    const html = buildNotificationEmail(memberName, answers)
     await Promise.allSettled(
       adminEmails.map(email =>
         fetch('https://api.sendgrid.com/v3/mail/send', {
@@ -156,7 +89,7 @@ async function notifyAdmins(
           body: JSON.stringify({
             personalizations: [{ to: [{ email }] }],
             from: { email: process.env.SENDGRID_FROM_EMAIL! },
-            subject: title,
+            subject: `${memberName} requested a blueprint revision`,
             content: [{ type: 'text/html', value: html }],
           }),
         })
@@ -169,12 +102,8 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function buildNotificationEmail(memberName: string, answers: Answer[], applied: boolean): string {
+function buildNotificationEmail(memberName: string, answers: Answer[]): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
-  const lead = applied
-    ? 'A revised draft of their blueprint is ready. Preview it in the portal, then publish it to make it live for them.'
-    : 'The automatic update did not run, so open their blueprint and regenerate it from these answers.'
-
   const answersHtml = answers.map(a => `
     <tr><td style="padding:14px 0;border-bottom:1px solid #1A1A1A;">
       <p style="margin:0 0 6px;font-size:11px;color:#C9A227;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">${esc(a.question)}</p>
@@ -207,9 +136,9 @@ function buildNotificationEmail(memberName: string, answers: Answer[], applied: 
 
         <tr><td style="padding-bottom:20px;">
           <h1 style="margin:0;font-family:Georgia,serif;font-size:26px;color:#FFFFFF;font-weight:normal;">
-            ${esc(memberName)} updated their direction.
+            ${esc(memberName)} requested a revision.
           </h1>
-          <p style="margin:8px 0 0;font-size:13px;color:#999;line-height:1.6;">${lead}</p>
+          <p style="margin:8px 0 0;font-size:13px;color:#999;line-height:1.6;">Open their blueprint in the portal, generate the update from these answers, then publish it.</p>
         </td></tr>
 
         <tr><td>
@@ -223,7 +152,7 @@ function buildNotificationEmail(memberName: string, answers: Answer[], applied: 
             <tr>
               <td style="background:#C9A227;border-radius:6px;">
                 <a href="${appUrl}/admin" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#090909;text-decoration:none;">
-                  Review in Portal →
+                  Open Portal →
                 </a>
               </td>
             </tr>
