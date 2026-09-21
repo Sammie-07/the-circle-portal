@@ -752,8 +752,8 @@ export default function BlueprintPanel({
           </div>
         )}
 
-        {/* Status */}
-        {html ? (
+        {/* Status — hidden while a revision is in progress to keep the focus on the card */}
+        {!pendingRevision && (html ? (
           <div className="space-y-2 mb-5">
             <div className="flex items-center gap-2 text-xs text-[var(--text-2)]">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -776,7 +776,7 @@ export default function BlueprintPanel({
           <p className="text-[var(--text-3)] text-sm mb-5">
             No blueprint yet. Click below — you&apos;ll paste the clarity call transcript and Claude will write the full 12-month plan using The Brain.
           </p>
-        )}
+        ))}
 
         {/* Progress bar while generating */}
         {generating && (
@@ -818,8 +818,8 @@ export default function BlueprintPanel({
           </div>
         )}
 
-        {/* Generate + Send buttons (hidden while generating) */}
-        {!generating && (
+        {/* Generate + Send buttons (hidden while generating or during a revision) */}
+        {!generating && !pendingRevision && (
           <div className="flex flex-wrap gap-3 mb-5">
             <button
               onClick={() => {
@@ -892,8 +892,8 @@ export default function BlueprintPanel({
           </div>
         )}
 
-        {/* Share + Export row */}
-        {html && shareToken && (
+        {/* Share + Export row (hidden during a revision) */}
+        {html && shareToken && !pendingRevision && (
           <div className="border border-[var(--border-color)] rounded p-4 space-y-4">
 
             {/* Share link */}
