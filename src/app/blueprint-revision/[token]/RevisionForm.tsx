@@ -13,23 +13,23 @@ const QUESTIONS: { key: string; question: string; placeholder: string; note?: st
   {
     key: 'direction',
     question: "What's the new idea or direction you want to build into your blueprint?",
-    placeholder: 'Describe the one or two big things you want to focus on…',
+    placeholder: 'Describe the one or two big things you want to focus on. Be as detailed as you can, the more you give, the better your blueprint…',
     note: 'Remember: two big ideas at most. Focus on the one or two that matter most right now.',
   },
   {
     key: 'why_now',
     question: "Why now, what's changed since your last blueprint?",
-    placeholder: 'What shifted in your business, your market, or your goals…',
+    placeholder: 'What shifted in your business, your market, or your goals? Be as detailed as you can…',
   },
   {
     key: 'success_12mo',
     question: 'What does winning at this look like over the next 12 months?',
-    placeholder: 'Paint the picture, numbers, milestones, what success feels like…',
+    placeholder: 'Paint the picture in as much detail as you can, numbers, milestones, what success feels like…',
   },
   {
     key: 'tradeoffs',
     question: 'What will you stop or pause to make room for it?',
-    placeholder: "You can't add without subtracting, what comes off your plate…",
+    placeholder: "You can't add without subtracting, what comes off your plate? Be as detailed as you can…",
   },
 ]
 
