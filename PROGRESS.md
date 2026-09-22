@@ -1,6 +1,6 @@
 # Circle Portal — Progress
 
-> **Canonical status doc.** Snapshot refreshed 2026-09-03 against the live code, schema, and
+> **Canonical status doc.** Snapshot refreshed 2026-09-22 against the live code, schema, and
 > deployment. Sections 1–8 below are the current state; **§9 Changelog** is the full dated
 > history of every change (newest first). README and CLAUDE.md are real docs now.
 >
@@ -160,6 +160,61 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 ## 9. Changelog
 
 Every code change is recorded here, newest first.
+
+### 2026-09-21
+- **Blueprint revisions — member questionnaire → auto-edit → admin review & send.** New flow: a member
+  requests a blueprint revision through a questionnaire (every field placeholder nudges for detail; the
+  two-ideas-per-quarter rule surfaced as a prominent note); the system auto-edits the blueprint into a
+  pending draft; the admin reviews and publishes in a zero-gap one-click generate → preview → publish flow
+  (dropped the earlier silent background edit). Standard blueprint controls are hidden while a revision is
+  pending. (28212e4, b2315d0, 436e81c, fe54dfa, ffeb385, 4dbe2b0)
+
+### 2026-09-15
+- **Log the week — paste a transcript, not just Fathom.** `/api/logs/from-fathom` now accepts EITHER a
+  Fathom share link OR a pasted transcript (`{transcript}`), so Fyxer / Zoom / any tool works (Fyxer share
+  pages are client-rendered with no scrapable transcript, so no Fyxer-specific fetch). `BulkLogForm` gained
+  a "No Fathom link? Paste a transcript instead" box; pasted text wins and dims the link field. Same AI
+  extraction path (attendance, questions, notes, suggested homework) either way. (82571dc)
+
+### 2026-09-14
+- **Admin Progress — readable, comparable reflections.** The long-form written answers (personal wins,
+  biggest achievement, disappointment, takeaway, catch-all) were crammed into the numeric comparison table
+  as right-aligned `nowrap` cells and getting truncated. Pulled all `longtext` questions out into their own
+  **Reflections** table: a questions × months matrix with a sticky question column, latest month highlighted,
+  and cells that WRAP — full text, side-by-side month comparison, far less scrolling. (b9a1c13, a4fb485)
+
+### 2026-09-10
+- **Content — retire "20 seats / opens once a year" scarcity.** Hard ban in the generator prompt (no seat
+  counts, no annual-opening / closing-deadline / countdown language) because Gogo is expanding The Circle;
+  premium "small, handpicked, intimate" positioning is still allowed (just never a number or a date).
+  Mirrored as a standing rule in the brain repo's `CLAUDE.md`. (823702c, 61123bf)
+
+### 2026-09-08
+- **Content — clarity + lead-gen rewrite (founder feedback).** Every post now follows a strict MESSAGE
+  FORMULA written for a cold reader who has never heard of Gogo or The Circle ⭕️: name the reader's
+  **problem** → teach **one clear concept** → **proof** with any member fact fully explained (no bare "$16M"
+  or "zero missed calls") → **The Circle ⭕️ is where it gets solved** + easy CTA. Cold-reader test and
+  clarity rules baked into `SYSTEM_PROMPT` and `taskFor`. Old vague drafts cleared to regenerate. (3e27381)
+
+### 2026-09-07
+- **Content images — strictly black/gold/red luxury.** Dropped the light/ivory skin (brand is dark-only)
+  and removed the temporary design-preview route; kept the rays motif. (fd5a14a, 736e189)
+
+### 2026-09-05
+- **Login must never depend on email case.** A member (Krystal) whose profile email was stored `Krystal@…`
+  could not sign in because the member lookup was case-sensitive while Supabase lowercases the auth email.
+  Fixed the data (lowercased all member emails) and added a Postgres BEFORE INSERT/UPDATE trigger
+  (`members_lowercase_email`) that force-lowercases `members.email` on every write, so the login → member
+  match can never miss on case again. (f005b31 + migration; `supabase-schema.sql` mirrored)
+
+### 2026-09-03 (evening — supersedes the cream/light skins from the snapshot below)
+- **Content — The Circle ⭕️ brand voice + brand mark + premium images.** Rewrote the generator to write as
+  The Circle ⭕️'s OWN brand account (we/our; Gogo and members in the third person), and enforced the
+  "The Circle ⭕️" brand mark in captions and on slides. Rebuilt the slide renderer as
+  `src/lib/content/slide-image.tsx`: a premium luxury system with real Playfair Display + DM Sans (fetched
+  once, cached, graceful fallback to system fonts), a black/gold/red palette, a drawn **red ⭕** brand mark,
+  medallion / ray motifs, and no "#teamgogo" text on the images. This replaced the earlier 5-skin renderer
+  (incl. the cream/light skin) described in the snapshot entry below. (84ee8c5, dcb92f8)
 
 ### 2026-09-03
 - **Monthly survey automation — LIVE.** Scheduled `/api/cron/surveys` in `vercel.json` (daily `0 15 * * *`
