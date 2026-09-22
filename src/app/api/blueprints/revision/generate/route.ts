@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { brandedEmail, sendEmail } from '@/lib/email'
 import { NextResponse } from 'next/server'
 
 // POST /api/blueprints/revision/generate
-// Admin creates (or reuses) a tokenized revision-questionnaire link for a member.
-// The member fills it out at /blueprint-revision/<token>; on submit it comes back
-// for admin approval. Copy-link only — no email is sent from here.
+// Admin creates (or reuses) a tokenized revision-questionnaire link for a member,
+// AND emails the member the link. The member fills it out at
+// /blueprint-revision/<token>; on submit it comes back for admin approval.
 export async function POST(request: Request) {
   const supabase = await createClient()
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   const { memberId } = await request.json()
   if (!memberId) return NextResponse.json({ error: 'memberId required' }, { status: 400 })
 
-  const { data: member } = await supabase.from('members').select('id').eq('id', memberId).single()
+  const { data: member } = await supabase.from('members').select('id, name, email').eq('id', memberId).single()
   if (!member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
 
   // Reuse an outstanding (not-yet-submitted) link if one exists, so repeated
@@ -46,5 +47,30 @@ export async function POST(request: Request) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://the-circle-portal.vercel.app'
-  return NextResponse.json({ url: `${appUrl}/blueprint-revision/${token}` })
+  const url = `${appUrl}/blueprint-revision/${token}`
+
+  // Email the member the link. Never fail the request if the email doesn't send
+  // (the admin still gets the copyable link back).
+  const firstName = (member.name ?? '').trim().split(/\s+/)[0] || 'there'
+  let emailed = false
+  if (member.email) {
+    try {
+      const html = brandedEmail({
+        eyebrow: 'Your Blueprint',
+        heading: "Let's fine-tune your blueprint",
+        body: [
+          `Hi ${firstName}, we want your 12-month blueprint to fit exactly where you are taking your business.`,
+          'Tell us what you would like to add or change, and your coach will update it for you. It takes about two minutes.',
+        ],
+        cta: { text: 'Update my blueprint', url },
+        note: 'If the button does not work, copy and paste this link into your browser: ' + url,
+      })
+      await sendEmail(member.email, "Let's fine-tune your Circle blueprint", html)
+      emailed = true
+    } catch (e) {
+      console.error('[Revision] link email failed:', e)
+    }
+  }
+
+  return NextResponse.json({ url, emailed })
 }

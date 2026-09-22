@@ -181,13 +181,11 @@ export async function editBlueprintForRevision({
   memberName,
   answers,
   adminNote,
-  captureRaw,
 }: {
   existingHtml: string
   memberName: string
   answers: { question: string; answer: string }[]
   adminNote?: string
-  captureRaw?: (raw: string) => void // TEMP debug: hand back the raw model output
 }): Promise<string> {
   const anthropic = getAnthropic()
   const existingBody = extractBlueprintBody(existingHtml)
@@ -252,7 +250,6 @@ Raw HTML only, no JSON, no markdown, no commentary before or after. If nothing n
 
   // Read ALL text blocks (the model may lead with a non-text block).
   const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
-  captureRaw?.(raw) // TEMP debug
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
   const outRe = /@@UNIT\s+(\d+)@@\r?\n([\s\S]*?)\r?\n@@ENDUNIT@@/g

@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 
-// Generates a blueprint-revision questionnaire link for a member and copies it to
-// the clipboard (copy-link only — the admin sends it however they like).
+// Generates a blueprint-revision questionnaire link for a member, emails it to
+// them, and also copies it to the clipboard as a backup for the admin.
 export default function RevisionLinkButton({ memberId }: { memberId: string }) {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'copied' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'sent' | 'copiedonly' | 'error'>('idle')
   const [url, setUrl] = useState('')
 
   async function handleGenerate() {
@@ -20,9 +20,10 @@ export default function RevisionLinkButton({ memberId }: { memberId: string }) {
       if (!res.ok) { setStatus('error'); setTimeout(() => setStatus('idle'), 3000); return }
 
       setUrl(data.url)
-      await navigator.clipboard.writeText(data.url)
-      setStatus('copied')
-      setTimeout(() => setStatus('idle'), 3000)
+      try { await navigator.clipboard.writeText(data.url) } catch {}
+      // emailed === false means no email on file / send failed — link still copied.
+      setStatus(data.emailed ? 'sent' : 'copiedonly')
+      setTimeout(() => setStatus('idle'), 4000)
     } catch {
       setStatus('error')
       setTimeout(() => setStatus('idle'), 3000)
@@ -36,14 +37,15 @@ export default function RevisionLinkButton({ memberId }: { memberId: string }) {
         disabled={status === 'loading'}
         className="text-xs border border-[var(--border-color)] text-[var(--text-2)] px-3 py-1.5 rounded hover:border-[#C9A227] hover:text-[#C9A227] transition-all disabled:opacity-40"
       >
-        {status === 'loading' ? 'Generating…'
-          : status === 'copied' ? '✓ Link Copied'
+        {status === 'loading' ? 'Sending…'
+          : status === 'sent' ? '✓ Emailed to member (link copied)'
+          : status === 'copiedonly' ? '✓ Link copied (no email on file)'
           : status === 'error' ? 'Error — try again'
-          : '⟳ Copy Blueprint Revision Link'}
+          : '⟳ Send Blueprint Revision Link'}
       </button>
       {url && status === 'idle' && (
         <button
-          onClick={() => { navigator.clipboard.writeText(url); setStatus('copied'); setTimeout(() => setStatus('idle'), 2000) }}
+          onClick={() => { navigator.clipboard.writeText(url); setStatus('copiedonly'); setTimeout(() => setStatus('idle'), 2000) }}
           className="text-[#C9A227] text-xs hover:underline truncate max-w-[160px]"
           title={url}
         >
