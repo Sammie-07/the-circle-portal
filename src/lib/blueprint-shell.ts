@@ -211,15 +211,19 @@ ${existingBody}
 
 OUTPUT: Return ONLY the full edited HTML body, every element from the opening <nav> through the closing </footer>, with your edits applied and everything else unchanged. No prose, no explanation, no markdown fences. Do NOT include <!DOCTYPE>, <html>, <head>, <style>, or <body> tags. PUNCTUATION: never use em dashes (the — character); use commas, periods, or rewrite. For numeric ranges use a hyphen like "Months 1-3".`
 
-  const msg = await anthropic.messages.create({
-    model: EDIT_MODEL,
-    // The edit echoes the whole blueprint body back. Real blueprints run ~15-16k
-    // output tokens, so 16k truncated them right at the edge. 32k is a hard cap,
-    // not a target (the model still stops when done, ~15-16k), so this only adds
-    // headroom, it does not increase latency.
-    max_tokens: 32000,
-    messages: [{ role: 'user', content: prompt }],
-  })
+  // The edit echoes the whole blueprint body back. Real blueprints run ~15-16k
+  // output tokens, so 16k truncated them right at the edge. 32k is a hard cap,
+  // not a target (the model still stops when done, ~15-16k), so this only adds
+  // headroom, it does not increase latency. A cap this high makes the SDK require
+  // STREAMING (its worst-case time estimate crosses 10 min), so we stream and read
+  // the final assembled message.
+  const msg = await anthropic.messages
+    .stream({
+      model: EDIT_MODEL,
+      max_tokens: 32000,
+      messages: [{ role: 'user', content: prompt }],
+    })
+    .finalMessage()
 
   // Read ALL text blocks and join them: the model may emit a non-text block
   // first (so content[0] can be empty), which otherwise looks like an empty edit.
