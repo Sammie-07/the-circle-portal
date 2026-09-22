@@ -180,10 +180,12 @@ export async function editBlueprintForRevision({
   existingHtml,
   memberName,
   answers,
+  adminNote,
 }: {
   existingHtml: string
   memberName: string
   answers: { question: string; answer: string }[]
+  adminNote?: string
 }): Promise<string> {
   const anthropic = getAnthropic()
   const existingBody = extractBlueprintBody(existingHtml)
@@ -192,6 +194,12 @@ export async function editBlueprintForRevision({
     .filter(a => a?.answer?.trim())
     .map(a => `Q: ${a.question}\nA: ${a.answer.trim()}`)
     .join('\n\n')
+
+  // An optional note from the coach/admin steering this (re)generation. Applied
+  // on TOP of the member's request and given priority when the two differ.
+  const coachBlock = adminNote?.trim()
+    ? `\n\nCOACH'S INSTRUCTIONS (from the admin, apply these on top of the member's request and give them priority where they differ):\n${adminNote.trim()}`
+    : ''
 
   // Ask for a MINIMAL SET OF FIND/REPLACE EDITS, not the whole document. Echoing
   // the full ~15-16k-token blueprint back was slow enough to hit the serverless
@@ -207,7 +215,7 @@ RULES:
 - Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
 
 MEMBER'S REVISION REQUEST:
-${answersBlock}
+${answersBlock}${coachBlock}
 
 BLUEPRINT (copy every FIND snippet verbatim from here):
 ${existingBody}

@@ -11,10 +11,13 @@ export const runtime = 'nodejs'
 // submitted answers, storing the result as a DRAFT (the live blueprint is left
 // untouched until the admin publishes). Returns the draft HTML for preview.
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  let noteBody: { note?: string } = {}
+  try { noteBody = await request.json() } catch { /* no body is fine */ }
+  const adminNote = (noteBody.note ?? '').trim()
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -58,6 +61,7 @@ export async function POST(
       existingHtml: member.blueprint_html,
       memberName: member.name,
       answers,
+      adminNote: adminNote || undefined,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

@@ -102,6 +102,7 @@ export default function BlueprintPanel({
   const [draftHtml, setDraftHtml] = useState<string | null>(initialDraftHtml)
   const [generatingDraft, setGeneratingDraft] = useState(false)
   const [genElapsed, setGenElapsed] = useState(0)
+  const [regenNote, setRegenNote] = useState('')
   // Tick an elapsed-seconds counter while a draft is generating, for the progress bar.
   useEffect(() => {
     if (!generatingDraft) { setGenElapsed(0); return }
@@ -278,7 +279,7 @@ export default function BlueprintPanel({
 
   // Step 1 of the revision: generate the updated blueprint (a draft). The live
   // blueprint is left untouched; the draft is shown for preview before publishing.
-  async function handleGenerateDraft() {
+  async function handleGenerateDraft(note?: string) {
     if (!pendingRevision || generatingDraft) return
     setGeneratingDraft(true)
     setError('')
@@ -286,6 +287,7 @@ export default function BlueprintPanel({
       const res = await fetch(`/api/blueprints/revision/${pendingRevision.id}/generate-draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(note?.trim() ? { note: note.trim() } : {}),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -755,11 +757,11 @@ export default function BlueprintPanel({
                       {showDraftPreview ? 'Hide preview' : 'Preview draft'}
                     </button>
                     <button
-                      onClick={handleGenerateDraft}
+                      onClick={() => handleGenerateDraft(regenNote)}
                       disabled={generatingDraft || resolvingRevision}
                       className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {generatingDraft ? 'Regenerating…' : 'Regenerate'}
+                      {generatingDraft ? 'Regenerating…' : regenNote.trim() ? 'Regenerate with my notes' : 'Regenerate'}
                     </button>
                     <button
                       onClick={handleDiscardRevision}
@@ -768,6 +770,20 @@ export default function BlueprintPanel({
                     >
                       Discard
                     </button>
+                  </div>
+                  {/* Optional coach note to steer a regenerate — what to change in the draft. */}
+                  <div>
+                    <label className="block text-[var(--text-3)] text-[11px] mb-1.5">
+                      Want changes? Tell it what to adjust, then Regenerate (optional)
+                    </label>
+                    <textarea
+                      value={regenNote}
+                      onChange={e => setRegenNote(e.target.value)}
+                      disabled={generatingDraft}
+                      rows={2}
+                      placeholder="e.g. Keep Q3 focused on listings, make the income goal $25k/mo, shorten the rules section."
+                      className="w-full bg-[var(--bg)] border border-[var(--border-color)] text-[var(--text)] rounded px-3 py-2 text-xs leading-relaxed resize-y focus:outline-none focus:border-[#C9A227] disabled:opacity-40"
+                    />
                   </div>
                   {generatingDraft && <GenerateProgress elapsed={genElapsed} />}
                   <p className="text-[var(--text-4)] text-[11px]">Publishing replaces {memberName}&rsquo;s current blueprint and emails them. Until then they keep seeing the current one, no gap.</p>
