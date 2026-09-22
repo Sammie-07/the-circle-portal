@@ -193,47 +193,76 @@ export async function editBlueprintForRevision({
     .map(a => `Q: ${a.question}\nA: ${a.answer.trim()}`)
     .join('\n\n')
 
-  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Your job is to edit the EXISTING blueprint so it accommodates their request.
+  // Ask for a MINIMAL SET OF FIND/REPLACE EDITS, not the whole document. Echoing
+  // the full ~15-16k-token blueprint back was slow enough to hit the serverless
+  // time limit; returning only the changed snippets keeps the output tiny (a few
+  // hundred tokens), so it is fast, never truncates, and needs no streaming.
+  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Return the minimal set of edits that make the blueprint reflect their request.
 
-CRITICAL EDITING RULES:
-- This is a surgical edit, NOT a rewrite. Change ONLY the parts that must change to reflect the new direction (e.g. the relevant quarters in the 12-month blueprint, the income architecture, the rules, focus areas, and the cover tagline if it no longer fits).
-- Keep every other part of the document EXACTLY as it is, word for word, element for element. Do not restructure, reorder, or reword sections that the new direction does not touch.
-- Preserve all existing HTML structure and use ONLY the CSS classes already present.
-- Keep it in Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you.
+RULES:
+- Surgical edit, NOT a rewrite. Change ONLY the parts that must change (e.g. the relevant quarters, the income architecture, the rules, focus areas, and the cover tagline if it no longer fits). Leave everything else untouched.
+- Each edit is a {"find","replace"} pair. "find" MUST be an exact, verbatim snippet copied character-for-character from the blueprint below (including the HTML tags and existing CSS classes), long enough to appear EXACTLY ONCE. Do NOT reformat, re-indent, or change quotes or whitespace in "find". If unsure it is unique, include more surrounding text.
+- "replace" is the new HTML that takes its place, using ONLY the CSS classes already present in the document.
+- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
 
 MEMBER'S REVISION REQUEST:
 ${answersBlock}
 
-${BLUEPRINT_CSS_CLASSES}
-
-EXISTING BLUEPRINT BODY (edit this and return it IN FULL):
+BLUEPRINT (copy every "find" snippet verbatim from here):
 ${existingBody}
 
-OUTPUT: Return ONLY the full edited HTML body, every element from the opening <nav> through the closing </footer>, with your edits applied and everything else unchanged. No prose, no explanation, no markdown fences. Do NOT include <!DOCTYPE>, <html>, <head>, <style>, or <body> tags. PUNCTUATION: never use em dashes (the — character); use commas, periods, or rewrite. For numeric ranges use a hyphen like "Months 1-3".`
+OUTPUT: Return ONLY minified JSON, no markdown, no prose: {"edits":[{"find":"<verbatim snippet>","replace":"<new html>"}]}. Include only the edits that must change. If nothing needs to change, return {"edits":[]}.`
 
-  // The edit echoes the whole blueprint body back. Real blueprints run ~15-16k
-  // output tokens, so 16k truncated them right at the edge. 32k is a hard cap,
-  // not a target (the model still stops when done, ~15-16k), so this only adds
-  // headroom, it does not increase latency. A cap this high makes the SDK require
-  // STREAMING (its worst-case time estimate crosses 10 min), so we stream and read
-  // the final assembled message.
-  const msg = await anthropic.messages
-    .stream({
-      model: EDIT_MODEL,
-      max_tokens: 32000,
-      messages: [{ role: 'user', content: prompt }],
-    })
-    .finalMessage()
+  const msg = await anthropic.messages.create({
+    model: EDIT_MODEL,
+    max_tokens: 8000, // only the edits come back, so this is plenty and stays non-streaming
+    messages: [{ role: 'user', content: prompt }],
+  })
 
-  // Read ALL text blocks and join them: the model may emit a non-text block
-  // first (so content[0] can be empty), which otherwise looks like an empty edit.
-  const edited = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
-  if (msg.stop_reason === 'max_tokens') {
-    throw new Error('The edited blueprint was too long to finish in one pass. Try again, or edit it manually.')
+  // Read ALL text blocks (the model may lead with a non-text block).
+  const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
+  const jsonText = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+
+  let parsed: { edits?: { find?: string; replace?: string }[] }
+  try {
+    parsed = JSON.parse(jsonText)
+  } catch {
+    throw new Error('Could not read the edit instructions. Please try again.')
   }
-  if (!edited) throw new Error('The edit returned an empty document')
 
-  return wrapWithShell(cleanBlueprintPart(edited), memberName)
+  const edits = (parsed.edits ?? []).filter(
+    (e) => typeof e?.find === 'string' && e.find.trim() !== '' && typeof e?.replace === 'string'
+  )
+  if (edits.length === 0) {
+    throw new Error('The edit produced no changes. Add more detail to the revision request and try again.')
+  }
+
+  const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  // Apply each edit: exact match first, then a whitespace-tolerant fallback so a
+  // minor reformatting in "find" still lands. First occurrence only.
+  let body = existingBody
+  let applied = 0
+  for (const e of edits) {
+    const find = e.find as string
+    const replace = noDash(e.replace as string)
+    if (body.includes(find)) {
+      body = body.replace(find, () => replace)
+      applied++
+      continue
+    }
+    const re = new RegExp(escapeRe(find).replace(/\s+/g, '\\s+'))
+    if (re.test(body)) {
+      body = body.replace(re, () => replace)
+      applied++
+    }
+  }
+  if (applied === 0) {
+    throw new Error('Could not locate the sections to edit in the current blueprint. Please try again.')
+  }
+
+  return wrapWithShell(cleanBlueprintPart(body), memberName)
 }
 
 function escapeHtml(s: string): string {
