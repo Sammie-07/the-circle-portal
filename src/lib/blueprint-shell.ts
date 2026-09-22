@@ -213,7 +213,11 @@ OUTPUT: Return ONLY the full edited HTML body, every element from the opening <n
 
   const msg = await anthropic.messages.create({
     model: EDIT_MODEL,
-    max_tokens: 16000,
+    // The edit echoes the whole blueprint body back. Real blueprints run ~15-16k
+    // output tokens, so 16k truncated them right at the edge. 32k is a hard cap,
+    // not a target (the model still stops when done, ~15-16k), so this only adds
+    // headroom, it does not increase latency.
+    max_tokens: 32000,
     messages: [{ role: 'user', content: prompt }],
   })
 
