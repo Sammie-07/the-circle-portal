@@ -718,7 +718,7 @@ export default function BlueprintPanel({
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
-                      onClick={handleGenerateDraft}
+                      onClick={() => handleGenerateDraft()}
                       disabled={generatingDraft}
                       className="bg-[#C9A227] text-[#090909] font-medium text-sm px-5 py-2.5 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >

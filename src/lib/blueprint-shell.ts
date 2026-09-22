@@ -201,86 +201,76 @@ export async function editBlueprintForRevision({
     ? `\n\nCOACH'S INSTRUCTIONS (from the admin, apply these on top of the member's request and give them priority where they differ):\n${adminNote.trim()}`
     : ''
 
-  // Ask for a MINIMAL SET OF FIND/REPLACE EDITS, not the whole document. Echoing
-  // the full ~15-16k-token blueprint back was slow enough to hit the serverless
-  // time limit; returning only the changed snippets keeps the output tiny (a few
-  // hundred tokens), so it is fast, never truncates, and needs no streaming.
-  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Return the minimal set of edits that make the blueprint reflect their request.
+  // Split the body into ordered UNITS: each <section> is an editable unit, and
+  // the bits between them (nav, header, cover, footer) are preserved as units
+  // too, so reassembly is exact. We ask the model to return ONLY the units that
+  // change, keyed by index. Output stays small (a few sections), so it is fast,
+  // never truncates, needs no streaming, and the parse is a robust integer key
+  // (no HTML-inside-JSON to break on quotes or newlines).
+  const secRe = /<section[\s\S]*?<\/section>/gi
+  const units: string[] = []
+  let cursor = 0
+  for (const mm of existingBody.matchAll(secRe)) {
+    const start = mm.index ?? 0
+    if (start > cursor) units.push(existingBody.slice(cursor, start))
+    units.push(mm[0])
+    cursor = start + mm[0].length
+  }
+  if (cursor < existingBody.length) units.push(existingBody.slice(cursor))
+  if (units.length === 0) units.push(existingBody)
+
+  const unitList = units.map((u, i) => `@@UNIT ${i}@@\n${u}`).join('\n\n')
+
+  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Edit the blueprint so it reflects their request.
+
+The blueprint below is split into numbered UNITS. Change ONLY the units the new direction actually requires (usually the relevant quarter sections, the income architecture, the rules, the focus areas, and the cover unit if its tagline no longer fits). Leave every other unit alone.
 
 RULES:
-- Surgical edit, NOT a rewrite. Change ONLY the parts that must change (e.g. the relevant quarters, the income architecture, the rules, focus areas, and the cover tagline if it no longer fits). Leave everything else untouched.
-- Each edit is a {"find","replace"} pair. "find" MUST be an exact, verbatim snippet copied character-for-character from the blueprint below (including the HTML tags and existing CSS classes), long enough to appear EXACTLY ONCE. Do NOT reformat, re-indent, or change quotes or whitespace in "find". If unsure it is unique, include more surrounding text.
-- The replacement is the new HTML that takes its place, using ONLY the CSS classes already present in the document.
-- Each "find" snippet should be one element or a small cluster of elements, NOT the whole document. Keep them small and targeted.
+- Surgical edit, NOT a rewrite. For each unit you change, return its FULL new HTML, keeping the same structure and wrapper (e.g. the <section ...> tag) and using ONLY the CSS classes already present.
+- Do not reorder or renumber units. Do not return units you did not change.
 - Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
 
 MEMBER'S REVISION REQUEST:
 ${answersBlock}${coachBlock}
 
-BLUEPRINT (copy every FIND snippet verbatim from here):
-${existingBody}
+BLUEPRINT UNITS:
+${unitList}
 
-OUTPUT FORMAT: For EACH change, output a block in EXACTLY this shape and nothing else:
-
-@@FIND@@
-<verbatim snippet copied from the blueprint>
-@@REPLACE@@
-<the new HTML>
-@@END@@
-
-Output one block per change, back to back, raw HTML (do NOT escape it, do NOT wrap in JSON or markdown, no commentary before or after). If nothing needs to change, output only: NO_CHANGES`
+OUTPUT FORMAT: For EACH changed unit, output exactly this, back to back:
+@@UNIT <number>@@
+<full new HTML for that unit>
+@@ENDUNIT@@
+Raw HTML only, no JSON, no markdown, no commentary before or after. If nothing needs to change, output only: NO_CHANGES`
 
   const msg = await anthropic.messages.create({
     model: EDIT_MODEL,
-    max_tokens: 8000, // only the edits come back, so this is plenty and stays non-streaming
+    max_tokens: 16000, // only changed units come back, so this is ample and stays non-streaming
     messages: [{ role: 'user', content: prompt }],
   })
 
   // Read ALL text blocks (the model may lead with a non-text block).
   const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
 
-  // Parse the delimiter-based patch (raw HTML between markers — no JSON escaping
-  // to break on quotes/newlines inside the HTML snippets).
-  const blockRe = /@@FIND@@\r?\n([\s\S]*?)\r?\n@@REPLACE@@\r?\n([\s\S]*?)\r?\n@@END@@/g
-  const edits: { find: string; replace: string }[] = []
+  const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
+  const outRe = /@@UNIT\s+(\d+)@@\r?\n([\s\S]*?)\r?\n@@ENDUNIT@@/g
+  let applied = 0
   let m: RegExpExecArray | null
-  while ((m = blockRe.exec(raw))) {
-    if (m[1].trim() !== '') edits.push({ find: m[1], replace: m[2] })
+  while ((m = outRe.exec(raw))) {
+    const idx = Number(m[1])
+    if (Number.isInteger(idx) && idx >= 0 && idx < units.length && m[2].trim() !== '') {
+      units[idx] = noDash(m[2])
+      applied++
+    }
   }
 
-  if (edits.length === 0) {
+  if (applied === 0) {
     if (/\bNO_CHANGES\b/.test(raw)) {
       throw new Error('The edit produced no changes. Add more detail to the revision request and try again.')
     }
     throw new Error('Could not read the edit instructions. Please try again.')
   }
 
-  const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
-  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-  // Apply each edit: exact match first, then a whitespace-tolerant fallback so a
-  // minor reformatting in "find" still lands. First occurrence only.
-  let body = existingBody
-  let applied = 0
-  for (const e of edits) {
-    const find = e.find as string
-    const replace = noDash(e.replace as string)
-    if (body.includes(find)) {
-      body = body.replace(find, () => replace)
-      applied++
-      continue
-    }
-    const re = new RegExp(escapeRe(find).replace(/\s+/g, '\\s+'))
-    if (re.test(body)) {
-      body = body.replace(re, () => replace)
-      applied++
-    }
-  }
-  if (applied === 0) {
-    throw new Error('Could not locate the sections to edit in the current blueprint. Please try again.')
-  }
-
-  return wrapWithShell(cleanBlueprintPart(body), memberName)
+  return wrapWithShell(cleanBlueprintPart(units.join('')), memberName)
 }
 
 function escapeHtml(s: string): string {
