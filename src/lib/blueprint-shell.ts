@@ -217,11 +217,13 @@ OUTPUT: Return ONLY the full edited HTML body, every element from the opening <n
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const edited = msg.content[0]?.type === 'text' ? msg.content[0].text : ''
-  if (!edited.trim()) throw new Error('The edit returned an empty document')
+  // Read ALL text blocks and join them: the model may emit a non-text block
+  // first (so content[0] can be empty), which otherwise looks like an empty edit.
+  const edited = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
   if (msg.stop_reason === 'max_tokens') {
     throw new Error('The edited blueprint was too long to finish in one pass. Try again, or edit it manually.')
   }
+  if (!edited) throw new Error('The edit returned an empty document')
 
   return wrapWithShell(cleanBlueprintPart(edited), memberName)
 }
