@@ -103,6 +103,7 @@ export default function BlueprintPanel({
   const [generatingDraft, setGeneratingDraft] = useState(false)
   const [genElapsed, setGenElapsed] = useState(0)
   const [regenNote, setRegenNote] = useState('')
+  const [showRegen, setShowRegen] = useState(false)
   // Tick an elapsed-seconds counter while a draft is generating, for the progress bar.
   useEffect(() => {
     if (!generatingDraft) { setGenElapsed(0); return }
@@ -295,6 +296,8 @@ export default function BlueprintPanel({
       } else {
         setDraftHtml(data.draft_html ?? null)
         setShowDraftPreview(true)
+        setShowRegen(false)
+        setRegenNote('')
       }
     } catch {
       setError('Could not generate the updated blueprint. Please try again.')
@@ -756,13 +759,15 @@ export default function BlueprintPanel({
                     >
                       {showDraftPreview ? 'Hide preview' : 'Preview draft'}
                     </button>
-                    <button
-                      onClick={() => handleGenerateDraft(regenNote)}
-                      disabled={generatingDraft || resolvingRevision}
-                      className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {generatingDraft ? 'Regenerating…' : regenNote.trim() ? 'Regenerate with my notes' : 'Regenerate'}
-                    </button>
+                    {!showRegen && (
+                      <button
+                        onClick={() => setShowRegen(true)}
+                        disabled={generatingDraft || resolvingRevision}
+                        className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2.5 rounded hover:text-[var(--text-2)] hover:border-[var(--border-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Regenerate
+                      </button>
+                    )}
                     <button
                       onClick={handleDiscardRevision}
                       disabled={resolvingRevision || generatingDraft}
@@ -771,20 +776,40 @@ export default function BlueprintPanel({
                       Discard
                     </button>
                   </div>
-                  {/* Optional coach note to steer a regenerate — what to change in the draft. */}
-                  <div>
-                    <label className="block text-[var(--text-3)] text-[11px] mb-1.5">
-                      Want changes? Tell it what to adjust, then Regenerate (optional)
-                    </label>
-                    <textarea
-                      value={regenNote}
-                      onChange={e => setRegenNote(e.target.value)}
-                      disabled={generatingDraft}
-                      rows={2}
-                      placeholder="e.g. Keep Q3 focused on listings, make the income goal $25k/mo, shorten the rules section."
-                      className="w-full bg-[var(--bg)] border border-[var(--border-color)] text-[var(--text)] rounded px-3 py-2 text-xs leading-relaxed resize-y focus:outline-none focus:border-[#C9A227] disabled:opacity-40"
-                    />
-                  </div>
+                  {/* Regenerate flow: the note box appears only after clicking Regenerate,
+                      and a note is required before it will run. */}
+                  {showRegen && (
+                    <div className="rounded-md border border-[#C9A227]/30 bg-[var(--bg)] p-3 space-y-2">
+                      <label className="block text-[var(--text-2)] text-xs font-medium">
+                        What should change in this draft? <span className="text-[#C9A227]">(required)</span>
+                      </label>
+                      <textarea
+                        value={regenNote}
+                        onChange={e => setRegenNote(e.target.value)}
+                        disabled={generatingDraft}
+                        rows={3}
+                        autoFocus
+                        placeholder="e.g. Keep Q3 focused on listings, make the income goal $25k/mo, add finding and training a VA as an early step, shorten the rules section."
+                        className="w-full bg-[var(--card)] border border-[var(--border-color)] text-[var(--text)] rounded px-3 py-2 text-xs leading-relaxed resize-y focus:outline-none focus:border-[#C9A227] disabled:opacity-40"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleGenerateDraft(regenNote)}
+                          disabled={generatingDraft || resolvingRevision || !regenNote.trim()}
+                          className="bg-[#C9A227] text-[#090909] font-medium text-sm px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {generatingDraft ? 'Regenerating…' : 'Regenerate with these changes'}
+                        </button>
+                        <button
+                          onClick={() => { setShowRegen(false); setRegenNote('') }}
+                          disabled={generatingDraft}
+                          className="border border-[var(--border-color)] text-[var(--text-3)] text-sm px-4 py-2 rounded hover:text-[var(--text-2)] transition-colors disabled:opacity-40"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {generatingDraft && <GenerateProgress elapsed={genElapsed} />}
                   <p className="text-[var(--text-4)] text-[11px]">Publishing replaces {memberName}&rsquo;s current blueprint and emails them. Until then they keep seeing the current one, no gap.</p>
 
