@@ -28,8 +28,8 @@ const QUESTIONS: { key: string; question: string; placeholder: string; note?: st
   },
   {
     key: 'tradeoffs',
-    question: 'What will you stop or pause to make room for it?',
-    placeholder: "You can't add without subtracting, what comes off your plate? Be as detailed as you can…",
+    question: 'What needs to change in your setup to make this a successful year, what will you add, and what will you stop or pause?',
+    placeholder: "Both sides count. What do you need to ADD (e.g. find, hire and train a VA, a new tool, a new lead source), and what will you stop or pause to make room? Be as detailed as you can…",
   },
 ]
 
