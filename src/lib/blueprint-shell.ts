@@ -202,16 +202,25 @@ export async function editBlueprintForRevision({
 RULES:
 - Surgical edit, NOT a rewrite. Change ONLY the parts that must change (e.g. the relevant quarters, the income architecture, the rules, focus areas, and the cover tagline if it no longer fits). Leave everything else untouched.
 - Each edit is a {"find","replace"} pair. "find" MUST be an exact, verbatim snippet copied character-for-character from the blueprint below (including the HTML tags and existing CSS classes), long enough to appear EXACTLY ONCE. Do NOT reformat, re-indent, or change quotes or whitespace in "find". If unsure it is unique, include more surrounding text.
-- "replace" is the new HTML that takes its place, using ONLY the CSS classes already present in the document.
+- The replacement is the new HTML that takes its place, using ONLY the CSS classes already present in the document.
+- Each "find" snippet should be one element or a small cluster of elements, NOT the whole document. Keep them small and targeted.
 - Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
 
 MEMBER'S REVISION REQUEST:
 ${answersBlock}
 
-BLUEPRINT (copy every "find" snippet verbatim from here):
+BLUEPRINT (copy every FIND snippet verbatim from here):
 ${existingBody}
 
-OUTPUT: Return ONLY minified JSON, no markdown, no prose: {"edits":[{"find":"<verbatim snippet>","replace":"<new html>"}]}. Include only the edits that must change. If nothing needs to change, return {"edits":[]}.`
+OUTPUT FORMAT: For EACH change, output a block in EXACTLY this shape and nothing else:
+
+@@FIND@@
+<verbatim snippet copied from the blueprint>
+@@REPLACE@@
+<the new HTML>
+@@END@@
+
+Output one block per change, back to back, raw HTML (do NOT escape it, do NOT wrap in JSON or markdown, no commentary before or after). If nothing needs to change, output only: NO_CHANGES`
 
   const msg = await anthropic.messages.create({
     model: EDIT_MODEL,
@@ -221,20 +230,21 @@ OUTPUT: Return ONLY minified JSON, no markdown, no prose: {"edits":[{"find":"<ve
 
   // Read ALL text blocks (the model may lead with a non-text block).
   const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
-  const jsonText = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
 
-  let parsed: { edits?: { find?: string; replace?: string }[] }
-  try {
-    parsed = JSON.parse(jsonText)
-  } catch {
-    throw new Error('Could not read the edit instructions. Please try again.')
+  // Parse the delimiter-based patch (raw HTML between markers — no JSON escaping
+  // to break on quotes/newlines inside the HTML snippets).
+  const blockRe = /@@FIND@@\r?\n([\s\S]*?)\r?\n@@REPLACE@@\r?\n([\s\S]*?)\r?\n@@END@@/g
+  const edits: { find: string; replace: string }[] = []
+  let m: RegExpExecArray | null
+  while ((m = blockRe.exec(raw))) {
+    if (m[1].trim() !== '') edits.push({ find: m[1], replace: m[2] })
   }
 
-  const edits = (parsed.edits ?? []).filter(
-    (e) => typeof e?.find === 'string' && e.find.trim() !== '' && typeof e?.replace === 'string'
-  )
   if (edits.length === 0) {
-    throw new Error('The edit produced no changes. Add more detail to the revision request and try again.')
+    if (/\bNO_CHANGES\b/.test(raw)) {
+      throw new Error('The edit produced no changes. Add more detail to the revision request and try again.')
+    }
+    throw new Error('Could not read the edit instructions. Please try again.')
   }
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')

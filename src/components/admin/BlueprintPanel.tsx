@@ -41,6 +41,32 @@ interface IntakeData {
   transcript: string
 }
 
+// Progress bar shown while the revision draft generates. There's no real
+// server-side progress to report, so the fill eases toward ~92% over ~40s to
+// signal steady work, and the message advances through the stages.
+function GenerateProgress({ elapsed }: { elapsed: number }) {
+  const pct = Math.min(92, Math.round(100 * (1 - Math.exp(-elapsed / 18))))
+  const msg =
+    elapsed < 8 ? 'Reading the current blueprint…'
+    : elapsed < 22 ? 'Working out what your new direction changes…'
+    : elapsed < 40 ? 'Applying the edits…'
+    : 'Almost there, finishing up…'
+  return (
+    <div className="space-y-1.5" aria-live="polite">
+      <div className="h-1.5 w-full rounded-full overflow-hidden bg-[var(--border-color)]">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #C9A227, #E8CF7A)', transition: 'width 0.9s ease' }}
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[var(--text-3)] text-[11px]">{msg}</span>
+        <span className="text-[var(--text-4)] text-[11px] tabular-nums">{elapsed}s</span>
+      </div>
+    </div>
+  )
+}
+
 export default function BlueprintPanel({
   memberId,
   memberName,
@@ -75,6 +101,14 @@ export default function BlueprintPanel({
   const [pendingRevision, setPendingRevision] = useState<PendingRevision | null>(initialPendingRevision)
   const [draftHtml, setDraftHtml] = useState<string | null>(initialDraftHtml)
   const [generatingDraft, setGeneratingDraft] = useState(false)
+  const [genElapsed, setGenElapsed] = useState(0)
+  // Tick an elapsed-seconds counter while a draft is generating, for the progress bar.
+  useEffect(() => {
+    if (!generatingDraft) { setGenElapsed(0); return }
+    setGenElapsed(0)
+    const t = setInterval(() => setGenElapsed(e => e + 1), 1000)
+    return () => clearInterval(t)
+  }, [generatingDraft])
   const [resolvingRevision, setResolvingRevision] = useState(false)
   const [showDraftPreview, setShowDraftPreview] = useState(false)
   const [showVersions, setShowVersions] = useState(false)
@@ -696,6 +730,7 @@ export default function BlueprintPanel({
                       Dismiss request
                     </button>
                   </div>
+                  {generatingDraft && <GenerateProgress elapsed={genElapsed} />}
                   <p className="text-[var(--text-4)] text-[11px]">Nothing changes for {memberName} yet, their current blueprint stays live until you publish.</p>
                 </div>
               ) : (
@@ -734,6 +769,7 @@ export default function BlueprintPanel({
                       Discard
                     </button>
                   </div>
+                  {generatingDraft && <GenerateProgress elapsed={genElapsed} />}
                   <p className="text-[var(--text-4)] text-[11px]">Publishing replaces {memberName}&rsquo;s current blueprint and emails them. Until then they keep seeing the current one, no gap.</p>
 
                   {showDraftPreview && draftHtml && (
