@@ -4,7 +4,13 @@
 // .nav-brand + .nav-links) so that src/app/b/[token]/route.ts can inject its
 // download toolbar via its existing `html.replace('</nav>', ...)` call.
 
-import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
+import { getAnthropic } from '@/lib/ai'
+
+// The revision edit echoes back the whole blueprint HTML with surgical changes,
+// a read-and-restructure task, not deep reasoning. A faster model does long
+// structured output much quicker (same choice as the Fathom transcript route),
+// which keeps a large blueprint's edit inside Vercel's function time limit.
+const EDIT_MODEL = 'claude-sonnet-5'
 
 // ─── Full blueprint CSS — injected around the body, never sent to Claude ───
 export const BLUEPRINT_CSS = `<style>
@@ -206,7 +212,7 @@ ${existingBody}
 OUTPUT: Return ONLY the full edited HTML body, every element from the opening <nav> through the closing </footer>, with your edits applied and everything else unchanged. No prose, no explanation, no markdown fences. Do NOT include <!DOCTYPE>, <html>, <head>, <style>, or <body> tags. PUNCTUATION: never use em dashes (the — character); use commas, periods, or rewrite. For numeric ranges use a hyphen like "Months 1-3".`
 
   const msg = await anthropic.messages.create({
-    model: CLAUDE_MODEL,
+    model: EDIT_MODEL,
     max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
   })
