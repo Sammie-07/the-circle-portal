@@ -5,6 +5,7 @@
 // download toolbar via its existing `html.replace('</nav>', ...)` call.
 
 import { getAnthropic } from '@/lib/ai'
+import { searchBrain, buildBrainContext, sanitizeBrainText } from '@/lib/brain-search'
 
 // The revision edit echoes back the whole blueprint HTML with surgical changes,
 // a read-and-restructure task, not deep reasoning. A faster model does long
@@ -197,10 +198,23 @@ export async function editBlueprintForRevision({
     .map(a => `Q: ${a.question}\nA: ${a.answer.trim()}`)
     .join('\n\n')
 
-  // An optional note from the coach/admin steering this (re)generation. Applied
-  // on TOP of the member's request and given priority when the two differ.
+  // An optional note from the coach/admin steering this (re)generation. It is the
+  // HIGHEST-priority instruction for this pass (see the prompt), placed up top.
   const coachBlock = adminNote?.trim()
-    ? `\n\nCOACH'S INSTRUCTIONS (from the admin, apply these on top of the member's request and give them priority where they differ):\n${adminNote.trim()}`
+    ? `\n\nHIGHEST-PRIORITY COACH INSTRUCTIONS FOR THIS EDIT (from Gogo's team — follow these exactly; where they conflict with anything else, these win):\n${adminNote.trim()}\n`
+    : ''
+
+  // Ground the edit in Gogo's actual principles (her Brain), so notes like "how
+  // would Gogo manage this" or "what would Gogo say" pull her real approach
+  // instead of generic advice. Best-effort: never block the edit if it fails.
+  const brainQuery = [
+    'Gogo Bethke coaching approach for a real estate agent changing direction:',
+    answers.map((a) => a?.answer ?? '').join(' '),
+    adminNote ?? '',
+  ].join(' ').trim().slice(0, 500)
+  const brainChunks = await searchBrain(brainQuery, 10).catch(() => [])
+  const brainBlock = brainChunks.length
+    ? `\n\nGOGO'S PRINCIPLES (from her Brain — make the edited plan reflect how SHE actually coaches this, e.g. phasing changes in without dropping what already makes money):\n${sanitizeBrainText(buildBrainContext(brainChunks))}\n`
     : ''
 
   // Split the body into ordered UNITS: each <section> is an editable unit, and
@@ -223,17 +237,17 @@ export async function editBlueprintForRevision({
 
   const unitList = units.map((u, i) => `@@UNIT ${i}@@\n${u}`).join('\n\n')
 
-  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Edit the blueprint so it reflects their request.
-
-The blueprint below is split into numbered UNITS. Change ONLY the units the new direction actually requires (usually the relevant quarter sections, the income architecture, the rules, the focus areas, and the cover unit if its tagline no longer fits). Leave every other unit alone.
+  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Edit the blueprint so it reflects the request AND the coach instructions below.
+${coachBlock}${brainBlock}
+The blueprint below is split into numbered UNITS. Change ONLY the units the request and coach instructions actually require (usually the relevant quarter sections, the income architecture, the rules, the focus areas, and the cover unit if its tagline no longer fits). Leave every other unit alone. Do not just tack the new idea on: reflect HOW Gogo would sequence it, e.g. phasing a new direction in while keeping the income that already works, rather than dropping it.
 
 RULES:
 - Surgical edit, NOT a rewrite. For each unit you change, return its FULL new HTML, keeping the same structure and wrapper (e.g. the <section ...> tag) and using ONLY the CSS classes already present.
 - Do not reorder or renumber units. Do not return units you did not change.
-- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
+- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you and the Brain principles above. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
 
 MEMBER'S REVISION REQUEST:
-${answersBlock}${coachBlock}
+${answersBlock}
 
 BLUEPRINT UNITS:
 ${unitList}
