@@ -258,15 +258,25 @@ OUTPUT FORMAT: For EACH changed unit, output exactly this, back to back:
 @@ENDUNIT@@
 Raw HTML only, no JSON, no markdown, no commentary before or after. If nothing needs to change, output only: NO_CHANGES`
 
-  const msg = await anthropic.messages.create({
-    model: EDIT_MODEL,
-    max_tokens: 16000, // only changed units come back, so this is ample and stays non-streaming
-    messages: [{ role: 'user', content: prompt }],
-  })
+  async function runEdit() {
+    const msg = await anthropic.messages.create({
+      model: EDIT_MODEL,
+      max_tokens: 16000, // only changed units come back, so this is ample and stays non-streaming
+      messages: [{ role: 'user', content: prompt }],
+    })
+    // Read ALL text blocks (the model may lead with a non-text block).
+    const text = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
+    return { text, stop: msg.stop_reason }
+  }
 
-  // Read ALL text blocks (the model may lead with a non-text block).
-  const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
-  captureRaw?.(raw) // TEMP debug
+  // The API occasionally returns an empty completion; one retry clears it.
+  let { text: raw, stop } = await runEdit()
+  if (!raw) ({ text: raw, stop } = await runEdit())
+  captureRaw?.(`[stop=${stop}] len=${raw.length}\n${raw}`) // TEMP debug
+
+  if (stop === 'max_tokens' && raw === '') {
+    throw new Error('The edit ran out of room before writing anything. Please try again.')
+  }
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
 
