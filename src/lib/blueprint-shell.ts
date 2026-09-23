@@ -217,81 +217,65 @@ export async function editBlueprintForRevision({
     ? `\n\nGOGO'S PRINCIPLES (from her Brain — make the edited plan reflect how SHE actually coaches this, e.g. phasing changes in without dropping what already makes money):\n${sanitizeBrainText(buildBrainContext(brainChunks))}\n`
     : ''
 
-  // Split the body into ordered UNITS: each <section> is an editable unit, and
-  // the bits between them (nav, header, cover, footer) are preserved as units
-  // too, so reassembly is exact. We ask the model to return ONLY the units that
-  // change, keyed by index. Output stays small (a few sections), so it is fast,
-  // never truncates, needs no streaming, and the parse is a robust integer key
-  // (no HTML-inside-JSON to break on quotes or newlines).
-  const secRe = /<section[\s\S]*?<\/section>/gi
-  const units: string[] = []
-  let cursor = 0
-  for (const mm of existingBody.matchAll(secRe)) {
-    const start = mm.index ?? 0
-    if (start > cursor) units.push(existingBody.slice(cursor, start))
-    units.push(mm[0])
-    cursor = start + mm[0].length
-  }
-  if (cursor < existingBody.length) units.push(existingBody.slice(cursor))
-  if (units.length === 0) units.push(existingBody)
-
-  const unitList = units.map((u, i) => `@@UNIT ${i}@@\n${u}`).join('\n\n')
-
-  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." ${memberName} submitted a revision request describing a new idea or change of direction. Edit the blueprint so it reflects the request AND the coach instructions below.
+  // Ask for the SMALLEST set of find/replace edits, not whole sections. Rewriting
+  // full sections meant ~15k output tokens and ~100s (which timed out); returning
+  // only the changed snippets is ~700 tokens and ~10s. Delimiter format (not JSON)
+  // so raw HTML can't break the parse on quotes/newlines.
+  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." Apply the request and coach instructions with the SMALLEST set of targeted edits.
 ${coachBlock}${brainBlock}
-The blueprint below is split into numbered UNITS. Change ONLY the units the request and coach instructions actually require (usually the relevant quarter sections, the income architecture, the rules, the focus areas, and the cover unit if its tagline no longer fits). Leave every other unit alone. Do not just tack the new idea on: reflect HOW Gogo would sequence it, e.g. phasing a new direction in while keeping the income that already works, rather than dropping it.
+Reflect HOW Gogo would sequence the change, e.g. phasing a new direction in while KEEPING the income that already works, rather than dropping it. Change only what the request and coach instructions require; leave everything else exactly as is.
 
 RULES:
-- Surgical edit, NOT a rewrite. For each unit you change, return its FULL new HTML, keeping the same structure and wrapper (e.g. the <section ...> tag) and using ONLY the CSS classes already present.
-- Do not reorder or renumber units. Do not return units you did not change.
-- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you and the Brain principles above. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3".
+- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you and the Brain principles above. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3". Use ONLY the CSS classes already present.
 
 MEMBER'S REVISION REQUEST:
 ${answersBlock}
 
-BLUEPRINT UNITS:
-${unitList}
+BLUEPRINT (copy every FIND snippet verbatim from here):
+${existingBody}
 
-OUTPUT FORMAT: For EACH changed unit, output exactly this, back to back:
-@@UNIT <number>@@
-<full new HTML for that unit>
-@@ENDUNIT@@
-Raw HTML only, no JSON, no markdown, no commentary before or after. If nothing needs to change, output only: NO_CHANGES`
+OUTPUT FORMAT: For EACH change, output a block in EXACTLY this shape, back to back:
+@@FIND@@
+<text copied VERBATIM from the blueprint, character-for-character, long enough to appear exactly once>
+@@REPLACE@@
+<the new text that takes its place>
+@@END@@
+Copy the FIND text exactly (do not reformat or change whitespace). Raw HTML only, no JSON, no markdown, no commentary. If nothing needs to change, output only: NO_CHANGES`
 
-  // ONE model call — a second sequential call risked exceeding the function time
-  // limit (the generic "please try again" timeout). Kept non-streaming.
-  const msg = await anthropic.messages.create({
-    model: EDIT_MODEL,
-    max_tokens: 16000, // only changed units come back, so this is ample and stays non-streaming
-    messages: [{ role: 'user', content: prompt }],
-  })
-  // Read ALL text blocks (the model may lead with a non-text block).
-  const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
-  captureRaw?.(`[stop=${msg.stop_reason}] len=${raw.length}\n${raw}`) // TEMP debug
-
-  if (!raw) {
-    throw new Error('The model returned an empty response. Please click Regenerate again.')
+  async function runEdit() {
+    const msg = await anthropic.messages.create({
+      model: EDIT_MODEL,
+      max_tokens: 8000, // only the small snippets come back — fast, non-streaming
+      messages: [{ role: 'user', content: prompt }],
+    })
+    return msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
   }
+  // Fast enough (~10s) that one retry on an empty completion is safe.
+  let raw = await runEdit()
+  if (!raw) raw = await runEdit()
+  captureRaw?.(`len=${raw.length}\n${raw}`) // TEMP debug
+  if (!raw) throw new Error('The model returned an empty response. Please click Regenerate again.')
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-  // Tolerant parse: split on the @@UNIT marker (any spacing / newlines), read the
-  // leading index, and take the content up to @@ENDUNIT@@ if present, otherwise
-  // up to the next @@UNIT (the split already bounds it). This survives the model
-  // varying whitespace, dropping the closing marker, or fencing the output.
+  // Apply each find/replace: exact match first, then a whitespace-tolerant match.
+  let body = existingBody
   let applied = 0
-  const chunks = raw.split(/@@\s*UNIT\s+/i).slice(1)
-  for (const chunk of chunks) {
-    const head = chunk.match(/^(\d+)\s*@@\s*\n?/)
-    if (!head) continue
-    const idx = Number(head[1])
-    let content = chunk.slice(head[0].length)
-    content = content.split(/@@\s*END\s*UNIT\s*@@/i)[0]
-      .replace(/^```(?:html)?\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim()
-    if (Number.isInteger(idx) && idx >= 0 && idx < units.length && content !== '') {
-      units[idx] = noDash(content)
+  const blockRe = /@@FIND@@\r?\n([\s\S]*?)\r?\n@@REPLACE@@\r?\n([\s\S]*?)\r?\n@@END@@/g
+  let m: RegExpExecArray | null
+  while ((m = blockRe.exec(raw))) {
+    const find = m[1]
+    const replace = noDash(m[2])
+    if (find.trim() === '') continue
+    if (body.includes(find)) {
+      body = body.replace(find, () => replace)
+      applied++
+      continue
+    }
+    const rx = new RegExp(escapeRe(find).replace(/\s+/g, '\\s+'))
+    if (rx.test(body)) {
+      body = body.replace(rx, () => replace)
       applied++
     }
   }
@@ -303,7 +287,7 @@ Raw HTML only, no JSON, no markdown, no commentary before or after. If nothing n
     throw new Error('Could not read the edit instructions. Please try again.')
   }
 
-  return wrapWithShell(cleanBlueprintPart(units.join('')), memberName)
+  return wrapWithShell(cleanBlueprintPart(body), memberName)
 }
 
 function escapeHtml(s: string): string {
