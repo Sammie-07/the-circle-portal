@@ -372,7 +372,7 @@ WRITE THESE 4 ELEMENTS IN FULL — no placeholders, no truncation:
    Pull rules from Brain but write the rule-explain to match their exact situation.
 
 3. <section id="s7" class="page-section"> — eyebrow "Section 07", h2 "Your Circle Support System", section-intro, support-grid with 6 support-cards (first gets class="support-card lead"):
-   Weekly Office Hours (Every Tuesday 12-1pm EST), Private WhatsApp Community (between-session access), Monthly 1:1 Tech Session (60 min, one per month), GoGet'Em Community (required, tech calls Tue+Wed 3pm EST), Session Recordings (posted in WhatsApp same week), The Circle Members (up to 20, NDA-protected)
+   Weekly Office Hours (Every Tuesday 12-1pm EST), Private WhatsApp Community (between-session access), Monthly 1:1 Tech Session (60 min, one per month), GoGet'Em Community (required, tech call Tuesdays 3pm EST), Session Recordings (posted in WhatsApp same week), The Circle Members (a small, handpicked, application-only group, NDA-protected)
    Then community-box (non-subscription commitment text + right side: all payments non-refundable / early termination / year begins moment you sign)
    Then program-detail (3 pd-items separated by pd-sep: monthly $3,000/month · 12 payments total $36,000 | annual $30,000 · paid in full · 2 months complimentary · save $6,000 | italic "Your year starts the moment you sign.")
 
