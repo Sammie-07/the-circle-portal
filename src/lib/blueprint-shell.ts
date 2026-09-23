@@ -4,7 +4,7 @@
 // .nav-brand + .nav-links) so that src/app/b/[token]/route.ts can inject its
 // download toolbar via its existing `html.replace('</nav>', ...)` call.
 
-import { getAnthropic } from '@/lib/ai'
+import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, sanitizeBrainText } from '@/lib/brain-search'
 
 // The revision edit echoes back the whole blueprint HTML with surgical changes,
@@ -242,19 +242,35 @@ OUTPUT FORMAT: For EACH change, output a block in EXACTLY this shape, back to ba
 @@END@@
 Copy the FIND text exactly (do not reformat or change whitespace). Raw HTML only, no JSON, no markdown, no commentary. If nothing needs to change, output only: NO_CHANGES`
 
-  async function runEdit() {
+  // Thinking is DISABLED on the primary call: the edit is mechanical, and by
+  // default this model spends output budget thinking before it writes anything
+  // (slower, and with a long coach note + Brain context it can end up writing no
+  // text at all). If the primary still comes back empty, fall back to a
+  // different model, which won't share the same failure mode.
+  async function runEdit(model: string, disableThinking: boolean) {
     const msg = await anthropic.messages.create({
-      model: EDIT_MODEL,
-      max_tokens: 8000, // only the small snippets come back — fast, non-streaming
+      model,
+      max_tokens: 12000, // only small snippets come back; well under the streaming threshold
       messages: [{ role: 'user', content: prompt }],
+      ...(disableThinking ? { thinking: { type: 'disabled' as const } } : {}),
     })
-    return msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
+    const text = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
+    const info = `model=${model} stop=${msg.stop_reason} blocks=${msg.content.map((b) => b.type).join(',')} out=${msg.usage?.output_tokens}`
+    return { text, stop: msg.stop_reason, info }
   }
-  // Fast enough (~10s) that one retry on an empty completion is safe.
-  let raw = await runEdit()
-  if (!raw) raw = await runEdit()
-  captureRaw?.(`len=${raw.length}\n${raw}`) // TEMP debug
-  if (!raw) throw new Error('The model returned an empty response. Please click Regenerate again.')
+
+  let result = await runEdit(EDIT_MODEL, true)
+  let diag = result.info
+  if (!result.text) {
+    const fallback = await runEdit(CLAUDE_MODEL, false)
+    diag += ` | fallback ${fallback.info}`
+    result = fallback
+  }
+  captureRaw?.(`${diag}\nlen=${result.text.length}\n${result.text}`) // TEMP debug
+  if (!result.text) {
+    throw new Error(`The model returned an empty response (${result.stop ?? 'unknown'}). Please click Regenerate again.`)
+  }
+  const raw = result.text
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
   const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
