@@ -181,11 +181,13 @@ export async function editBlueprintForRevision({
   memberName,
   answers,
   adminNote,
+  captureRaw,
 }: {
   existingHtml: string
   memberName: string
   answers: { question: string; answer: string }[]
   adminNote?: string
+  captureRaw?: (raw: string) => void // TEMP debug: hand back the raw model output
 }): Promise<string> {
   const anthropic = getAnthropic()
   const existingBody = extractBlueprintBody(existingHtml)
@@ -250,15 +252,27 @@ Raw HTML only, no JSON, no markdown, no commentary before or after. If nothing n
 
   // Read ALL text blocks (the model may lead with a non-text block).
   const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
+  captureRaw?.(raw) // TEMP debug
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
-  const outRe = /@@UNIT\s+(\d+)@@\r?\n([\s\S]*?)\r?\n@@ENDUNIT@@/g
+
+  // Tolerant parse: split on the @@UNIT marker (any spacing / newlines), read the
+  // leading index, and take the content up to @@ENDUNIT@@ if present, otherwise
+  // up to the next @@UNIT (the split already bounds it). This survives the model
+  // varying whitespace, dropping the closing marker, or fencing the output.
   let applied = 0
-  let m: RegExpExecArray | null
-  while ((m = outRe.exec(raw))) {
-    const idx = Number(m[1])
-    if (Number.isInteger(idx) && idx >= 0 && idx < units.length && m[2].trim() !== '') {
-      units[idx] = noDash(m[2])
+  const chunks = raw.split(/@@\s*UNIT\s+/i).slice(1)
+  for (const chunk of chunks) {
+    const head = chunk.match(/^(\d+)\s*@@\s*\n?/)
+    if (!head) continue
+    const idx = Number(head[1])
+    let content = chunk.slice(head[0].length)
+    content = content.split(/@@\s*END\s*UNIT\s*@@/i)[0]
+      .replace(/^```(?:html)?\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .trim()
+    if (Number.isInteger(idx) && idx >= 0 && idx < units.length && content !== '') {
+      units[idx] = noDash(content)
       applied++
     }
   }
