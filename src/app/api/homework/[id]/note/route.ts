@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
+import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -58,7 +59,9 @@ export async function POST(request: Request, { params }: Params) {
 
   // Analyze with Claude; any failure here still leaves the note saved.
   try {
-    const prompt = `A member of a coaching program is working on this task:
+    const prompt = `${CIRCLE_FACTS}
+
+A member of a coaching program is working on this task:
 
 Title: ${row.title}
 Description: ${row.description || '(none)'}

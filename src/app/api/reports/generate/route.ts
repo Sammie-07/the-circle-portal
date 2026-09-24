@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { sanitizeBrainText } from '@/lib/brain-search'
+import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 120
@@ -223,6 +224,8 @@ export async function POST(request: Request) {
     const brainContext = await fetchBrainContext(brainQuery)
 
     const prompt = `You are writing a ${period_type} progress report for ${member.name}, a member of Gogo Bethke's 12-month high-ticket coaching program, The Circle. Write it as Gogo would, speaking directly to the member ("you").
+
+${CIRCLE_FACTS}
 
 Two things anchor this report:
 1. THE BLUEPRINT is the member's 12-month map, the plan Gogo built for them. It is the north star, and blueprint progress is measured against it.

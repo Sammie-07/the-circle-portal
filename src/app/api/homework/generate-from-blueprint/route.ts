@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
+import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 60
@@ -65,6 +66,9 @@ export async function POST(request: Request) {
     const anthropic = getAnthropic()
 
     const prompt = `You are reading ${member.name}'s 12-month Circle coaching blueprint prepared by Gogo Bethke.
+
+${CIRCLE_FACTS}
+(If the blueprint text below conflicts with these facts, e.g. it mentions a Wednesday tech call, follow the facts.)
 
 Today is ${todayStr}. ${member.name} is currently in Q${currentQuarter} of their program.
 
