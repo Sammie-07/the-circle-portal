@@ -6,6 +6,7 @@
 
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, sanitizeBrainText } from '@/lib/brain-search'
+import { CIRCLE_FACTS } from '@/lib/circle-facts'
 
 // The revision edit echoes back the whole blueprint HTML with surgical changes,
 // a read-and-restructure task, not deep reasoning. A faster model does long
@@ -223,6 +224,8 @@ export async function editBlueprintForRevision({
   // so raw HTML can't break the parse on quotes/newlines.
   const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." Apply the request and coach instructions with the SMALLEST set of targeted edits.
 ${coachBlock}${brainBlock}
+${CIRCLE_FACTS}
+
 Reflect HOW Gogo would sequence the change, e.g. phasing a new direction in while KEEPING the income that already works, rather than dropping it. Change only what the request and coach instructions require; leave everything else exactly as is.
 
 RULES:

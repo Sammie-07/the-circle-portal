@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { sanitizeBrainText } from '@/lib/brain-search'
 import { applyFinancialRules } from '@/lib/apply-financial-rules'
+import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import { NextResponse } from 'next/server'
 
 // Extend timeout to 5 minutes — blueprint generation takes 60–90s
@@ -244,7 +245,7 @@ export async function POST(request: Request) {
     fetchBrainContext('content strategy avatar shift agent attraction Friday reels ManyChat social media coaching digital products', 4),
     fetchBrainContext('income streams revenue share team splits eXp mentorship coaching digital products passive income', 4),
     fetchBrainContext("Gogo rules commitments non-negotiables show up Tuesday phone quiet delegate hourly rate Friday content", 4),
-    fetchBrainContext('Circle support system GoGetEm community WhatsApp Kristy Tuesday calls one-on-one tech session', 3),
+    fetchBrainContext('Circle support system GoGetEm community portal dashboard Kristy Tuesday calls one-on-one tech session', 3),
     fetchBrainContext(`quarterly plan 12 month blueprint Q1 Q2 Q3 Q4 foundation build machine scale launch ${transcriptSnippet}`, 4),
   ])
 
@@ -304,7 +305,9 @@ WRITE THESE 5 ELEMENTS IN FULL — no placeholders, no truncation:
 5. <section id="s3" class="page-section"> — eyebrow "Section 03", h2 "Your Hire Sequence", section-intro, blockquote from Brain (Kristy hire story), hire-timeline with 3-4 hire-items (month label + title + description tailored to their situation), h3 "How to Find Your First Hire", body-text, callout with 71.1% stat, h3 "How to Train Them So They Actually Stick", q-section with q-section-head + 5 q-points (Loom, type it out, checklists, 90-day check-ins, accountability)
 
 ${feedback ? `---\nREFINEMENT REQUEST: The admin has reviewed the previous blueprint and asked for these specific changes:\n${feedback}\nApply these changes where relevant to the sections you are writing. Keep everything else as specified.\n---` : ''}
-RULES: Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
+${CIRCLE_FACTS}
+
+RULES:Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
   // ── CALL 2 of 3: section 4 only — 12-month quarterly blueprint ───────────
   const prompt2 = `You are writing PART 2 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle." This call is dedicated entirely to Section 04 — the 12-Month Blueprint.
@@ -332,7 +335,9 @@ Q4 (Months 10-12): same complete structure
 Each q-point should be a concrete action item or milestone pulled directly from the transcript. Each q-section-head should name a specific focus area (e.g., "BUILD YOUR SUPPORT TEAM", "SYSTEMIZE LEAD GEN", "LAUNCH PASSIVE STREAMS"). Each q-quote-box should end with a motivating Gogo-voice line specific to that quarter's theme.
 
 ${feedback ? `---\nREFINEMENT REQUEST: The admin has reviewed the previous blueprint and asked for these specific changes:\n${feedback}\nApply these changes where relevant to Section 04. Keep everything else as specified.\n---` : ''}
-RULES: All action items must come directly from the transcript. Gogo's voice, direct, warm, personal. No invented facts. All 4 quarters must be fully written out. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
+${CIRCLE_FACTS}
+
+RULES:All action items must come directly from the transcript. Gogo's voice, direct, warm, personal. No invented facts. All 4 quarters must be fully written out. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
   // ── CALL 3 of 3: sections 5–7 + footer ───────────────────────────────────
   const prompt3 = `You are writing PART 3 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle."
@@ -372,14 +377,16 @@ WRITE THESE 4 ELEMENTS IN FULL — no placeholders, no truncation:
    Pull rules from Brain but write the rule-explain to match their exact situation.
 
 3. <section id="s7" class="page-section"> — eyebrow "Section 07", h2 "Your Circle Support System", section-intro, support-grid with 6 support-cards (first gets class="support-card lead"):
-   Weekly Office Hours (Every Tuesday 12-1pm EST), Private WhatsApp Community (between-session access), Monthly 1:1 Tech Session (60 min, one per month), GoGet'Em Community (required, tech call Tuesdays 3pm EST), Session Recordings (posted in WhatsApp same week), The Circle Members (a small, handpicked, application-only group, NDA-protected)
+   Weekly Office Hours (Every Tuesday 12-1pm EST), Private WhatsApp Community (between-session access), Monthly 1:1 Tech Session (60 min, one per month), GoGet'Em Community (required, tech call Tuesdays 3pm EST only), Session Recordings (every call is recorded and added to your portal), The Circle Members (a small, handpicked, application-only group, NDA-protected, NO member count or cap)
    Then community-box (non-subscription commitment text + right side: all payments non-refundable / early termination / year begins moment you sign)
    Then program-detail (3 pd-items separated by pd-sep: monthly $3,000/month · 12 payments total $36,000 | annual $30,000 · paid in full · 2 months complimentary · save $6,000 | italic "Your year starts the moment you sign.")
 
 4. <footer> — footer-circle (div with span inside), footer-quote with Gogo's warm personal closing line TO this specific person based on their call, footer-meta "The Circle · 12-Month Coaching Program · gogobethke.com", second footer-meta "Confidential · Prepared for ${member.name} · ${today}"
 
 ${feedback ? `---\nREFINEMENT REQUEST: The admin has reviewed the previous blueprint and asked for these specific changes:\n${feedback}\nApply these changes where relevant to the sections you are writing. Keep everything else as specified.\n---` : ''}
-RULES: Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense, complete content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
+${CIRCLE_FACTS}
+
+RULES:Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense, complete content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
   let part1 = ''
   let part2 = ''

@@ -1,6 +1,7 @@
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, buildCanonicalFacts, sanitizeBrainText } from '@/lib/brain-search'
 import { getTeamAgentCount } from '@/lib/settings'
+import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import type { ContentSignal } from './signals'
 
 // ---------------------------------------------------------------------------
@@ -92,6 +93,8 @@ FORMAT — choose the ONE that fits THIS post. Do NOT default to carousel, genui
 NEVER SAY (hard bans, even if the Brain excerpts mention them):
 - Do NOT reference a seat count or a once-a-year / annual opening. Never write "20 seats", "only 20 spots", "opens once a year", "doors open once a year", "enrollment closes", a countdown, or any fixed number of spots. The Circle ⭕️ is actively expanding, so never imply an annual-only window, a waitlist, or a closing deadline.
 - Premium positioning IS allowed (it just cannot be a number or a date): describing The Circle ⭕️ as a small, handpicked, intimate coaching room is fine. The CTA stays the open invitation to comment CIRCLE.
+
+${CIRCLE_FACTS}
 
 BRAND: real estate, coaching, The Circle ⭕️ 12-month program, #teamgogo.
 
