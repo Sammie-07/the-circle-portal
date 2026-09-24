@@ -27,6 +27,9 @@ export default function AchievementGate() {
   const [isTester, setIsTester] = useState(false)
   const [idx, setIdx] = useState(0)
   const [open, setOpen] = useState(false)
+  // Bumped by Replay so the card + confetti re-mount (and re-animate) even when
+  // we're already on the first card and idx doesn't change.
+  const [replay, setReplay] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -87,10 +90,10 @@ export default function AchievementGate() {
       onClick={close}
     >
       {/* Confetti re-mounts per card so each one bursts fresh. */}
-      <div key={`c-${idx}`} className="pointer-events-none absolute inset-0"><Confetti /></div>
+      <div key={`c-${replay}-${idx}`} className="pointer-events-none absolute inset-0"><Confetti /></div>
 
       <div
-        key={`card-${idx}`}
+        key={`card-${replay}-${idx}`}
         className="relative w-full max-w-[460px] rounded-[26px] overflow-hidden text-center px-8 pt-9 pb-8"
         style={{
           background: 'linear-gradient(180deg, rgba(20,18,14,0.98), var(--surface))',
@@ -205,7 +208,7 @@ export default function AchievementGate() {
           {/* Tester-only — re-experience the whole set from the top. */}
           {isTester && (
             <button
-              onClick={() => setIdx(0)}
+              onClick={() => { setIdx(0); setReplay((r) => r + 1) }}
               className="inline-flex items-center justify-center rounded-full border text-[13px] px-5 py-3 text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
               style={{ borderColor: 'var(--border-2)' }}
             >
