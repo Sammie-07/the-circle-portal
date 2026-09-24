@@ -174,23 +174,38 @@ export function extractBlueprintBody(fullHtml: string): string {
   return m ? m[1].trim() : fullHtml
 }
 
-// Edit an EXISTING blueprint to accommodate a member's revision request. This is
-// a surgical edit — the model changes only what the new direction requires and
-// keeps everything else byte-for-byte, rather than regenerating from scratch.
-// Returns a full wrapped HTML document ready to store as blueprint_html.
+export interface RevisionEditResult {
+  html: string
+  applied: number
+  total: number
+  missed: number
+  /** Share of the blueprint's visible text that survived (1 = same length). */
+  keptRatio: number
+}
+
+// Edit a blueprint to accommodate a revision. Two modes:
+//  - initial: edit the member's LIVE blueprint to reflect their request.
+//  - refine:  edit the current DRAFT with ONE new coach instruction, keeping the
+//             member's request and every earlier coach note exactly as applied.
+// Refine mode is what makes Regenerate accumulate instead of starting over (it
+// used to re-edit the live blueprint each time, so a new fix undid the last one).
 export async function editBlueprintForRevision({
   existingHtml,
   memberName,
   answers,
   adminNote,
+  priorNotes = [],
+  mode = 'initial',
   captureRaw,
 }: {
   existingHtml: string
   memberName: string
   answers: { question: string; answer: string }[]
   adminNote?: string
+  priorNotes?: string[]
+  mode?: 'initial' | 'refine'
   captureRaw?: (raw: string) => void // TEMP debug: hand back the raw model output
-}): Promise<string> {
+}): Promise<RevisionEditResult> {
   const anthropic = getAnthropic()
   const existingBody = extractBlueprintBody(existingHtml)
 
@@ -199,10 +214,12 @@ export async function editBlueprintForRevision({
     .map(a => `Q: ${a.question}\nA: ${a.answer.trim()}`)
     .join('\n\n')
 
-  // An optional note from the coach/admin steering this (re)generation. It is the
-  // HIGHEST-priority instruction for this pass (see the prompt), placed up top.
-  const coachBlock = adminNote?.trim()
-    ? `\n\nHIGHEST-PRIORITY COACH INSTRUCTIONS FOR THIS EDIT (from Gogo's team — follow these exactly; where they conflict with anything else, these win):\n${adminNote.trim()}\n`
+  const note = adminNote?.trim() ?? ''
+  const priorBlock = priorNotes.length
+    ? `\n\nEARLIER COACH INSTRUCTIONS (ALREADY APPLIED in the blueprint below — they must STAY true; do not undo, remove, or reword what they produced):\n${priorNotes.map((n, i) => `${i + 1}. ${n}`).join('\n')}\n`
+    : ''
+  const coachBlock = note
+    ? `\n\n${mode === 'refine' ? 'THE NEW INSTRUCTION TO APPLY NOW' : 'HIGHEST-PRIORITY COACH INSTRUCTIONS FOR THIS EDIT'} (from Gogo's team — follow every part of it exactly):\n${note}\n`
     : ''
 
   // Ground the edit in Gogo's actual principles (her Brain), so notes like "how
@@ -210,32 +227,35 @@ export async function editBlueprintForRevision({
   // instead of generic advice. Best-effort: never block the edit if it fails.
   const brainQuery = [
     'Gogo Bethke coaching approach for a real estate agent changing direction:',
-    answers.map((a) => a?.answer ?? '').join(' '),
-    adminNote ?? '',
+    mode === 'refine' ? '' : answers.map((a) => a?.answer ?? '').join(' '),
+    note,
   ].join(' ').trim().slice(0, 500)
   const brainChunks = await searchBrain(brainQuery, 6).catch(() => [])
   const brainBlock = brainChunks.length
     ? `\n\nGOGO'S PRINCIPLES (from her Brain — make the edited plan reflect how SHE actually coaches this, e.g. phasing changes in without dropping what already makes money):\n${sanitizeBrainText(buildBrainContext(brainChunks))}\n`
     : ''
 
-  // Ask for the SMALLEST set of find/replace edits, not whole sections. Rewriting
-  // full sections meant ~15k output tokens and ~100s (which timed out); returning
-  // only the changed snippets is ~700 tokens and ~10s. Delimiter format (not JSON)
-  // so raw HTML can't break the parse on quotes/newlines.
-  const prompt = `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." Apply the request and coach instructions with the SMALLEST set of targeted edits.
-${coachBlock}${brainBlock}
+  const task = mode === 'refine'
+    ? `You are REFINING a DRAFT of ${memberName}'s 12-month business blueprint (HTML) in Gogo Bethke's coaching program "The Circle." The draft ALREADY reflects the member's revision request${priorNotes.length ? ' and the earlier coach instructions listed below' : ''}. Apply ONLY the new instruction. Everything already in the draft that the new instruction does not mention must stay exactly as it is.`
+    : `You are EDITING an existing personalized 12-month business blueprint (HTML) for ${memberName} in Gogo Bethke's coaching program "The Circle." Apply the member's request${note ? ' and the coach instructions' : ''} with targeted edits.`
+
+  const buildPrompt = (body: string, extra = '') => `${task}
+${coachBlock}${priorBlock}${brainBlock}
 ${CIRCLE_FACTS}
 
-Reflect HOW Gogo would sequence the change, e.g. phasing a new direction in while KEEPING the income that already works, rather than dropping it. Change only what the request and coach instructions require; leave everything else exactly as is.
+Reflect HOW Gogo would sequence the change, e.g. phasing a new direction in while KEEPING the income that already works, rather than dropping it.
 
-RULES:
-- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member told you and the Brain principles above. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3". Use ONLY the CSS classes already present.
+RULES (follow all of them):
+- Apply EVERY part of the instruction. If it asks for several things, make an edit for each one. Do not skip any part.
+- NEVER delete, shorten, or reword existing content unless the instruction explicitly asks you to remove or change it. To ADD something, put the anchor text back in REPLACE and add the new content after it, so nothing existing is lost.
+- Each FIND is one element (a paragraph, list item, heading) or a short run of them, never a whole section.
+- Keep Gogo's voice: direct, warm, personal. No invented facts beyond what the member and coach said and the Brain principles above. Never use em dashes (the — character); use commas. Numeric ranges like "Months 1-3". Use ONLY the CSS classes already present.
 
-MEMBER'S REVISION REQUEST:
+MEMBER'S REVISION REQUEST${mode === 'refine' ? ' (already applied in the draft, for context only)' : ''}:
 ${answersBlock}
-
+${extra}
 BLUEPRINT (copy every FIND snippet verbatim from here):
-${existingBody}
+${body}
 
 OUTPUT FORMAT: For EACH change, output a block in EXACTLY this shape, back to back:
 @@FIND@@
@@ -250,7 +270,7 @@ Copy the FIND text exactly (do not reformat or change whitespace). Raw HTML only
   // (slower, and with a long coach note + Brain context it can end up writing no
   // text at all). If the primary still comes back empty, fall back to a
   // different model, which won't share the same failure mode.
-  async function runEdit(model: string, disableThinking: boolean) {
+  async function runEdit(prompt: string, model: string, disableThinking: boolean) {
     const msg = await anthropic.messages.create({
       model,
       max_tokens: 12000, // only small snippets come back; well under the streaming threshold
@@ -261,52 +281,87 @@ Copy the FIND text exactly (do not reformat or change whitespace). Raw HTML only
     const info = `model=${model} stop=${msg.stop_reason} blocks=${msg.content.map((b) => b.type).join(',')} out=${msg.usage?.output_tokens}`
     return { text, stop: msg.stop_reason, info }
   }
-
-  let result = await runEdit(EDIT_MODEL, true)
-  let diag = result.info
-  if (!result.text) {
-    const fallback = await runEdit(CLAUDE_MODEL, false)
-    diag += ` | fallback ${fallback.info}`
-    result = fallback
+  async function callModel(prompt: string) {
+    let r = await runEdit(prompt, EDIT_MODEL, true)
+    let diag = r.info
+    if (!r.text) {
+      const fb = await runEdit(prompt, CLAUDE_MODEL, false)
+      diag += ` | fallback ${fb.info}`
+      r = fb
+    }
+    return { ...r, diag }
   }
-  captureRaw?.(`${diag}\nlen=${result.text.length}\n${result.text}`) // TEMP debug
-  if (!result.text) {
-    throw new Error(`The model returned an empty response (${result.stop ?? 'unknown'}). Please click Regenerate again.`)
-  }
-  const raw = result.text
 
   const noDash = (s: string) => s.replace(/—/g, ', ').replace(/–/g, '-')
   const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-  // Apply each find/replace: exact match first, then a whitespace-tolerant match.
-  let body = existingBody
-  let applied = 0
   const blockRe = /@@FIND@@\r?\n([\s\S]*?)\r?\n@@REPLACE@@\r?\n([\s\S]*?)\r?\n@@END@@/g
-  let m: RegExpExecArray | null
-  while ((m = blockRe.exec(raw))) {
-    const find = m[1]
-    const replace = noDash(m[2])
-    if (find.trim() === '') continue
-    if (body.includes(find)) {
-      body = body.replace(find, () => replace)
-      applied++
-      continue
+
+  // Apply find/replace blocks to `body`: exact match first, then whitespace-
+  // tolerant. Returns the new body plus the blocks that could NOT be placed.
+  function applyBlocks(body: string, raw: string) {
+    let out = body
+    let applied = 0
+    let total = 0
+    const missed: { find: string; replace: string }[] = []
+    let m: RegExpExecArray | null
+    blockRe.lastIndex = 0
+    while ((m = blockRe.exec(raw))) {
+      const find = m[1]
+      const replace = noDash(m[2])
+      if (find.trim() === '') continue
+      total++
+      if (out.includes(find)) { out = out.replace(find, () => replace); applied++; continue }
+      const rx = new RegExp(escapeRe(find).replace(/\s+/g, '\\s+'))
+      if (rx.test(out)) { out = out.replace(rx, () => replace); applied++; continue }
+      missed.push({ find, replace })
     }
-    const rx = new RegExp(escapeRe(find).replace(/\s+/g, '\\s+'))
-    if (rx.test(body)) {
-      body = body.replace(rx, () => replace)
-      applied++
+    return { out, applied, total, missed }
+  }
+
+  const first = await callModel(buildPrompt(existingBody))
+  captureRaw?.(`${first.diag}\nlen=${first.text.length}\n${first.text}`) // TEMP debug
+  if (!first.text) {
+    throw new Error(`The model returned an empty response (${first.stop ?? 'unknown'}). Please click Regenerate again.`)
+  }
+
+  const firstPass = applyBlocks(existingBody, first.text)
+  let body = firstPass.out
+  let applied = firstPass.applied
+  let missed = firstPass.missed
+  const total = firstPass.total
+
+  // One repair pass for changes whose FIND text didn't match, so part of the
+  // instruction isn't silently dropped. Re-asks for exactly those changes,
+  // anchored in the CURRENT (already partly edited) blueprint.
+  if (missed.length > 0) {
+    const repairNote = `\nREPAIR: these intended changes could not be placed because their FIND text did not match the blueprint. Re-output ONLY these changes, with FIND copied verbatim from the CURRENT blueprint below:\n${missed.map((x, i) => `${i + 1}. Intended new text: ${x.replace.slice(0, 600)}`).join('\n')}\n`
+    const repair = await callModel(buildPrompt(body, repairNote))
+    if (repair.text) {
+      const r2 = applyBlocks(body, repair.text)
+      body = r2.out
+      applied += r2.applied
+      missed = missed.slice(r2.applied)
     }
   }
 
   if (applied === 0) {
-    if (/\bNO_CHANGES\b/.test(raw)) {
-      throw new Error('The edit produced no changes. Add more detail to the revision request and try again.')
+    if (/\bNO_CHANGES\b/.test(first.text)) {
+      throw new Error('The edit produced no changes. Make the instruction more specific and try again.')
     }
-    throw new Error('Could not read the edit instructions. Please try again.')
+    throw new Error('Could not place the changes in the blueprint. Please click Regenerate again.')
   }
 
-  return wrapWithShell(cleanBlueprintPart(body), memberName)
+  // Safety net for "fixed one thing, removed another": compare visible text.
+  const visible = (h: string) => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().length
+  const keptRatio = visible(body) / Math.max(1, visible(existingBody))
+
+  return {
+    html: wrapWithShell(cleanBlueprintPart(body), memberName),
+    applied,
+    total,
+    missed: missed.length,
+    keptRatio,
+  }
 }
 
 function escapeHtml(s: string): string {

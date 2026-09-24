@@ -10,6 +10,7 @@ interface PendingRevision {
   id: string
   answers: RevisionAnswer[] | null
   submitted_at: string | null
+  admin_notes?: unknown
 }
 
 interface BlueprintVersion {
@@ -104,6 +105,14 @@ export default function BlueprintPanel({
   const [genElapsed, setGenElapsed] = useState(0)
   const [regenNote, setRegenNote] = useState('')
   const [showRegen, setShowRegen] = useState(false)
+  // Coach notes already applied to this draft (they accumulate across Regenerates)
+  // and any warning from the last run (changes that didn't land, text removed).
+  const [revNotes, setRevNotes] = useState<string[]>(
+    Array.isArray(pendingRevision?.admin_notes)
+      ? (pendingRevision!.admin_notes as unknown[]).filter((n): n is string => typeof n === 'string')
+      : []
+  )
+  const [draftWarning, setDraftWarning] = useState<string | null>(null)
   // Tick an elapsed-seconds counter while a draft is generating, for the progress bar.
   useEffect(() => {
     if (!generatingDraft) { setGenElapsed(0); return }
@@ -298,6 +307,8 @@ export default function BlueprintPanel({
         setShowDraftPreview(true)
         setShowRegen(false)
         setRegenNote('')
+        setDraftWarning(data.warning ?? null)
+        if (Array.isArray(data.notes)) setRevNotes(data.notes)
       }
     } catch {
       setError('Could not generate the updated blueprint. Please try again.')
@@ -776,6 +787,21 @@ export default function BlueprintPanel({
                       Discard
                     </button>
                   </div>
+                  {draftWarning && (
+                    <div className="rounded-md border border-[#CC1F1F]/40 bg-[#CC1F1F]/10 px-3 py-2 text-xs text-[var(--text)] leading-relaxed">
+                      <span className="font-semibold text-[#E86A6A]">Check before publishing:</span> {draftWarning}
+                    </div>
+                  )}
+                  {revNotes.length > 0 && (
+                    <div className="rounded-md border border-[var(--border-color)] px-3 py-2">
+                      <p className="text-[var(--text-3)] text-[11px] uppercase tracking-wider mb-1">Your changes applied to this draft</p>
+                      <ol className="list-decimal pl-4 space-y-0.5">
+                        {revNotes.map((n, i) => (
+                          <li key={i} className="text-[var(--text-2)] text-xs leading-relaxed">{n}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                   {/* Regenerate flow: the note box appears only after clicking Regenerate,
                       and a note is required before it will run. */}
                   {showRegen && (
@@ -783,6 +809,9 @@ export default function BlueprintPanel({
                       <label className="block text-[var(--text-2)] text-xs font-medium">
                         What should change in this draft? <span className="text-[#C9A227]">(required)</span>
                       </label>
+                      <p className="text-[var(--text-4)] text-[11px] leading-relaxed">
+                        This builds on the current draft. Everything already changed{revNotes.length ? ', including the changes listed above,' : ''} stays in place, so only describe what to change next.
+                      </p>
                       <textarea
                         value={regenNote}
                         onChange={e => setRegenNote(e.target.value)}

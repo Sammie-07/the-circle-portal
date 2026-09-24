@@ -71,7 +71,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   // plus archived prior versions for the history list.
   const { data: pendingRevision } = await supabase
     .from('blueprint_revisions')
-    .select('id, answers, submitted_at')
+    .select('id, answers, submitted_at, admin_notes')
     .eq('member_id', id)
     .eq('status', 'submitted')
     .order('submitted_at', { ascending: false })
