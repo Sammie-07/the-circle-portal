@@ -1,6 +1,6 @@
 # Circle Portal — Progress
 
-> **Canonical status doc.** Snapshot refreshed 2026-09-22 against the live code, schema, and
+> **Canonical status doc.** Snapshot refreshed 2026-09-24 against the live code, schema, and
 > deployment. Sections 1–8 below are the current state; **§9 Changelog** is the full dated
 > history of every change (newest first). README and CLAUDE.md are real docs now.
 >
@@ -73,6 +73,15 @@ profile fields; member↔login matched by **email**, `user_id` is unused), `week
 `applications` (GHL webhook landing zone, keyed by email), `app_settings` (key/value:
 `teamgogo_agent_count`, `office_hours_zoom_link`). Also `admin_invites` and a `weekly_checkins`
 table. Storage buckets: `blueprints` (public), `member-documents` (private).
+
+**Added since (Sep 2026):** `survey_periods` + `survey_responses` (monthly progress survey),
+`content_posts` (content machine drafts; `format` single/carousel/video), `achievements`
+(award-once per member+key; `tier`, seen/emailed stamps, `backfilled`), `admin_notifications`
+(admin bell feed), `blueprint_revisions` (tokenized revision questionnaire; `status`
+sent→submitted→approved/rejected, `answers`, **`admin_notes`** = coach notes applied to the draft,
+temp `debug_raw`), `blueprint_versions` (archived prior blueprint HTML). `members` also gained
+`blueprint_draft_html` / `blueprint_draft_generated_at` / `blueprint_draft_revision_id` (the
+zero-gap revision draft). A `members_lowercase_email` trigger forces `members.email` lowercase.
 
 **RLS pattern:** admins (via `is_admin()`) manage all; members read/write only their own
 (matched by email). Reports: members read only **sent** ones. Finances: admin-only, no member
@@ -160,6 +169,63 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 ## 9. Changelog
 
 Every code change is recorded here, newest first.
+
+### 2026-09-24
+- **Blueprint revisions — Regenerate now builds on the draft (fixes "fixes one thing, removes
+  another").** Root cause: every Regenerate re-edited the LIVE blueprint, discarding the previous
+  draft's changes, and coach notes were never stored. Now `editBlueprintForRevision` has an
+  `initial` mode (edit live from the member's request) and a `refine` mode (edit the current draft
+  with ONE new instruction). Each coach note is saved on the revision (`blueprint_revisions.admin_notes`
+  jsonb, new column) and passed back as "already applied, must stay true." Prompt rules: apply every
+  part of the instruction; never delete/reword unless asked; add new content alongside existing text.
+  Unplaced find/replace edits get one automatic repair pass; anything still missed, or >10% of the
+  visible text removed, returns a `warning` shown to the admin ("Check before publishing"). Step 2 of
+  the revision card lists "Your changes applied to this draft." Verified locally with the real
+  function over 3 rounds (member request → note A → note B): all earlier changes kept, 0 missed,
+  no text lost. (aa19f24)
+- **Shared Circle facts across every AI generator.** New `src/lib/circle-facts.ts` (`CIRCLE_FACTS`)
+  is injected into the blueprint generator (all 3 parts), the revision editor, the content machine,
+  Ask Gogo chat (`gogo-chat.ts`, covers portal + preview), member reports, homework-from-blueprint,
+  and homework note follow-ups. It overrides older transcript/Brain wording: GGTC tech call is
+  **Tuesdays 3pm EST only** (no Wednesday, no "twice a week"); **recordings are added to the
+  member's portal** (not WhatsApp); The Circle gets **no member count or cap** (small, handpicked,
+  application-only). Blueprint Section 07 support-card spec updated to match, and the support-system
+  Brain query no longer pulls WhatsApp wording. One place to edit when a program detail changes.
+  (39d6fef, e4116a5)
+- **Data fix — 9 stored blueprints corrected in place** (kept at the user's request). Only the exact
+  stale phrases were rewritten: GGTC "Tuesday and Wednesday"/"Tue + Wed"/"twice a week" tech-call
+  mentions → Tuesday only; "Up to 20 members"/"nine members… never go over 20" → small, handpicked;
+  "Posted in WhatsApp same week" recordings → added to your portal (incl. Krystal's letter-spaced
+  PDF-blueprint labels and Samuel's pending draft). Unrelated Wednesday mentions (#teamgogo trainings,
+  members' own team meetings, open-to-public last-Wednesday) left untouched. Verified 0 stale.
+- **Kate Howard — admin-opened revision** to add a goal: a free monthly call/group teaching her
+  downline social media (GoGet'Em-style). Created as a `submitted` revision so the admin generates,
+  previews, and publishes it from her member page; her live blueprint is unchanged until publish.
+
+### 2026-09-23
+- **Blueprint revision edit — reliability saga resolved.** Symptoms in order: empty document →
+  truncation → SDK streaming guard → timeouts → "could not read the edit instructions" → empty model
+  response. Diagnosed with a temporary `debug_raw` capture on `blueprint_revisions` plus local repros
+  against realistically sized blueprints (~64k chars ≈ 16k tokens). Findings: rewriting whole sections
+  took ~100s / ~15k output tokens (the timeouts); find/replace snippets take ~10s / ~700 tokens and
+  apply cleanly; the edit model thinks by default, which spent its output budget before writing any
+  text. Final design: **find/replace snippets** (`@@FIND@@/@@REPLACE@@/@@END@@` delimiters, exact then
+  whitespace-tolerant apply), **thinking disabled** on `claude-sonnet-5`, 12k output cap
+  (non-streaming), **fallback to `CLAUDE_MODEL`** if still empty; stop reason / block types / usage
+  recorded in `debug_raw`. Coach note leads the prompt as top priority and the edit is grounded in
+  Gogo's Brain (6-chunk `searchBrain`). (2ae5726, 5c18710, 396e246, 9a359f2, 1cac4bf, 7fcbc4e)
+- **Blueprint prompt** — GGTC tech call Tuesdays only; Circle seat count dropped. (a532ceb)
+
+### 2026-09-22
+- **Blueprint revision UX.** Revision link now **emails the member** a branded "Let's fine-tune your
+  blueprint" message and still copies the link (falls back to copy-only if no email on file); button
+  relabeled "Send Blueprint Revision Link." Regenerate reveals a **required** "What should change in
+  this draft?" box (hidden until clicked; collapses after a run). **Progress bar** with staged
+  messages + elapsed timer while a draft generates. Questionnaire's last question reworded to "what
+  needs to change in your setup, something to add, or something to stop or pause" (either, not both).
+  Early reliability iterations (faster model, all-text-blocks parse, 32k cap + streaming, JSON then
+  delimiter then section-based patch formats) were superseded by the 09-23 design above; one commit
+  (eeb1b60) failed to build and was fixed by the next. (3a6a052 → 3f3fe8c)
 
 ### 2026-09-21
 - **Blueprint revisions — member questionnaire → auto-edit → admin review & send.** New flow: a member

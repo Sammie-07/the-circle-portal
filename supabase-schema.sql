@@ -590,6 +590,11 @@ create table if not exists blueprint_revisions (
   created_by   uuid,
   created_at   timestamptz not null default now()
 );
+-- Coach notes applied to this revision's draft, in order. Each Regenerate builds
+-- on the draft and re-sends these as "already applied, must stay true".
+alter table blueprint_revisions add column if not exists admin_notes jsonb not null default '[]'::jsonb;
+-- TEMP diagnostics: the edit model's raw output / stop reason for the last run.
+alter table blueprint_revisions add column if not exists debug_raw text;
 create index if not exists blueprint_revisions_member_idx on blueprint_revisions(member_id, created_at desc);
 create index if not exists blueprint_revisions_status_idx on blueprint_revisions(status);
 alter table blueprint_revisions enable row level security;
