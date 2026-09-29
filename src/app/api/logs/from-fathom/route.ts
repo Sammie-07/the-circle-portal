@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAnthropic } from '@/lib/ai'
+import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { fetchFathomTranscript } from '@/lib/fathom'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 300
 
 // Faster model for extraction/attribution (this is a read-and-structure task,
 // not deep reasoning), so a 50+ minute transcript processes inside the limit.
@@ -87,22 +87,32 @@ Return ONLY a JSON object: {"members":[{"member_id":"<id>","attended":<bool>,"qu
 TRANSCRIPT (${transcript.title}):
 ${transcript.text}`
 
-    const message = await getAnthropic().messages.create({
-      model: EXTRACT_MODEL,
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }],
-    })
-    // Read ALL text blocks (the model may emit a thinking block first, so
-    // content[0] can be non-text and empty).
-    const raw = message.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
-    const jsonText = raw.replace(/^\s*```[a-zA-Z]*\s*/, '').replace(/\s*```\s*$/, '').trim()
+    // Thinking is disabled: by default this model spends its output budget
+    // thinking first, which cut the JSON off on long (90+ minute) calls and
+    // produced "Could not read the call results". If a reply still can't be
+    // parsed, retry once on the fallback model.
+    async function extract(model: string, disableThinking: boolean) {
+      const msg = await getAnthropic().messages.create({
+        model,
+        max_tokens: 12000,
+        ...(disableThinking ? { thinking: { type: 'disabled' as const } } : {}),
+        messages: [{ role: 'user', content: prompt }],
+      })
+      // Read ALL text blocks (a thinking block can come first).
+      const raw = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('').trim()
+      return { parsed: parseMembersJson(raw), info: `model=${model} stop=${msg.stop_reason} out=${msg.usage?.output_tokens} len=${raw.length}` }
+    }
 
-    let parsed: { members?: ExtractedRow[] }
-    try {
-      parsed = JSON.parse(jsonText)
-    } catch {
+    let result = await extract(EXTRACT_MODEL, true)
+    if (!result.parsed) {
+      console.error('[from-fathom] unreadable reply, retrying on fallback:', result.info)
+      result = await extract(CLAUDE_MODEL, false)
+    }
+    if (!result.parsed) {
+      console.error('[from-fathom] unreadable reply on fallback:', result.info)
       return NextResponse.json({ error: 'Could not read the call results. Please try processing again.' }, { status: 502 })
     }
+    const parsed = result.parsed
 
     // Only return rows for real roster ids; clamp shapes.
     const validIds = new Set(roster.map((m) => m.id))
@@ -164,5 +174,19 @@ ${transcript.text}`
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Something went wrong processing the call.'
     return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}
+
+// Pull the {"members":[...]} object out of the model's reply, tolerating code
+// fences or a stray sentence before/after the JSON.
+function parseMembersJson(raw: string): { members?: ExtractedRow[] } | null {
+  const start = raw.indexOf('{')
+  const end = raw.lastIndexOf('}')
+  if (start === -1 || end <= start) return null
+  try {
+    const obj = JSON.parse(raw.slice(start, end + 1))
+    return obj && Array.isArray(obj.members) ? obj : null
+  } catch {
+    return null
   }
 }
