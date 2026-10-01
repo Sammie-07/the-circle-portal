@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Session {
   id: string
@@ -16,6 +17,57 @@ interface Message {
   content: string
   created_at: string
   attachmentName?: string | null
+}
+
+// A photo or PDF sent to the model as the real file (so it can see it).
+interface AttachmentFile {
+  kind: 'image' | 'pdf'
+  mediaType: string
+  data: string
+}
+
+interface Attachment {
+  name: string
+  text: string
+  file?: AttachmentFile
+  previewUrl?: string
+}
+
+// PDFs up to this size go to the model as the actual file (it sees the layout,
+// not just the text). Larger ones fall back to text extraction. Keeps the
+// request under the hosting body limit once base64-encoded.
+const MAX_NATIVE_PDF_BYTES = 3 * 1024 * 1024
+
+function readAsBase64(file: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result).split(',')[1] ?? '')
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(file)
+  })
+}
+
+// Shrink photos to what the model actually uses (long edge 1568px) as JPEG, so
+// phone pictures upload fast and stay well under the request limit.
+async function prepareImage(file: File): Promise<{ data: string; mediaType: string; previewUrl: string }> {
+  const url = URL.createObjectURL(file)
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image()
+    el.onload = () => resolve(el)
+    el.onerror = () => reject(new Error('Could not open that image'))
+    el.src = url
+  })
+  const scale = Math.min(1, 1568 / Math.max(img.naturalWidth, img.naturalHeight))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(img.naturalWidth * scale)
+  canvas.height = Math.round(img.naturalHeight * scale)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Could not process that image')
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+  return { data: dataUrl.split(',')[1] ?? '', mediaType: 'image/jpeg', previewUrl: url }
 }
 
 interface ChatOverlayProps {
@@ -36,7 +88,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window === 'undefined' ? true : window.innerWidth >= 768
   )
-  const [attachment, setAttachment] = useState<{ name: string; text: string } | null>(null)
+  const [attachment, setAttachment] = useState<Attachment | null>(null)
   const [attaching, setAttaching] = useState(false)
   const [attachError, setAttachError] = useState<string | null>(null)
 
@@ -145,6 +197,19 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
     setAttachError(null)
     setAttaching(true)
     try {
+      const lower = file.name.toLowerCase()
+      const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|heic)$/.test(lower)
+      const isPdf = file.type === 'application/pdf' || lower.endsWith('.pdf')
+      if (isImage) {
+        const img = await prepareImage(file)
+        setAttachment({ name: file.name, text: '', file: { kind: 'image', mediaType: img.mediaType, data: img.data }, previewUrl: img.previewUrl })
+        return
+      }
+      if (isPdf && file.size <= MAX_NATIVE_PDF_BYTES) {
+        const data = await readAsBase64(file)
+        setAttachment({ name: file.name, text: '', file: { kind: 'pdf', mediaType: 'application/pdf', data } })
+        return
+      }
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/chat/extract', { method: 'POST', body: fd })
@@ -162,6 +227,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
   }
 
   function removeAttachment() {
+    if (attachment?.previewUrl) URL.revokeObjectURL(attachment.previewUrl)
     setAttachment(null)
     setAttachError(null)
   }
@@ -210,7 +276,8 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
               content: trimmed,
               history: messages.map(m => ({ role: m.role, content: m.content })),
               attachmentName: sentAttachment?.name ?? null,
-              attachmentText: sentAttachment?.text ?? null,
+              attachmentText: sentAttachment?.text || null,
+              attachmentFile: sentAttachment?.file ?? null,
             }),
             signal: abortRef.current.signal,
           })
@@ -220,7 +287,8 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
         body: JSON.stringify({
           content: trimmed,
           attachmentName: sentAttachment?.name ?? null,
-          attachmentText: sentAttachment?.text ?? null,
+          attachmentText: sentAttachment?.text || null,
+          attachmentFile: sentAttachment?.file ?? null,
         }),
         signal: abortRef.current.signal,
       })
@@ -446,9 +514,19 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
             </div>
           ) : (
             <div className="max-w-3xl mx-auto space-y-6">
-              {messages.map(msg => (
-                <MessageBubble key={msg.id} message={msg} />
-              ))}
+              {messages.map((msg, i) => {
+                const prevUser = msg.role === 'assistant'
+                  ? [...messages.slice(0, i)].reverse().find(m => m.role === 'user')?.content ?? null
+                  : null
+                return (
+                  <MessageBubble
+                    key={msg.id}
+                    message={msg}
+                    prevUser={prevUser}
+                    sessionTitle={sessions.find(s => s.id === activeSessionId)?.title ?? null}
+                  />
+                )
+              })}
 
               {/* Streaming message */}
               {isStreaming && (
@@ -485,7 +563,10 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
                     <span className="text-[var(--text-3)] text-xs">Attaching…</span>
                   ) : attachment ? (
                     <span className="inline-flex items-center gap-2 bg-[#C9A227]/10 border border-[#C9A227]/30 text-[var(--text-2)] text-xs rounded px-2.5 py-1">
-                      <span className="truncate max-w-[260px]">📎 {attachment.name}</span>
+                      {attachment.previewUrl
+                        ? <img src={attachment.previewUrl} alt="" className="w-7 h-7 rounded object-cover" />
+                        : null}
+                      <span className="truncate max-w-[260px]">{attachment.previewUrl ? '' : '📎 '}{attachment.name}</span>
                       <button
                         onClick={removeAttachment}
                         className="text-[var(--text-4)] hover:text-[#CC1F1F] transition-colors leading-none"
@@ -503,7 +584,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.txt,.md,.csv,application/pdf,text/plain"
+                accept=".pdf,.txt,.md,.csv,application/pdf,text/plain,image/*"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -512,7 +593,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isStreaming || attaching}
                   className="flex-shrink-0 w-8 h-8 text-[var(--text-3)] hover:text-[#C9A227] rounded flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Attach a file (PDF or text)"
+                  title="Attach a photo, PDF, or text file"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
@@ -546,7 +627,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
                 </button>
               </div>
               <p className="text-[var(--text-4)] text-[10px] mt-2 text-center">
-                Answers drawn exclusively from Gogo&apos;s knowledge base · Enter to send · Shift+Enter for new line
+                Answers drawn from Gogo&apos;s knowledge base · Attach photos or PDFs with the clip · Enter to send
               </p>
             </div>
           </div>
@@ -559,18 +640,21 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
 function MarkdownContent({ content }: { content: string }) {
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
       components={{
         p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
         strong: ({ children }) => <strong className="font-semibold text-[var(--text)]">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
-        ul: ({ children }) => <ul className="mb-3 space-y-1 list-none">{children}</ul>,
-        ol: ({ children }) => <ol className="mb-3 space-y-1 list-none counter-reset-[item]">{children}</ol>,
-        li: ({ children }) => (
-          <li className="flex gap-2 items-start">
-            <span className="text-[#C9A227] mt-0.5 flex-shrink-0">·</span>
-            <span>{children}</span>
-          </li>
+        ul: ({ children }) => <ul className="mb-3 space-y-1 list-disc pl-5 marker:text-[#C9A227]">{children}</ul>,
+        ol: ({ children }) => <ol className="mb-3 space-y-1 list-decimal pl-5 marker:text-[#C9A227]">{children}</ol>,
+        li: ({ children }) => <li className="pl-1 leading-relaxed">{children}</li>,
+        table: ({ children }) => (
+          <div className="my-3 overflow-x-auto">
+            <table className="w-full text-xs border border-[var(--border-color)] border-collapse">{children}</table>
+          </div>
         ),
+        th: ({ children }) => <th className="text-left font-semibold text-[var(--text)] bg-[var(--bg)] border border-[var(--border-color)] px-3 py-2">{children}</th>,
+        td: ({ children }) => <td className="align-top border border-[var(--border-color)] px-3 py-2">{children}</td>,
         blockquote: ({ children }) => (
           <blockquote className="border-l-2 border-[#C9A227] pl-3 my-3 text-[#aaa] italic">
             {children}
@@ -588,7 +672,7 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message, prevUser, sessionTitle }: { message: Message; prevUser: string | null; sessionTitle: string | null }) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
@@ -607,9 +691,89 @@ function MessageBubble({ message }: { message: Message }) {
       <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex-shrink-0 flex items-center justify-center mt-0.5">
         <div className="w-1.5 h-1.5 rounded-full bg-[#CC1F1F]" />
       </div>
-      <div className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
-        <MarkdownContent content={message.content} />
+      <div className="flex-1 min-w-0">
+        <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
+          <MarkdownContent content={message.content} />
+        </div>
+        {!message.id.startsWith('err-') && (
+          <MessageActions message={message} prevUser={prevUser} sessionTitle={sessionTitle} />
+        )}
       </div>
+    </div>
+  )
+}
+
+// Under each Gogo reply: Download PDF (prominent when the member asked for a
+// PDF) and Copy.
+function MessageActions({ message, prevUser, sessionTitle }: { message: Message; prevUser: string | null; sessionTitle: string | null }) {
+  const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [asked, setAsked] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    import('@/lib/chat-pdf').then(m => { if (alive) setAsked(m.isPdfRequest(prevUser)) }).catch(() => {})
+    return () => { alive = false }
+  }, [prevUser])
+
+  async function download() {
+    setBusy(true)
+    setFailed(false)
+    try {
+      const { downloadChatPdf, isPdfRequest } = await import('@/lib/chat-pdf')
+      // "You asked: ..." only when the question says something on its own.
+      const question = prevUser?.replace(/\n*📎 Attached:[\s\S]*$/, '').trim() || null
+      const showQuestion = question && !isPdfRequest(question) && question.length <= 220 ? question : null
+      const fallbackTitle = sessionTitle && sessionTitle !== 'New Chat' && !isPdfRequest(sessionTitle)
+        ? sessionTitle.replace(/…$/, '')
+        : 'Your Notes from Gogo'
+      await downloadChatPdf({ content: message.content, fallbackTitle, askedQuestion: showQuestion, date: new Date(message.created_at) })
+    } catch (err) {
+      console.error('PDF download failed:', err)
+      setFailed(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch { /* clipboard blocked */ }
+  }
+
+  const icon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" />
+    </svg>
+  )
+
+  return (
+    <div className="mt-2 flex items-center gap-3 flex-wrap">
+      {asked ? (
+        <button
+          onClick={download}
+          disabled={busy}
+          className="inline-flex items-center gap-2 bg-[#C9A227] text-[#090909] text-xs font-medium px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-50"
+        >
+          {icon}{busy ? 'Building your PDF…' : 'Download PDF'}
+        </button>
+      ) : (
+        <button
+          onClick={download}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors disabled:opacity-50"
+        >
+          {icon}{busy ? 'Building PDF…' : 'Download PDF'}
+        </button>
+      )}
+      <button onClick={copy} className="text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
+        {copied ? 'Copied ✓' : 'Copy'}
+      </button>
+      {failed && <span className="text-[11px] text-[#CC1F1F]">Could not build the PDF. Try again.</span>}
     </div>
   )
 }

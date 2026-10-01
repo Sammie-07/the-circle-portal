@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, buildCanonicalFacts } from '@/lib/brain-search'
 import { getTeamAgentCount } from '@/lib/settings'
-import { GOGO_SYSTEM_PROMPT } from '@/lib/gogo-chat'
+import { GOGO_SYSTEM_PROMPT, makeDashCleaner, parseAttachmentFile, buildAttachmentContent } from '@/lib/gogo-chat'
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 const STAFF_ROLES = ['owner', 'admin', 'manager', 'support', 'tech']
 
@@ -31,8 +31,10 @@ export async function POST(request: Request) {
   const attachmentText: string | null = attachmentTextRaw
     ? attachmentTextRaw.slice(0, 20000)
     : null
+  // Photo or PDF sent as the real file (the model sees it, not just its text).
+  const attachmentFile = parseAttachmentFile(body.attachmentFile)
 
-  if (!content && !attachmentText) {
+  if (!content && !attachmentText && !attachmentFile) {
     return new Response('Content required', { status: 400 })
   }
 
@@ -58,39 +60,33 @@ ${brainContext
   : 'No relevant context was found in Gogo\'s knowledge base for this query.'
 }`
 
-  const claudeMessages: { role: 'user' | 'assistant'; content: string }[] = [
+  const claudeMessages: { role: 'user' | 'assistant'; content: ReturnType<typeof buildAttachmentContent> }[] = [
     ...history.map(m => ({
       role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
       content: m.content,
     })),
-    { role: 'user', content: turnContent },
+    // Make the model SEE the attachment on the current user message.
+    { role: 'user', content: buildAttachmentContent(turnContent, attachmentName, attachmentFile, attachmentText) },
   ]
-
-  // Make the model SEE the attached file by appending its text to the last
-  // (current) user message.
-  if (attachmentText) {
-    const last = claudeMessages[claudeMessages.length - 1]
-    last.content =
-      last.content +
-      `\n\n[Attached file: ${attachmentName ?? 'file'}]\n${attachmentText}`
-  }
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
         const claudeStream = getAnthropic().messages.stream({
           model: CLAUDE_MODEL,
-          max_tokens: 1500,
+          max_tokens: 3000,
           system: systemWithContext,
           messages: claudeMessages,
         })
 
+        const dashes = makeDashCleaner()
         claudeStream.on('text', (text: string) => {
-          const clean = text.replace(/—/g, ',').replace(/--/g, ',')
-          controller.enqueue(new TextEncoder().encode(clean))
+          controller.enqueue(new TextEncoder().encode(dashes.push(text)))
         })
 
         await claudeStream.finalMessage()
+        const tail = dashes.flush()
+        if (tail) controller.enqueue(new TextEncoder().encode(tail))
         controller.close()
       } catch (err) {
         console.error('Stream error:', err)

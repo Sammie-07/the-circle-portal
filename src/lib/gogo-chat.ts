@@ -10,7 +10,16 @@ export const GOGO_SYSTEM_PROMPT = `You ARE Gogo Bethke. Not an AI assistant repo
 This member is in your Circle. They paid to be in the room with you. Talk to them like it.
 
 KNOWLEDGE RULE — NON-NEGOTIABLE:
-Answer ONLY from the knowledge base context provided at the end of this prompt. That is your brain — your actual teachings, your frameworks, your stories. Do not pull from general knowledge or anything outside it. If the answer is not in the context, say: "I don't have that one top of mind right now. Bring it to the next call and we'll get into it."
+Your teachings, frameworks, stories, numbers, programs, and facts about you and your business come ONLY from the knowledge base context provided at the end of this prompt. That is your brain. Never invent a story, statistic, result, price, program detail, or quote.
+When a member asks you to review, rate, rewrite, brainstorm, plan, calculate, or give an opinion on THEIR OWN material (names, photos, captions, scripts, plans, numbers, documents), DO IT, fully and specifically. Apply your principles from the context. You do not need a knowledge-base entry to have an opinion on their work.
+Only when they ask for a specific teaching or fact of yours that is not in the context, say: "I don't have that one top of mind right now. Bring it to the next call and we'll get into it." Then still give them the most useful next step you can from what you do know. Never leave them with nothing.
+
+WHAT YOU CAN DO IN THIS CHAT (never say you can't do these):
+- READ ATTACHED FILES: members can attach PDFs and text files with the paperclip. When a file is attached you can read it, including designed pages. Never say "I can't see files" or "I'm text only."
+- SEE PHOTOS: members can attach images (headshots, flyers, posts, screenshots). When one is attached, look at it and give specific, honest feedback.
+- You only see an attachment in the message it was sent with. If they refer to a file or photo from earlier that is no longer attached, ask them to attach it again with the paperclip. Do not claim you are unable to see attachments.
+- MAKE A PDF: every one of your replies has a "Download PDF" button under it that turns that reply into a clean, branded PDF. When a member asks for a PDF, a document, a printable, a handout, or "put that in a doc", NEVER say you can't. Write the full content again as one complete, clean document: start with a "# " title line, then clear "## " section headings, steps, and bullets, covering everything they asked to include (pull it together from earlier in the conversation if they said "all of that"). No chit-chat opener. End with one short line telling them to tap "Download PDF" below this message.
+- What you genuinely cannot do: browse the web, open links, log into their accounts or tools, or send messages for them. If they ask for one of these, say so in one line and immediately give them the closest thing you CAN do.
 
 VOICE RULES — THIS IS HOW YOU SOUND:
 
@@ -59,3 +68,68 @@ FORMAT:
 - Keep it conversational. This is a coaching call, not an essay.
 
 ${CIRCLE_FACTS}`
+
+// Streams replace em dashes with commas (voice rule). A lone "--" counts as an
+// em dash too, but runs of 3+ hyphens are markdown (tables "|---|", dividers
+// "---") and must survive. Trailing dashes are held back until the next chunk
+// (with any spaces before them) so a run split across chunks is judged whole.
+export function makeDashCleaner() {
+  let carry = ''
+  const clean = (s: string) => s.replace(/ *— */g, ', ').replace(/ *(?<!-)--(?!-) */g, ', ')
+  return {
+    push(text: string) {
+      let s = carry + text
+      const m = s.match(/[ —-]+$/)
+      carry = m ? m[0] : ''
+      if (carry) s = s.slice(0, -carry.length)
+      return clean(s)
+    },
+    flush() {
+      const s = clean(carry)
+      carry = ''
+      return s
+    },
+  }
+}
+
+// A file the member attached, sent to the model as the real thing (so it can
+// see photos and designed PDF pages), not just extracted text.
+export interface ChatAttachmentFile {
+  kind: 'image' | 'pdf'
+  mediaType: string
+  data: string // base64, no data: prefix
+}
+
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
+type ImageType = (typeof IMAGE_TYPES)[number]
+
+export function parseAttachmentFile(raw: unknown): ChatAttachmentFile | null {
+  if (!raw || typeof raw !== 'object') return null
+  const f = raw as Partial<ChatAttachmentFile>
+  if (typeof f.data !== 'string' || !f.data || f.data.length > 4_400_000) return null
+  if (f.kind === 'image' && IMAGE_TYPES.includes(f.mediaType as ImageType)) return f as ChatAttachmentFile
+  if (f.kind === 'pdf' && f.mediaType === 'application/pdf') return f as ChatAttachmentFile
+  return null
+}
+
+type Block =
+  | { type: 'text'; text: string }
+  | { type: 'image'; source: { type: 'base64'; media_type: ImageType; data: string } }
+  | { type: 'document'; source: { type: 'base64'; media_type: 'application/pdf'; data: string }; title?: string }
+
+// Content for the user turn that carries an attachment: the file block first,
+// then the text (with any extracted text appended for text/large files).
+export function buildAttachmentContent(
+  text: string,
+  name: string | null,
+  file: ChatAttachmentFile | null,
+  extractedText: string | null,
+): string | Block[] {
+  const label = name ?? 'file'
+  const withExtract = extractedText ? `${text}\n\n[Attached file: ${label}]\n${extractedText}` : text
+  if (!file) return withExtract
+  const fileBlock: Block = file.kind === 'image'
+    ? { type: 'image', source: { type: 'base64', media_type: file.mediaType as ImageType, data: file.data } }
+    : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.data }, title: label }
+  return [fileBlock, { type: 'text', text: `${withExtract}\n\n[The member attached: ${label}]` }]
+}

@@ -4,9 +4,9 @@ import { NextResponse } from 'next/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, buildCanonicalFacts } from '@/lib/brain-search'
 import { getTeamAgentCount } from '@/lib/settings'
-import { GOGO_SYSTEM_PROMPT as SYSTEM_PROMPT } from '@/lib/gogo-chat'
+import { GOGO_SYSTEM_PROMPT as SYSTEM_PROMPT, makeDashCleaner, parseAttachmentFile, buildAttachmentContent } from '@/lib/gogo-chat'
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 // GET — load messages for a session
 export async function GET(
@@ -60,8 +60,10 @@ export async function POST(
   const attachmentText: string | null = attachmentTextRaw
     ? attachmentTextRaw.slice(0, 20000)
     : null
+  // Photo or PDF sent as the real file (the model sees it, not just its text).
+  const attachmentFile = parseAttachmentFile(body.attachmentFile)
 
-  if (!rawContent && !attachmentText) {
+  if (!rawContent && !attachmentText && !attachmentFile) {
     return new Response('Content required', { status: 400 })
   }
 
@@ -111,23 +113,21 @@ ${brainContext
   : 'No relevant context was found in Gogo\'s knowledge base for this query.'
 }`
 
-  const claudeMessages: { role: 'user' | 'assistant'; content: string }[] =
+  const claudeMessages: { role: 'user' | 'assistant'; content: ReturnType<typeof buildAttachmentContent> }[] =
     conversationHistory.map(m => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }))
 
-  // Make the model SEE the attached file by appending its text to the last
-  // user message — for the model only. The saved/displayed transcript stays
-  // clean (it only carries the "📎 Attached: ..." marker).
-  if (attachmentText) {
+  // Make the model SEE the attachment on the latest user message, for the
+  // model only. The saved/displayed transcript stays clean (it only carries
+  // the "📎 Attached: ..." marker).
+  if (attachmentText || attachmentFile) {
     for (let i = claudeMessages.length - 1; i >= 0; i--) {
       if (claudeMessages[i].role === 'user') {
         claudeMessages[i] = {
           ...claudeMessages[i],
-          content:
-            claudeMessages[i].content +
-            `\n\n[Attached file: ${attachmentName ?? 'file'}]\n${attachmentText}`,
+          content: buildAttachmentContent(claudeMessages[i].content as string, attachmentName, attachmentFile, attachmentText),
         }
         break
       }
@@ -141,19 +141,26 @@ ${brainContext
       try {
         const claudeStream = getAnthropic().messages.stream({
           model: CLAUDE_MODEL,
-          max_tokens: 1500,
+          max_tokens: 3000,
           system: systemWithContext,
           messages: claudeMessages,
         })
 
+        // Hard-strip em dashes at the stream level, no exceptions (markdown
+        // hyphen runs like table rules are kept).
+        const dashes = makeDashCleaner()
         claudeStream.on('text', (text: string) => {
-          // Hard-strip em dashes at the stream level — no exceptions
-          const clean = text.replace(/—/g, ',').replace(/--/g, ',')
+          const clean = dashes.push(text)
           fullResponse += clean
           controller.enqueue(new TextEncoder().encode(clean))
         })
 
         await claudeStream.finalMessage()
+        const tail = dashes.flush()
+        if (tail) {
+          fullResponse += tail
+          controller.enqueue(new TextEncoder().encode(tail))
+        }
 
         // Persist the assistant's response BEFORE closing the stream. On
         // serverless the function can be frozen the moment the response stream
