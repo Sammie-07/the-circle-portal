@@ -4,6 +4,7 @@
 
 import { Document, Page, Text, View, Link, StyleSheet, pdf } from '@react-pdf/renderer'
 import { marked, type Token, type Tokens } from 'marked'
+import { stripPdfMarker } from './pdf-marker'
 
 const GOLD = '#A8861C'
 const INK = '#1C1C1C'
@@ -201,21 +202,15 @@ export function ChatPdf({ content, title, askedQuestion, date = new Date() }: Ch
   )
 }
 
-const PDF_REQUEST = /\b(pdf|printable|handout)\b|\b(in|into|as|on) a (doc|document|one[- ]pager)\b/i
-
-/** True when a member's message is asking for a PDF / document version. */
-export function isPdfRequest(text: string | null | undefined): boolean {
-  return !!text && PDF_REQUEST.test(text)
-}
-
 /**
  * Pull a document title from the reply (its first "# " heading, which is then
  * removed from the body so it isn't printed twice), otherwise fall back.
  */
 export function prepareChatPdf(raw: string, fallbackTitle: string): { title: string; body: string } {
-  let body = repairLegacyMarkdown(raw).trim()
-  // Drop the closing "tap Download PDF below" pointer; it means nothing on paper.
-  body = body.replace(/(^|[.!?]\s+|\n)[^.!?\n]*\bdownload pdf\b[^\n]*$/i, '$1').trim()
+  let body = repairLegacyMarkdown(stripPdfMarker(raw)).trim()
+  // Drop the closing "your PDF is ready below" pointer; it means nothing on paper.
+  body = body.replace(/(^|[.!?]\s+|\n)[^.!?\n]*\b(pdf|printable|handout)\b[^\n]*$/i, '$1').trim()
+  body = body.replace(/\n\s*(-{3,}|\*{3,}|_{3,})\s*$/, '').trim()
   const m = body.match(/^\s*#\s+(.+)\n?/)
   if (m) return { title: m[1].replace(/[*_`]/g, '').trim(), body: body.slice(m[0].length).trim() }
   return { title: fallbackTitle, body }

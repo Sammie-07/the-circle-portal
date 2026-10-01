@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { hasPdfMarker, stripPdfMarker, pdfTitle } from '@/lib/pdf-marker'
 
 interface Session {
   id: string
@@ -91,6 +92,9 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
   const [attachment, setAttachment] = useState<Attachment | null>(null)
   const [attaching, setAttaching] = useState(false)
   const [attachError, setAttachError] = useState<string | null>(null)
+  // Replies (by id) that should download their PDF as soon as they land: the
+  // member just asked for a PDF in this sitting. Reopened chats don't re-download.
+  const [autoPdfIds, setAutoPdfIds] = useState<Set<string>>(new Set())
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -317,6 +321,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
         created_at: new Date().toISOString(),
       }
       setMessages(prev => [...prev, assistantMsg])
+      if (hasPdfMarker(full)) setAutoPdfIds(prev => new Set(prev).add(assistantMsg.id))
       setStreamingText('')
 
       // Bump session to top (no-op in preview — no session list)
@@ -514,19 +519,14 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
             </div>
           ) : (
             <div className="max-w-3xl mx-auto space-y-6">
-              {messages.map((msg, i) => {
-                const prevUser = msg.role === 'assistant'
-                  ? [...messages.slice(0, i)].reverse().find(m => m.role === 'user')?.content ?? null
-                  : null
-                return (
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    prevUser={prevUser}
-                    sessionTitle={sessions.find(s => s.id === activeSessionId)?.title ?? null}
-                  />
-                )
-              })}
+              {messages.map(msg => (
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  autoDownload={autoPdfIds.has(msg.id)}
+                  fallbackTitle={sessions.find(s => s.id === activeSessionId)?.title ?? null}
+                />
+              ))}
 
               {/* Streaming message */}
               {isStreaming && (
@@ -536,7 +536,7 @@ export default function ChatOverlay({ onClose, preview = false }: ChatOverlayPro
                   </div>
                   <div className="flex-1 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
                     {streamingText ? (
-                      <MarkdownContent content={streamingText} />
+                      <MarkdownContent content={stripPdfMarker(streamingText).replace(/^\s*\[(\[(P(D(F(\](\])?)?)?)?)?)?$/, '')} />
                     ) : (
                       <span className="flex items-center gap-1.5 text-[var(--text-3)]">
                         <span className="inline-block w-1.5 h-1.5 bg-[#C9A227] rounded-full animate-pulse" />
@@ -672,7 +672,7 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-function MessageBubble({ message, prevUser, sessionTitle }: { message: Message; prevUser: string | null; sessionTitle: string | null }) {
+function MessageBubble({ message, autoDownload, fallbackTitle }: { message: Message; autoDownload: boolean; fallbackTitle: string | null }) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
@@ -686,6 +686,7 @@ function MessageBubble({ message, prevUser, sessionTitle }: { message: Message; 
     )
   }
 
+  const isPdf = hasPdfMarker(message.content)
   return (
     <div className="flex gap-3">
       <div className="w-7 h-7 rounded-full border border-[#CC1F1F] flex-shrink-0 flex items-center justify-center mt-0.5">
@@ -693,87 +694,60 @@ function MessageBubble({ message, prevUser, sessionTitle }: { message: Message; 
       </div>
       <div className="flex-1 min-w-0">
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
-          <MarkdownContent content={message.content} />
+          <MarkdownContent content={isPdf ? stripPdfMarker(message.content) : message.content} />
         </div>
-        {!message.id.startsWith('err-') && (
-          <MessageActions message={message} prevUser={prevUser} sessionTitle={sessionTitle} />
-        )}
+        {isPdf && <PdfCard message={message} autoDownload={autoDownload} fallbackTitle={fallbackTitle} />}
       </div>
     </div>
   )
 }
 
-// Under each Gogo reply: Download PDF (prominent when the member asked for a
-// PDF) and Copy.
-function MessageActions({ message, prevUser, sessionTitle }: { message: Message; prevUser: string | null; sessionTitle: string | null }) {
-  const [busy, setBusy] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const [asked, setAsked] = useState(false)
+// The PDF Gogo hands over when a member asks for one. It downloads by itself
+// the moment the reply lands; the card stays in the chat so they can grab it
+// again (and so phones that block automatic downloads still get it in a tap).
+function PdfCard({ message, autoDownload, fallbackTitle }: { message: Message; autoDownload: boolean; fallbackTitle: string | null }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'failed'>('idle')
+  const started = useRef(false)
+  const fallback = fallbackTitle && fallbackTitle !== 'New Chat' ? fallbackTitle.replace(/…$/, '') : 'Your Notes from Gogo'
+  const title = pdfTitle(message.content, fallback)
 
-  useEffect(() => {
-    let alive = true
-    import('@/lib/chat-pdf').then(m => { if (alive) setAsked(m.isPdfRequest(prevUser)) }).catch(() => {})
-    return () => { alive = false }
-  }, [prevUser])
-
-  async function download() {
-    setBusy(true)
-    setFailed(false)
+  const download = useCallback(async () => {
+    setState('busy')
     try {
-      const { downloadChatPdf, isPdfRequest } = await import('@/lib/chat-pdf')
-      // "You asked: ..." only when the question says something on its own.
-      const question = prevUser?.replace(/\n*📎 Attached:[\s\S]*$/, '').trim() || null
-      const showQuestion = question && !isPdfRequest(question) && question.length <= 220 ? question : null
-      const fallbackTitle = sessionTitle && sessionTitle !== 'New Chat' && !isPdfRequest(sessionTitle)
-        ? sessionTitle.replace(/…$/, '')
-        : 'Your Notes from Gogo'
-      await downloadChatPdf({ content: message.content, fallbackTitle, askedQuestion: showQuestion, date: new Date(message.created_at) })
+      const { downloadChatPdf } = await import('@/lib/chat-pdf')
+      await downloadChatPdf({ content: message.content, fallbackTitle: fallback, date: new Date(message.created_at) })
+      setState('done')
     } catch (err) {
       console.error('PDF download failed:', err)
-      setFailed(true)
-    } finally {
-      setBusy(false)
+      setState('failed')
     }
-  }
+  }, [message.content, message.created_at, fallback])
 
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(message.content)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    } catch { /* clipboard blocked */ }
-  }
-
-  const icon = (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" />
-    </svg>
-  )
+  useEffect(() => {
+    if (autoDownload && !started.current) {
+      started.current = true
+      // Auto-download the moment the reply lands (intentional side effect).
+      download()
+    }
+  }, [autoDownload, download])
 
   return (
-    <div className="mt-2 flex items-center gap-3 flex-wrap">
-      {asked ? (
-        <button
-          onClick={download}
-          disabled={busy}
-          className="inline-flex items-center gap-2 bg-[#C9A227] text-[#090909] text-xs font-medium px-4 py-2 rounded hover:bg-[#d4ac2d] transition-colors disabled:opacity-50"
-        >
-          {icon}{busy ? 'Building your PDF…' : 'Download PDF'}
-        </button>
-      ) : (
-        <button
-          onClick={download}
-          disabled={busy}
-          className="inline-flex items-center gap-1.5 text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors disabled:opacity-50"
-        >
-          {icon}{busy ? 'Building PDF…' : 'Download PDF'}
-        </button>
-      )}
-      <button onClick={copy} className="text-[11px] text-[var(--text-3)] hover:text-[#C9A227] transition-colors">
-        {copied ? 'Copied ✓' : 'Copy'}
-      </button>
-      {failed && <span className="text-[11px] text-[#CC1F1F]">Could not build the PDF. Try again.</span>}
-    </div>
+    <button
+      onClick={download}
+      disabled={state === 'busy'}
+      className="mt-2 w-full sm:w-auto sm:min-w-[300px] max-w-full flex items-center gap-3 text-left bg-[#C9A227]/10 border border-[#C9A227]/40 rounded-lg px-3.5 py-3 hover:bg-[#C9A227]/15 hover:border-[#C9A227]/70 transition-colors disabled:opacity-70"
+      title="Download this PDF"
+    >
+      <span className="w-9 h-11 flex-shrink-0 rounded bg-[#C9A227] text-[#090909] text-[9px] font-bold tracking-wider flex items-end justify-center pb-1.5">PDF</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[var(--text)] text-sm font-medium truncate">{title}</span>
+        <span className="block text-[11px] text-[var(--text-3)] mt-0.5">
+          {state === 'busy' ? 'Preparing your PDF…'
+            : state === 'done' ? 'Downloaded ✓ · tap to download again'
+            : state === 'failed' ? 'Could not build the PDF. Tap to try again.'
+            : 'PDF · tap to download'}
+        </span>
+      </span>
+    </button>
   )
 }

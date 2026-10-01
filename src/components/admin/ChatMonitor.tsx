@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { hasPdfMarker, stripPdfMarker } from '@/lib/pdf-marker'
 
 interface SessionSummary {
   id: string
@@ -187,7 +188,10 @@ function MonitorBubble({ message }: { message: Message }) {
       <div className="min-w-0 flex-1">
         <p className="text-[var(--text-4)] text-[10px] mb-1">Ask Gogo · {fmtDate(message.created_at)}</p>
         <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-lg px-4 py-3 text-sm text-[var(--text-2)]">
-          <MarkdownContent content={message.content} />
+          {hasPdfMarker(message.content) && (
+            <p className="text-[10px] uppercase tracking-wider text-[#C9A227] mb-2">📄 Sent as a PDF</p>
+          )}
+          <MarkdownContent content={stripPdfMarker(message.content)} />
         </div>
       </div>
     </div>
