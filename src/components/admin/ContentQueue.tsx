@@ -514,6 +514,13 @@ function BriefCard({
   onEdit: (id: string, patch: Partial<ContentPost>) => void
 }) {
   const b = post.brief!
+  const [caption, setCaption] = useState(post.caption)
+  const [hashtags, setHashtags] = useState(post.hashtags)
+  const [savingCap, setSavingCap] = useState(false)
+  const [writing, setWriting] = useState(false)
+  const [showRewrite, setShowRewrite] = useState(false)
+  const [rewriteNote, setRewriteNote] = useState('')
+  const capDirty = caption !== post.caption || hashtags !== post.hashtags
   const [feedback, setFeedback] = useState(post.feedback ?? '')
   const [showFeedback, setShowFeedback] = useState(false)
   const [savingFb, setSavingFb] = useState(false)
@@ -535,6 +542,53 @@ function BriefCard({
     } finally {
       setSavingFb(false)
     }
+  }
+
+  async function saveCaption() {
+    setSavingCap(true)
+    try {
+      const res = await fetch(`/api/content/${post.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption, hashtags }),
+      })
+      if (!res.ok) { toast('Could not save', 'error'); return }
+      onEdit(post.id, { caption, hashtags })
+      toast('Caption saved')
+    } finally {
+      setSavingCap(false)
+    }
+  }
+
+  async function writeCaption() {
+    if (capDirty && caption && !confirm('Replace your edited caption with a new one?')) return
+    setWriting(true)
+    try {
+      const res = await fetch(`/api/content/${post.id}/caption`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rewriteNote.trim() ? { note: rewriteNote.trim() } : {}),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { toast(data.error ?? 'Could not write a caption', 'error'); return }
+      setCaption(data.caption)
+      setHashtags(data.hashtags)
+      onEdit(post.id, { caption: data.caption, hashtags: data.hashtags })
+      setShowRewrite(false)
+      setRewriteNote('')
+      toast('New caption written')
+    } catch {
+      toast('Network error, please try again', 'error')
+    } finally {
+      setWriting(false)
+    }
+  }
+
+  function copyCaption() {
+    navigator.clipboard.writeText(`${caption}\n\n${hashtags}`.trim()).then(
+      () => toast('Caption copied'),
+      () => toast('Copy failed', 'error')
+    )
   }
 
   function copyBrief() {
@@ -591,6 +645,64 @@ function BriefCard({
           <span className="text-[var(--text-2)]">{b.does.map((d) => DOES_LABEL[d]).join(' · ')}</span>
           <span className="text-[var(--text-3)] text-xs ml-2">“That&apos;s me” score {b.score}/10</span>
         </BriefRow>
+
+        {/* Caption: a starting point in the Circle voice, edit freely */}
+        <div className="mt-4 rounded-lg border border-[#C9A227]/30 bg-[var(--bg)] p-3.5">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--gold-text)]">Caption</p>
+            <span className="text-[11px] text-[var(--text-3)]">A starting point, edit freely</span>
+          </div>
+          {caption || writing ? (
+            <>
+              <textarea
+                value={writing ? 'Writing a caption in the Circle voice…' : caption}
+                onChange={(e) => setCaption(e.target.value)}
+                disabled={writing}
+                rows={9}
+                className="w-full bg-transparent border border-[var(--border-color)] rounded-lg p-3 text-sm text-[var(--text)] leading-relaxed resize-y disabled:opacity-60"
+              />
+              <input
+                value={hashtags}
+                onChange={(e) => setHashtags(e.target.value)}
+                disabled={writing}
+                className="w-full bg-transparent border border-[var(--border-color)] rounded-lg p-2.5 text-sm text-[#C9A227] mt-2"
+              />
+              <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                {capDirty ? (
+                  <button onClick={saveCaption} disabled={savingCap || writing} className="bg-[#C9A227] text-[#090909] text-sm font-medium px-3.5 py-1.5 rounded-lg disabled:opacity-40">
+                    {savingCap ? 'Saving…' : 'Save caption'}
+                  </button>
+                ) : null}
+                <button onClick={copyCaption} disabled={writing} className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-3.5 py-1.5 rounded-lg hover:bg-[var(--surface-2)] disabled:opacity-40">
+                  Copy caption
+                </button>
+                <button onClick={() => setShowRewrite((v) => !v)} disabled={writing} className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-3.5 py-1.5 rounded-lg hover:bg-[var(--surface-2)] disabled:opacity-40">
+                  {writing ? 'Writing…' : '↻ Rewrite caption'}
+                </button>
+              </div>
+              {showRewrite && !writing ? (
+                <div className="mt-2.5 flex flex-col sm:flex-row gap-2">
+                  <input
+                    value={rewriteNote}
+                    onChange={(e) => setRewriteNote(e.target.value)}
+                    placeholder="What should change? (optional) e.g. shorter, stronger hook, less salesy…"
+                    className="flex-1 bg-transparent border border-[var(--border-color)] rounded-lg p-2.5 text-sm text-[var(--text)]"
+                  />
+                  <button onClick={writeCaption} className="bg-[#C9A227] text-[#090909] text-sm font-medium px-3.5 py-2 rounded-lg whitespace-nowrap">
+                    Write new caption
+                  </button>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm text-[var(--text-3)]">No caption yet.</p>
+              <button onClick={writeCaption} className="bg-[#C9A227] text-[#090909] text-sm font-medium px-3.5 py-1.5 rounded-lg">
+                ✦ Write caption
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 mt-4">
           <button onClick={copyBrief} className="border border-[var(--border-color)] text-[var(--text-2)] text-sm px-3.5 py-1.5 rounded-lg hover:bg-[var(--surface-2)]">

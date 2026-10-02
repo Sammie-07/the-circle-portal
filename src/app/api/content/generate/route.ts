@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { generateBatch } from '@/lib/content/generate-batch'
+import { generateBatch, fillMissingCaptions } from '@/lib/content/generate-batch'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -17,6 +17,8 @@ export async function POST() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
   if (!profile || !STAFF.includes(profile.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const made = await generateBatch({ cap: 6, force: true, includeTranscripts: true, budgetMs: 200_000 })
-  return NextResponse.json({ ok: true, made })
+  // Ideas from before captions existed get theirs first (quick, parallel).
+  const captioned = await fillMissingCaptions(8).catch(() => 0)
+  const made = await generateBatch({ cap: 6, force: true, includeTranscripts: true, budgetMs: 170_000 })
+  return NextResponse.json({ ok: true, made, captioned })
 }

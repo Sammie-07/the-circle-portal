@@ -1,5 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { scanConceptSignals, generateConcepts, formatColumn, type ConceptSignal } from './concepts'
+import { scanConceptSignals, generateConcepts, formatColumn, type ConceptSignal, type ConceptBrief } from './concepts'
+import { writeCaption } from './caption'
+import type { Bucket } from './buckets'
 
 // Background content generation. Never call this in a request the user awaits
 // unless that request is built for it (maxDuration 300) — otherwise run it in
@@ -73,6 +75,9 @@ export async function runSignal(admin: ReturnType<typeof createAdminClient>, sig
   try {
     const { ideas, note: n } = await generateConcepts(signal, guidance)
     note = n
+    // Every idea comes with a starting caption (in parallel; a failed caption
+    // just leaves it blank for the "Write caption" button).
+    const captions = await Promise.all(ideas.map((idea) => writeCaption(idea.bucket, idea.brief).catch(() => null)))
     for (let i = 0; i < ideas.length; i++) {
       const { bucket, brief } = ideas[i]
       const { error } = await admin.from('content_posts').upsert(
@@ -86,8 +91,8 @@ export async function runSignal(admin: ReturnType<typeof createAdminClient>, sig
           dedupe_key: `${signal.dedupeKey}#${i}`,
           format: formatColumn(brief.format),
           platform: 'both',
-          caption: '',
-          hashtags: '',
+          caption: captions[i]?.caption ?? '',
+          hashtags: captions[i]?.hashtags ?? '',
           slides: [],
           art_direction: '',
           status: 'draft',
@@ -116,4 +121,33 @@ export async function scanTranscriptNow(transcriptId: string): Promise<number> {
   if (!signal) return 0
   const guidance = await recentFeedbackGuidance(admin).catch(() => '')
   return runSignal(admin, signal, guidance)
+}
+
+/**
+ * Give captions to ideas that don't have one yet (ideas made before captions
+ * existed, or whose caption failed). Newest first, a few at a time in parallel.
+ */
+export async function fillMissingCaptions(limit = 8): Promise<number> {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('content_posts')
+    .select('id, bucket, brief')
+    .eq('source_type', 'concept')
+    .eq('caption', '')
+    .in('status', ['draft', 'approved'])
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  let done = 0
+  const rows = (data ?? []).filter((r) => r.brief && r.bucket)
+  for (let i = 0; i < rows.length; i += 4) {
+    const chunk = rows.slice(i, i + 4)
+    const results = await Promise.all(chunk.map((r) => writeCaption(r.bucket as Bucket, r.brief as ConceptBrief).catch(() => null)))
+    for (let j = 0; j < chunk.length; j++) {
+      const c = results[j]
+      if (!c) continue
+      const { error } = await admin.from('content_posts').update({ caption: c.caption, hashtags: c.hashtags, updated_at: new Date().toISOString() }).eq('id', chunk[j].id).eq('caption', '')
+      if (!error) done++
+    }
+  }
+  return done
 }

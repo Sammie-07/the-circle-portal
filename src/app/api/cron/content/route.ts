@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { generateBatch } from '@/lib/content/generate-batch'
+import { generateBatch, fillMissingCaptions } from '@/lib/content/generate-batch'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const generated = await generateBatch({ cap: 8, force: true, includeTranscripts: true, budgetMs: 220_000 }).catch(() => 0)
-  return NextResponse.json({ ok: true, generated })
+  const captioned = await fillMissingCaptions(8).catch(() => 0)
+  const generated = await generateBatch({ cap: 8, force: true, includeTranscripts: true, budgetMs: 190_000 }).catch(() => 0)
+  return NextResponse.json({ ok: true, generated, captioned })
 }

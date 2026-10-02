@@ -172,6 +172,18 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-10-02
+- **Captions on every content idea, in the Circle voice.** The Circle admin's voice guide (written with
+  ChatGPT) is now the rulebook (`src/lib/content/circle-voice.ts`): brand account (not Gogo in first
+  person), the reader is the subject and Gogo the authority, no profanity, no generic coaching phrases,
+  normal paragraphs, CTA "comment 'circle' to apply" with Gogo in their corner, don't teach the whole
+  solution. Every new idea gets a caption + up to 5 hashtags (`src/lib/content/caption.ts`); ideas
+  without one are backfilled on "Find new ideas" and the daily cron. Each card has an editable caption,
+  Copy caption, and Rewrite caption with an optional note (`POST /api/content/[id]/caption`).
+  Captions that use a banned phrase, profanity, or one-sentence-per-line formatting are rewritten
+  automatically. **NDA check:** anonymous member-story captions are rejected and rewritten if they
+  contain any dollar figure, tax/debt/legal detail, family detail, follower count or status title.
+  The strategist's privacy rules were tightened the same way (the first live story briefs had private
+  figures), and it now applies the guide's final test ("could 500 generic coaches post this?").
 - **Content tab → Circle content strategist (concept briefs).** Per the Circle admin's brief: the tool
   now judges what is worth posting and returns a CONCEPT BRIEF instead of a finished post: Concept,
   (verbatim) Quote, Who it's for, Pain, Gogo angle, the Story (where/problem/changing/building, for
