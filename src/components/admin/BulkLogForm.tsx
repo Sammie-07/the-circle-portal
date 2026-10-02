@@ -77,7 +77,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Pasted transcript wins when present (works for Fyxer or any tool).
-        body: JSON.stringify(pasted ? { transcript: pasted } : { url: fathomUrl.trim() }),
+        body: JSON.stringify(pasted ? { transcript: pasted, weekOf } : { url: fathomUrl.trim(), weekOf }),
       })
       const data = await res.json()
       if (!res.ok) { toast(data.error ?? 'Could not process the call', 'error'); return }

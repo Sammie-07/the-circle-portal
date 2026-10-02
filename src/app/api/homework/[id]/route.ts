@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { detectForMember, reconcileAchievementPostNotifications } from '@/lib/achievements'
-import { generateBatch } from '@/lib/content/generate-batch'
 import { NextResponse, after } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -73,11 +72,9 @@ export async function PATCH(request: Request, { params }: Params) {
     after(async () => {
       const admin = createAdminClient()
       const awarded = await detectForMember(admin, memberId, { includeAi: false, email: true }).catch(() => [])
-      // A milestone is postable — draft content for it (achievements now feed the
-      // content machine as member_win signals), then log the "post drafted" admin
-      // notification. Background, capped, never blocks.
+      // Checking off homework is not content on its own (the content strategist
+      // looks for the bigger story monthly), so no post is drafted here.
       if (awarded.some((a) => a.tier === 'milestone')) {
-        await generateBatch({ memberId, force: true, cap: 2 }).catch(() => {})
         await reconcileAchievementPostNotifications(admin).catch(() => {})
       }
     })

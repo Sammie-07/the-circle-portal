@@ -1,6 +1,6 @@
 # Circle Portal — Progress
 
-> **Canonical status doc.** Snapshot refreshed 2026-09-24 against the live code, schema, and
+> **Canonical status doc.** Snapshot refreshed 2026-10-02 against the live code, schema, and
 > deployment. Sections 1–8 below are the current state; **§9 Changelog** is the full dated
 > history of every change (newest first). README and CLAUDE.md are real docs now.
 >
@@ -11,7 +11,8 @@
 
 ## 1. What it is
 
-A member portal for **The Circle**, Gogo Bethke's 12-month real-estate coaching program.
+A member portal for **The Circle**, Gogo Bethke's 12-month private mastermind for entrepreneurs
+(any industry) making consistent six figures (per gogobethke.com/thecircle).
 Live at **https://the-circle-portal.vercel.app**.
 
 - **Staff roles** (`owner`/`admin`/`manager`/`support`/`tech`) — Gogo, Adriana, Kristy, etc.
@@ -169,6 +170,49 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 ## 9. Changelog
 
 Every code change is recorded here, newest first.
+
+### 2026-10-02
+- **Content tab → Circle content strategist (concept briefs).** Per the Circle admin's brief: the tool
+  now judges what is worth posting and returns a CONCEPT BRIEF instead of a finished post: Concept,
+  (verbatim) Quote, Who it's for, Pain, Gogo angle, the Story (where/problem/changing/building, for
+  transformations), Why it sells The Circle, Format, Suggested visual (emotion type: power, relatable,
+  coaching, speaking, listening, table, lifestyle, team, B-roll), North-star checks and a "that's me"
+  score (ideas under 7, or doing none of feel-seen / see-Gogo / want-the-room, are dropped).
+  - **Six buckets:** Coaching, Gogo Pearls, Member Transformation, Testimonial/Proof, The Room, Gogo as the Coach.
+  - **Audience** = entrepreneurs (any industry) at consistent six figures moving to seven, with money but
+    not freedom (from gogobethke.com/thecircle; was "real estate agents").
+  - **Sources:** weekly call transcripts (Gogo Pearls), one bigger-picture story per member per month
+    (blueprint + surveys + call notes), the testimonial library, and 16 coaching topics from Gogo's Brain
+    (fresh angle each quarter). Homework counts, attendance and "has a blueprint" are no longer content.
+  - **NDA:** member stories anonymous by default; names only with `members.public_story_ok` /
+    `testimonials.name_ok`. Private names are scrubbed from output. Quotes are verified word for word
+    against the transcript/testimonial/Brain; a Pearl without a verifiable quote is dropped.
+  - **Transcripts are now saved** when an admin processes a call on Log This Week (`call_transcripts`,
+    deduped by content hash) and scanned for Pearls in the background right away.
+  - **New tables:** `call_transcripts`, `testimonials` (seeded with the 3 member testimonials + 4
+    endorsements on the website, approved to name), `content_signal_log`. `content_posts` gets `bucket`,
+    `brief`, source_type `concept`. `members.public_story_ok`.
+  - **UI:** Content ideas / Old drafts tabs (the 72 old finished-post drafts kept as they were), bucket
+    filters, New ideas / Using / Posted / Passed, Copy brief, Feedback (guides future ideas), "Find new
+    ideas" button (`POST /api/content/generate`, 300s). Daily cron now 300s, 8 signals, transcripts
+    included. Homework completion no longer triggers content.
+  - Legacy post writer (achievements "make a post") now anonymous by default and entrepreneur-focused.
+  - Tested on the real Sep 28 Circle call (5 pearl/coach ideas, quotes verified, no member names), the
+    "I can do it faster" topic, and Tina Gamble's testimonial.
+
+### 2026-10-01
+- **Ask Gogo: PDFs, photos, real PDF attachments, fewer "I can't".** When a member asks for a PDF the
+  model starts its reply with a `[[PDF]]` marker; the chat hides it, builds a Circle-branded PDF in the
+  browser (`@react-pdf/renderer` + `marked`, lazy-loaded) and downloads it, leaving a PDF card in the
+  chat. Photos (downscaled to 1568px JPEG) and PDFs up to 3MB go to the model as the real file. The
+  system prompt lists what the chat can do and gives real opinions on members' own work. Dash filter no
+  longer turns `---`/`|---|` into commas. GFM tables + real numbered lists in chat. (5997e12, 27ef85c)
+
+### 2026-09-29
+- **Log This Week: "Could not read the call results" on long calls fixed.** The extractor model spent
+  its 4000-token budget thinking before finishing the JSON on a 95-minute call. Thinking disabled,
+  budget 12000, tolerant JSON parse, one retry on the fallback model, maxDuration 300. (4f86a65)
+- **Achievement Replay button (test accounts) now replays from card 1.** (fa096ff)
 
 ### 2026-09-24
 - **Blueprint revisions — Regenerate now builds on the draft (fixes "fixes one thing, removes

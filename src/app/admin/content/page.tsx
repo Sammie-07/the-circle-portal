@@ -36,8 +36,9 @@ export default async function AdminContentPage() {
         <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
         <h1 className="text-[var(--text)] font-serif text-[38px]">Content</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
-          On-brand Instagram &amp; Facebook posts generated from real member wins. Review, approve,
-          download, and post. Aim for one every couple of days from the bank below.
+          Concept briefs for The Circle&apos;s account: the idea, the pain, Gogo&apos;s angle and why it
+          sells The Circle. Pulled from weekly calls, member stories (anonymous unless approved),
+          testimonials and Gogo&apos;s teachings. Pick the ones worth making.
         </p>
       </div>
 

@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { fetchFathomTranscript } from '@/lib/fathom'
-import { NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { scanTranscriptNow } from '@/lib/content/generate-batch'
+import { NextResponse, after } from 'next/server'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -33,7 +36,7 @@ export async function POST(request: Request) {
     }
     const userId = user.id
 
-    let body: { url?: string; transcript?: string } = {}
+    let body: { url?: string; transcript?: string; weekOf?: string } = {}
     try { body = await request.json() } catch { /* handled below */ }
 
     // Two ways in: a Fathom share link we fetch, OR a transcript pasted directly
@@ -50,6 +53,21 @@ export async function POST(request: Request) {
       transcript = await fetchFathomTranscript(body.url.trim())
     } else {
       return NextResponse.json({ error: 'Paste a Fathom share link, or paste a transcript.' }, { status: 400 })
+    }
+
+    // Keep the transcript: the content strategist scans every weekly call for
+    // Gogo Pearls (her strongest lines and coaching moments). Deduped by content,
+    // so re-processing the same call never saves or scans it twice.
+    const saved = await saveTranscript({
+      text: transcript.text,
+      title: transcript.title,
+      source: pasted ? 'paste' : 'fathom',
+      url: pasted ? null : (body.url ?? '').trim() || null,
+      callDate: /^\d{4}-\d{2}-\d{2}$/.test(body.weekOf ?? '') ? body.weekOf! : null,
+      userId,
+    }).catch((e) => { console.error('[from-fathom] transcript save failed:', e); return null })
+    if (saved?.isNew) {
+      after(async () => { await scanTranscriptNow(saved.id).catch((e) => console.error('[from-fathom] pearls scan failed:', e)) })
     }
 
     // Real, active members only. Internal/staff accounts (Gogo, Kristy, Ferny,
@@ -189,4 +207,18 @@ function parseMembersJson(raw: string): { members?: ExtractedRow[] } | null {
   } catch {
     return null
   }
+}
+
+async function saveTranscript(t: { text: string; title: string; source: 'paste' | 'fathom'; url: string | null; callDate: string | null; userId: string }): Promise<{ id: string; isNew: boolean } | null> {
+  const admin = createAdminClient()
+  const hash = createHash('sha256').update(t.text.replace(/\s+/g, ' ').trim()).digest('hex')
+  const { data: existing } = await admin.from('call_transcripts').select('id').eq('content_hash', hash).maybeSingle()
+  if (existing) return { id: existing.id as string, isNew: false }
+  const { data, error } = await admin
+    .from('call_transcripts')
+    .insert({ transcript: t.text, title: t.title, source: t.source, source_url: t.url, call_date: t.callDate, content_hash: hash, created_by: t.userId })
+    .select('id')
+    .single()
+  if (error || !data) return null
+  return { id: data.id as string, isNew: true }
 }

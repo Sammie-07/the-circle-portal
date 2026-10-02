@@ -628,3 +628,67 @@ create policy "admins_manage_blueprint_versions" on blueprint_versions
 alter table members add column if not exists blueprint_draft_html text;
 alter table members add column if not exists blueprint_draft_generated_at timestamptz;
 alter table members add column if not exists blueprint_draft_revision_id uuid;
+
+-- ============================================
+-- Content strategist: concept briefs (2026-10-01)
+-- ============================================
+-- content_posts now also holds CONCEPT BRIEFS (source_type 'concept'): the idea,
+-- pain, Gogo's angle, why it sells The Circle, format and visual, in `brief`,
+-- grouped by `bucket`. Older finished-post rows keep their original columns.
+alter table content_posts drop constraint if exists content_posts_source_type_check;
+alter table content_posts add constraint content_posts_source_type_check
+  check (source_type in ('member_win','community','takeaway','educational','concept'));
+alter table content_posts add column if not exists bucket text
+  check (bucket in ('coaching','pearls','transformation','proof','room','coach'));
+alter table content_posts add column if not exists brief jsonb;
+create index if not exists content_posts_bucket_idx on content_posts(bucket);
+
+-- Member stories are anonymous by default (NDA); naming needs explicit approval.
+alter table members add column if not exists public_story_ok boolean not null default false;
+
+-- Weekly call transcripts, saved when an admin processes a call on Log This
+-- Week, scanned for Gogo Pearls (her strongest lines / coaching moments).
+create table if not exists call_transcripts (
+  id                uuid primary key default gen_random_uuid(),
+  call_date         date,
+  title             text not null default '',
+  source            text not null default 'paste' check (source in ('fathom','paste')),
+  source_url        text,
+  transcript        text not null,
+  content_hash      text unique,
+  pearls_scanned_at timestamptz,
+  created_by        uuid references auth.users(id) on delete set null,
+  created_at        timestamptz not null default now()
+);
+create index if not exists call_transcripts_date_idx on call_transcripts(call_date desc);
+alter table call_transcripts enable row level security;
+create policy "admins_all_call_transcripts" on call_transcripts for all using (is_admin()) with check (is_admin());
+
+-- Testimonials / proof library. name_ok = approved to name/show publicly.
+-- Seeded 2026-10-01 with the testimonials and endorsements on gogobethke.com/thecircle.
+create table if not exists testimonials (
+  id           uuid primary key default gen_random_uuid(),
+  person_name  text not null,
+  person_title text,
+  member_id    uuid references members(id) on delete set null,
+  kind         text not null default 'member' check (kind in ('member','past_member','endorsement')),
+  source       text not null default 'written' check (source in ('website','video','written')),
+  headline     text,
+  quote        text not null,
+  video_url    text,
+  name_ok      boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+alter table testimonials enable row level security;
+create policy "admins_all_testimonials" on testimonials for all using (is_admin()) with check (is_admin());
+
+-- Signals the strategist already judged (including "not worth posting"), so it
+-- never re-spends a model call on them.
+create table if not exists content_signal_log (
+  dedupe_key  text primary key,
+  ideas       int not null default 0,
+  note        text,
+  created_at  timestamptz not null default now()
+);
+alter table content_signal_log enable row level security;
+create policy "admins_all_content_signal_log" on content_signal_log for all using (is_admin()) with check (is_admin());
