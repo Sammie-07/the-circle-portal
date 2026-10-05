@@ -18,7 +18,7 @@ export async function POST() {
   if (!profile || !STAFF.includes(profile.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   // Ideas from before captions existed get theirs first (quick, parallel).
-  const captioned = await fillMissingCaptions(8).catch(() => 0)
-  const made = await generateBatch({ cap: 6, force: true, includeTranscripts: true, budgetMs: 170_000 })
+  const captioned = await fillMissingCaptions(24).catch(() => 0)
+  const made = await generateBatch({ cap: 6, force: true, includeTranscripts: true, budgetMs: 150_000 })
   return NextResponse.json({ ok: true, made, captioned })
 }

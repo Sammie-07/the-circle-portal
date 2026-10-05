@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const captioned = await fillMissingCaptions(8).catch(() => 0)
-  const generated = await generateBatch({ cap: 8, force: true, includeTranscripts: true, budgetMs: 190_000 }).catch(() => 0)
+  const captioned = await fillMissingCaptions(24).catch(() => 0)
+  const generated = await generateBatch({ cap: 8, force: true, includeTranscripts: true, budgetMs: 150_000 }).catch(() => 0)
   return NextResponse.json({ ok: true, generated, captioned })
 }

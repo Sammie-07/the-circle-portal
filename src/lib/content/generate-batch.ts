@@ -125,7 +125,7 @@ export async function scanTranscriptNow(transcriptId: string): Promise<number> {
 
 /**
  * Give captions to ideas that don't have one yet (ideas made before captions
- * existed, or whose caption failed). Newest first, a few at a time in parallel.
+ * existed, or whose caption failed). Newest first, six at a time in parallel.
  */
 export async function fillMissingCaptions(limit = 8): Promise<number> {
   const admin = createAdminClient()
@@ -139,8 +139,8 @@ export async function fillMissingCaptions(limit = 8): Promise<number> {
     .limit(limit)
   let done = 0
   const rows = (data ?? []).filter((r) => r.brief && r.bucket)
-  for (let i = 0; i < rows.length; i += 4) {
-    const chunk = rows.slice(i, i + 4)
+  for (let i = 0; i < rows.length; i += 6) {
+    const chunk = rows.slice(i, i + 6)
     const results = await Promise.all(chunk.map((r) => writeCaption(r.bucket as Bucket, r.brief as ConceptBrief).catch(() => null)))
     for (let j = 0; j < chunk.length; j++) {
       const c = results[j]
