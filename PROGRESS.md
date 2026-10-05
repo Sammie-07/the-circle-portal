@@ -171,6 +171,17 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-05
+- **Member-story privacy, enforced on the brief (not just the caption).** The first live story briefs
+  still carried identifying details (sales volume, follower counts, award titles, tax trouble). Now:
+  anonymous stories never see the private figures (dollar amounts, award titles and follower counts are
+  masked; numeric survey answers are passed only as trends, "income: up"), every brief field is checked
+  against `PRIVATE_MEMBER_DETAIL` (shared with the caption check, `circle-voice.ts`) and regenerated up to
+  twice, then dropped if it still leaks. Gogo's own angle is exempt (her numbers are public). Headlines
+  starting "She satisfies…" (a recurring model tic) are rejected too. Old caption-less ideas (15) were
+  deleted at the admin's request; the 5 story briefs with identifying details were deleted to regenerate.
+- **Caption backfill** raised to 24 per run, 6 in parallel. (90a2059)
+
 ### 2026-10-02
 - **Captions on every content idea, in the Circle voice.** The Circle admin's voice guide (written with
   ChatGPT) is now the rulebook (`src/lib/content/circle-voice.ts`): brand account (not Gogo in first

@@ -84,3 +84,13 @@ export const BANNED_PHRASES = [
 ]
 
 export const PROFANITY = /\b(shit|fuck\w*|damn|hell|ass|bitch\w*|crap|bullshit)\b/i
+
+/**
+ * Private / identifying details that must never appear in an anonymous member
+ * story (brief or caption): dollar figures, sales volume, tax/debt/legal
+ * trouble, family, follower counts, status titles, years in business.
+ */
+export const PRIVATE_MEMBER_DETAIL = /\$\s?\d|\b\d+(\.\d+)?\s?(k|m|mm|million|thousand)\b|\birs\b|\btax(es)?\b|tax avoidance|\blev(y|ies)\b|lawsuit|bankrupt|\bdebt\b|frozen|daycare|\b(son|daughter|husband|wife|kids?|child(ren)?|brother|sister|mom|dad|mother|father)\b|divorce|followers|\bicon\b|\b\d+\s+(years?|agents|properties|people on)\b/i
+
+/** Headline tics the model keeps falling into. */
+export const CONCEPT_TICS = /^\s*(she|he|you|they)\s+satisf/i

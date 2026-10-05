@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, sanitizeBrainText } from '@/lib/brain-search'
 import { CIRCLE_FACTS } from '@/lib/circle-facts'
+import { PRIVATE_MEMBER_DETAIL, CONCEPT_TICS } from './circle-voice'
 
 // ---------------------------------------------------------------------------
 // The Circle content strategist. Instead of turning every member activity into
@@ -96,10 +97,11 @@ JUDGMENT (this is the job):
 - THE FINAL TEST: could this exact idea be published by 500 other generic business coaches? If you can remove Gogo's name and it still sounds like every other coaching account on Instagram, it is not Circle content. Do not suggest it.
 - Never use generic coaching language: "step into your highest self", "unlock your full potential", "your next level is waiting", "transform your business and your life", "you don't need X, you need Y", "success isn't about X, it's about Y", "your network is your net worth", "here's the truth".
 - No profanity (the brand account never curses).
+- Never start a concept with "She satisfies…" / "You satisfying…" or any "satisfies" phrasing. Write a plain, specific hook.
 
 PRIVACY (NDA, non-negotiable):
 - Member stories are ANONYMOUS by default: "One Circle member…", "One business owner inside The Circle…", "Someone Gogo coached this week…". Never use a member's name, their company, their city or any detail that identifies them, unless the material explicitly says the person is APPROVED TO BE NAMED.
-- Even anonymous, NEVER include private or identifying details anywhere in a brief (story, concept, pain, anything): exact income, sales volume, revenue or hourly figures; debts, taxes, the IRS, levies, lawsuits or any legal/financial trouble; health; family members or childcare; follower counts; years in business; niche, market or city; awards or titles that point to one person. Generalize so the story stays true but unrecognizable: "a top producer in her market", "a seven-figure business", "a financial mess she'd been avoiding", "years into a successful career". The room's privacy is part of its value.
+- Even anonymous, NEVER include private or identifying details anywhere in a brief (story, concept, pain, anything): exact income, sales volume, revenue or hourly figures; debts, taxes, the IRS, levies, lawsuits or any legal/financial trouble; health; family members or childcare; follower counts; years in business; niche, market or city; awards or titles that point to one person. Generalize so the story stays true but unrecognizable: "a top producer in her market", "a seven-figure business", "a financial mess she'd been avoiding", "years into a successful career". The room's privacy is part of its value. Private details are never a reason to skip a real story: generalize them and still tell the transformation.
 - Gogo, and her team (Kristy Waker), may always be named.
 
 TRUTH:
@@ -164,6 +166,15 @@ function nameVariants(name: string | null | undefined): string[] {
   const full = name.trim()
   const parts = full.split(/\s+/).filter((p) => p.length >= 3)
   return [...new Set([full, ...parts])]
+}
+
+/** Hide the private figures in a member's own words (anonymous stories only). */
+function maskPrivate(t: string): string {
+  return t
+    .replace(/\$\s?[\d,.]+\s?(k|m|mm|million|thousand|b|billion)?\b/gi, '[an amount]')
+    .replace(/\b[\d,.]+\s?(k|m|mm|million|thousand)\b/gi, '[an amount]')
+    .replace(/\b[\d,.]+\s?(followers|subscribers)\b/gi, '[an audience]')
+    .replace(/\bicon( agent| status| award)?\b/gi, '[a top award]')
 }
 
 interface StoryMember {
@@ -251,15 +262,30 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
       if (responses.length < 2 && notes.length < 2) continue
 
       const named = !!m.public_story_ok
-      const blueprint = m.blueprint_html ? htmlToText(m.blueprint_html).slice(0, 3500) : ''
+      // Anonymous stories never see the private figures: dollar amounts, award
+      // titles and follower counts are masked, and numeric survey answers are
+      // given only as trends (up / down). The model can't leak what it never saw.
+      const mask = named ? (t: string) => t : maskPrivate
+      const blueprint = m.blueprint_html ? mask(htmlToText(m.blueprint_html).slice(0, 3500)) : ''
+      const textKeys = ['biggest_achievement', 'biggest_disappointment', 'personal_wins', 'takeaway', 'catch_all', 'has_investments']
+      const numKeys = ['total_income', 'income_sources', 'hours_per_week', 'team_size', 'vas', 'personal_assistant', 'house_assistant', 'credit_score', 'total_debt', 'investments_value', 'real_estate_properties', 'real_estate_value', 'active_llcs', 'closings']
       const surveys = responses
         .map((r) => {
           const a = r.answers ?? {}
-          const pick = ['total_income', 'income_sources', 'hours_per_week', 'team_size', 'vas', 'personal_assistant', 'house_assistant', 'credit_score', 'total_debt', 'investments_value', 'has_investments', 'real_estate_properties', 'real_estate_value', 'active_llcs', 'closings', 'biggest_achievement', 'biggest_disappointment', 'personal_wins', 'takeaway', 'catch_all']
-          const kept = Object.fromEntries(pick.filter((k) => a[k] !== undefined && a[k] !== null && a[k] !== '').map((k) => [k, a[k]]))
+          const keys = named ? [...numKeys, ...textKeys] : textKeys
+          const kept = Object.fromEntries(keys.filter((k) => a[k] !== undefined && a[k] !== null && a[k] !== '').map((k) => [k, typeof a[k] === 'string' ? mask(a[k] as string) : a[k]]))
           return `${r.period_month}: ${JSON.stringify(kept)}`
         })
         .join('\n')
+      const trends = named || responses.length < 2 ? '' : numKeys
+        .map((k) => {
+          const first = Number(responses[0].answers?.[k])
+          const last = Number(responses[responses.length - 1].answers?.[k])
+          if (!Number.isFinite(first) || !Number.isFinite(last) || first === last) return ''
+          return `${k.replace(/_/g, ' ')}: ${last > first ? 'up' : 'down'}`
+        })
+        .filter(Boolean)
+        .join(', ')
 
       stories.push({
         kind: 'transformation',
@@ -271,7 +297,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
         bucketHint: 'transformation',
         privateNames: named ? privateNames.filter((n) => !nameVariants(m.name).includes(n)) : privateNames,
         publicName: named ? m.name.split(/\s+/)[0] : null,
-        material: `ONE MEMBER'S ACTIVITY (${named ? `APPROVED TO BE NAMED: you may call them "${m.name.split(/\s+/)[0]}"` : 'ANONYMOUS: never name or identify them'}). Find the BIGGER TRANSFORMATION, not the activity: where were they, what was the actual problem, what are they changing, what are they building now, and why would another successful entrepreneur identify with it? Return ONE transformation idea, or none if there is no real story yet.\n\nTheir 12-month blueprint (their starting point and goals):\n${blueprint || '(none)'}\n\nMonthly progress surveys (oldest to newest):\n${surveys || '(none)'}\n\nWhat they raised on recent coaching calls:\n${notes.slice(-10).join('\n') || '(none)'}`,
+        material: `ONE MEMBER'S ACTIVITY (${named ? `APPROVED TO BE NAMED: you may call them "${m.name.split(/\s+/)[0]}"` : 'ANONYMOUS: never name or identify them'}). Find the BIGGER TRANSFORMATION, not the activity: where were they, what was the actual problem, what are they changing, what are they building now, and why would another successful entrepreneur identify with it? Return ONE transformation idea, or none if there is no real story yet.\n\nTheir 12-month blueprint (their starting point and goals):\n${blueprint || '(none)'}\n\nMonthly progress surveys (oldest to newest):\n${surveys || '(none)'}${trends ? `\nTrends since their first survey: ${trends}` : ''}\n\nWhat they raised on recent coaching calls:\n${notes.slice(-10).map(mask).join('\n') || '(none)'}`,
       })
     }
   }
@@ -368,7 +394,7 @@ export async function generateConcepts(signal: ConceptSignal, guidance = ''): Pr
   const chunks = await searchBrain(signal.brainQuery, 10).catch(() => [])
   const brainText = chunks.length ? sanitizeBrainText(buildBrainContext(chunks)) : ''
 
-  const user = `GOGO'S BRAIN (her real teachings; the only source for her perspective outside a transcript):
+  const baseUser = `GOGO'S BRAIN (her real teachings; the only source for her perspective outside a transcript):
 ${brainText || '(no excerpts retrieved; stay strictly within what the material shows)'}
 ${guidance ? `\nWHAT THE TEAM HAS ASKED FOR (apply these preferences):\n${guidance}\n` : ''}
 ---
@@ -376,47 +402,68 @@ ${signal.material}
 
 Return up to ${signal.maxIdeas} idea${signal.maxIdeas === 1 ? '' : 's'}${signal.bucketHint ? ` (usually bucket "${signal.bucketHint}")` : ''}. Zero is fine if nothing passes the test. JSON only.`
 
-  const res = await getAnthropic().messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 4000,
-    system: STRATEGIST_SYSTEM,
-    messages: [{ role: 'user', content: user }],
-  })
-  const raw = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
-  let parsed: { ideas?: unknown[]; skipped_reason?: string }
-  try {
-    const t = stripFence(raw)
-    parsed = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1))
-  } catch {
-    throw new Error('Strategist returned unreadable output')
-  }
-
   // Quotes must be real: from the transcript/testimonial, or Gogo's Brain.
   const quoteHaystack = `${signal.quoteSource ?? ''}\n${brainText}`
-  const ideas: ConceptIdea[] = []
-  const dropped: string[] = []
+  // Anonymous member stories must not carry private/identifying details in ANY
+  // field (the brief is what the team designs from). Gogo's own angle is exempt (her
+  // own numbers are public). Other ideas are checked on the member story only.
+  const strictPrivacy = signal.kind === 'transformation' && !signal.publicName
 
-  for (const rawIdea of (parsed.ideas ?? []).slice(0, signal.maxIdeas)) {
-    const i = rawIdea as Record<string, unknown>
-    const bucket = (BUCKETS as readonly string[]).includes(String(i.bucket)) ? (i.bucket as Bucket) : signal.bucketHint ?? 'coaching'
-    const score = Number(i.score) || 0
-    const does = (Array.isArray(i.does) ? i.does : []).filter((d): d is ConceptBrief['does'][number] => ['seen', 'see_gogo', 'want_room'].includes(String(d)))
-    if (score < MIN_SCORE || does.length === 0) { dropped.push(`score ${score}`); continue }
+  function issuesFor(b: ConceptBrief): string[] {
+    const out: string[] = []
+    if (CONCEPT_TICS.test(b.concept)) out.push(`the concept "${b.concept}" starts with a "She satisfies..." style phrase; write a plain, specific hook`)
+    const fields = strictPrivacy
+      ? [b.concept, b.who, b.pain, b.why_circle, b.visual_note, ...(b.story ? Object.values(b.story) : [])]
+      : !signal.publicName && b.story ? Object.values(b.story) : []
+    for (const f of fields) {
+      const m = f.match(PRIVATE_MEMBER_DETAIL)
+      if (m) out.push(`"${m[0]}" is a private/identifying member detail (in: "${f.slice(0, 120)}"); generalize it`)
+    }
+    return out
+  }
 
-    const clean = (v: unknown) => scrubNames(noDashes(String(v ?? '').trim()), signal.privateNames)
-    let quote = String(i.quote ?? '').trim().replace(/^["“]|["”]$/g, '')
-    if (quote && !quoteIsReal(quote, quoteHaystack)) quote = ''
-    // A pearl IS its quote; without a verifiable line it isn't a pearl.
-    if (bucket === 'pearls' && !quote) { dropped.push('unverified quote'); continue }
+  let parsed: { ideas?: unknown[]; skipped_reason?: string } = {}
+  let ideas: ConceptIdea[] = []
+  let dropped: string[] = []
+  let fixNote = ''
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await getAnthropic().messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 4000,
+      system: STRATEGIST_SYSTEM,
+      messages: [{ role: 'user', content: fixNote ? `${baseUser}\n\nYOUR LAST ANSWER BROKE THE RULES. Fix every one of these and return the full JSON again:\n- ${fixNote}` : baseUser }],
+    })
+    const raw = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+    try {
+      const t = stripFence(raw)
+      parsed = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1))
+    } catch {
+      if (attempt === 0) { fixNote = 'the output was not valid JSON'; continue }
+      throw new Error('Strategist returned unreadable output')
+    }
 
-    const st = i.story as Record<string, unknown> | null | undefined
-    const story = st && typeof st === 'object' && Object.values(st).some((v) => String(v ?? '').trim())
-      ? { where: clean(st.where), problem: clean(st.problem), changing: clean(st.changing), building: clean(st.building) }
-      : null
-    const vt = String(i.visual_type)
-    ideas.push({
-      bucket,
-      brief: {
+    ideas = []
+    dropped = []
+    const problems: string[] = []
+    for (const rawIdea of (parsed.ideas ?? []).slice(0, signal.maxIdeas)) {
+      const i = rawIdea as Record<string, unknown>
+      const bucket = (BUCKETS as readonly string[]).includes(String(i.bucket)) ? (i.bucket as Bucket) : signal.bucketHint ?? 'coaching'
+      const score = Number(i.score) || 0
+      const does = (Array.isArray(i.does) ? i.does : []).filter((d): d is ConceptBrief['does'][number] => ['seen', 'see_gogo', 'want_room'].includes(String(d)))
+      if (score < MIN_SCORE || does.length === 0) { dropped.push(`score ${score}`); continue }
+
+      const clean = (v: unknown) => scrubNames(noDashes(String(v ?? '').trim()), signal.privateNames)
+      let quote = String(i.quote ?? '').trim().replace(/^["“]|["”]$/g, '')
+      if (quote && !quoteIsReal(quote, quoteHaystack)) quote = ''
+      // A pearl IS its quote; without a verifiable line it isn't a pearl.
+      if (bucket === 'pearls' && !quote) { dropped.push('unverified quote'); continue }
+
+      const st = i.story as Record<string, unknown> | null | undefined
+      const story = st && typeof st === 'object' && Object.values(st).some((v) => String(v ?? '').trim())
+        ? { where: clean(st.where), problem: clean(st.problem), changing: clean(st.changing), building: clean(st.building) }
+        : null
+      const vt = String(i.visual_type)
+      const brief: ConceptBrief = {
         concept: clean(i.concept),
         quote: scrubNames(noDashes(quote), signal.privateNames),
         quote_source: quote ? ((['call', 'brain', 'testimonial'].includes(String(i.quote_source)) ? i.quote_source : signal.kind === 'transcript' ? 'call' : signal.kind === 'testimonial' ? 'testimonial' : 'brain') as ConceptBrief['quote_source']) : '',
@@ -431,8 +478,14 @@ Return up to ${signal.maxIdeas} idea${signal.maxIdeas === 1 ? '' : 's'}${signal.
         does,
         score,
         named: !!signal.publicName,
-      },
-    })
+      }
+      const issues = issuesFor(brief)
+      if (issues.length) { problems.push(...issues); dropped.push(issues[0].slice(0, 160)); continue }
+      ideas.push({ bucket, brief })
+    }
+
+    if (!problems.length || attempt === 2) break
+    fixNote = problems.join('\n- ')
   }
 
   const note = ideas.length

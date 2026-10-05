@@ -1,6 +1,6 @@
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { CIRCLE_FACTS } from '@/lib/circle-facts'
-import { CIRCLE_VOICE, BANNED_PHRASES, PROFANITY } from './circle-voice'
+import { CIRCLE_VOICE, BANNED_PHRASES, PROFANITY, PRIVATE_MEMBER_DETAIL } from './circle-voice'
 import type { Bucket } from './buckets'
 import type { ConceptBrief } from './concepts'
 
@@ -48,7 +48,7 @@ function polish(s: string): string {
 }
 
 // Private details that must never appear in an anonymous member story.
-const PRIVATE_DETAIL = /\$\s?\d|\b\d+(\.\d+)?\s?(k|m|mm|million|thousand)\b|\birs\b|\btax(es)?\b|\blev(y|ies)\b|lawsuit|bankrupt|\bdebt\b|daycare|\b(son|daughter|husband|wife|kids?|child(ren)?)\b|divorce|followers|\bicon\b/i
+const PRIVATE_DETAIL = PRIVATE_MEMBER_DETAIL
 
 function problems(caption: string, privateStory = false): string[] {
   const lower = caption.toLowerCase()
