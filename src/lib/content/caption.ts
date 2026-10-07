@@ -1,7 +1,7 @@
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import { CIRCLE_VOICE, BANNED_PHRASES, PROFANITY, PRIVATE_MEMBER_DETAIL } from './circle-voice'
-import type { Bucket } from './buckets'
+import { BUCKET_LABEL, BUCKET_SAYS, PILLARS, type Bucket } from './buckets'
 import type { ConceptBrief } from './concepts'
 
 // Writes the Instagram/Facebook caption for a concept brief, in the Circle
@@ -65,7 +65,8 @@ function problems(caption: string, privateStory = false): string[] {
 /** Write a caption for one brief. Retries once if it breaks the guide's hard rules. */
 export async function writeCaption(bucket: Bucket, brief: ConceptBrief, opts: { note?: string; previous?: string } = {}): Promise<CaptionResult> {
   const briefText = [
-    `BUCKET: ${bucket}`,
+    `PILLAR: ${BUCKET_LABEL[bucket]} (${BUCKET_SAYS[bucket]}). The caption's JOB: ${PILLARS[bucket].job} It must NOT turn into: ${PILLARS[bucket].not}`,
+    brief.topic ? `TOPIC: ${brief.topic}` : '',
     `CONCEPT: ${brief.concept}`,
     brief.quote ? `QUOTE (verbatim, ${brief.quote_source === 'testimonial' ? 'the member\'s own words from their testimonial, NOT Gogo' : brief.quote_source === 'call' ? 'Gogo said this on a Circle coaching call' : 'Gogo\'s own words from her teachings; do not say it was on a call'}): "${brief.quote}"` : '',
     `WHO THIS IS FOR: ${brief.who}`,

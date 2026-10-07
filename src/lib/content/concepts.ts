@@ -15,8 +15,8 @@ import { PRIVATE_MEMBER_DETAIL, CONCEPT_TICS } from './circle-voice'
 // Gogo's Brain.
 // ---------------------------------------------------------------------------
 
-import { BUCKETS, VISUAL_TYPES, type Bucket, type VisualType } from './buckets'
-export { BUCKETS, VISUAL_TYPES, BUCKET_LABEL, VISUAL_LABEL, type Bucket, type VisualType } from './buckets'
+import { BUCKETS, VISUAL_TYPES, PILLARS, BUCKET_LABEL, BUCKET_SAYS, TOPICS, type Bucket, type VisualType } from './buckets'
+export { BUCKETS, VISUAL_TYPES, BUCKET_LABEL, VISUAL_LABEL, TOPICS, type Bucket, type VisualType, type Topic } from './buckets'
 
 export interface ConceptBrief {
   concept: string
@@ -27,6 +27,7 @@ export interface ConceptBrief {
   gogo_angle: string
   why_circle: string
   story: { where: string; problem: string; changing: string; building: string } | null
+  topic: string // what it's about (delegation, freedom...), separate from the pillar
   format: string
   visual_type: VisualType
   visual_note: string
@@ -40,7 +41,7 @@ export interface ConceptIdea {
   brief: ConceptBrief
 }
 
-export type ConceptSignalKind = 'transcript' | 'transformation' | 'testimonial' | 'topic'
+export type ConceptSignalKind = 'transcript' | 'transformation' | 'testimonial' | 'topic' | 'experience'
 
 export interface ConceptSignal {
   kind: ConceptSignalKind
@@ -82,13 +83,10 @@ THE TEST: would a successful six-figure owner read this and immediately recogniz
 - NOT Circle: "5 ways to stay motivated in business." Generic advice anyone could use. Beginner content.
 - Circle: "You built a six-figure business. Why are you still approving every decision?"
 
-BUCKETS (pick the one that fits):
-- coaching: a specific pain successful owners have + Gogo's perspective on it.
-- pearls: a strong line, coaching moment or perspective shift Gogo actually said.
-- transformation: an anonymous bigger-picture member story: where they were, the real problem, what they're changing, what they're building.
-- proof: real results and experiences from current or past members (testimonials).
-- room: why the caliber of the people, conversations and access inside The Circle matters.
-- coach: behind the scenes of being coached by Gogo: her personality, directness, way of thinking.
+CONTENT PILLARS (each pillar is a JOB the post does; pick the one whose job fits):
+${BUCKETS.map((b) => `- ${b} (${BUCKET_LABEL[b]}), says ${BUCKET_SAYS[b]}\n  JOB: ${PILLARS[b].job}\n  BELONGS: ${PILLARS[b].belongs}\n  DOES NOT BELONG: ${PILLARS[b].not}`).join('\n')}
+
+TOPIC IS NOT PILLAR. A topic is what the post is about; the pillar is the job it does. The same topic (say, delegation) can be Coaching ("'I can do it faster' might be the most expensive sentence in your business"), a Pearl (a real line Gogo said about letting go), a Member Transformation (someone went from approving everything to a team that owns it), Proof (a testimonial about finally taking a vacation), Gogo as the Coach (Gogo telling someone they are the bottleneck), or The Circle Experience (the member and their assistant both getting implementation support inside The Circle). Tag every idea with ONE topic from: ${TOPICS.join(', ')}.
 
 JUDGMENT (this is the job):
 - Never treat a routine activity as the idea. "Completed her homework", "didn't miss a call", "finished a task", "has a blueprint" are NOT posts. Ask what bigger transformation it represents, and if there isn't one, suggest nothing.
@@ -114,8 +112,8 @@ ${CIRCLE_FACTS}
 STYLE: plain, direct, no hype, no em dashes or en dashes (use commas or periods). The brand is written "The Circle ⭕️".
 
 OUTPUT: return ONLY minified JSON, no markdown:
-{"ideas":[{"bucket":"coaching|pearls|transformation|proof|room|coach","concept":"the idea as a scroll-stopping line (often the hook or headline)","quote":"verbatim quote or empty","quote_source":"call|brain|testimonial|","who":"who this is for, specifically","pain":"the pain in the owner's words","gogo_angle":"Gogo's perspective on it, from the material","why_circle":"why this sells The Circle (what it shows about the problems Gogo helps established owners solve)","story":{"where":"","problem":"","changing":"","building":""},"format":"one of: Quote graphic + caption | Carousel | Reel | Talking-head Reel | Single image + caption | Before/after story","visual_type":"power|relatable|coaching|speaking|listening|table|lifestyle|team|broll","visual_note":"what the visual should show and why it matches the emotion of the copy","does":["seen","see_gogo","want_room"],"score":1-10}],"skipped_reason":"if no ideas, why"}
-- "story" is only for transformation (and proof when the material tells a before/after); otherwise null.
+{"ideas":[{"bucket":"coaching|pearls|transformation|proof|coach|experience","topic":"one topic from the list","concept":"the idea as a scroll-stopping line (often the hook or headline)","quote":"verbatim quote or empty","quote_source":"call|brain|testimonial|","who":"who this is for, specifically","pain":"the pain in the owner's words","gogo_angle":"Gogo's perspective on it, from the material","why_circle":"why this sells The Circle (what it shows about the problems Gogo helps established owners solve)","story":{"where":"","problem":"","changing":"","building":""},"format":"one of: Quote graphic + caption | Carousel | Reel | Talking-head Reel | Single image + caption | Before/after story","visual_type":"power|relatable|coaching|speaking|listening|table|lifestyle|team|broll","visual_note":"what the visual should show and why it matches the emotion of the copy","does":["seen","see_gogo","want_room"],"score":1-10}],"skipped_reason":"if no ideas, why"}
+- "story" is only for transformation; otherwise null. Proof uses the person's OWN words (quote), never a story we narrate.
 - "score" = how strongly a six-figure owner would think "that's me" / "I need to be in that room". Be honest; below 7 means don't suggest it.
 - visual_type must match the EMOTION of the idea: power posts (caliber of the room, big numbers, authority) get power / table / speaking, never a vacation laugh. Vulnerable or funny ideas may use relatable.`
 
@@ -123,7 +121,7 @@ OUTPUT: return ONLY minified JSON, no markdown:
 // Coaching topics: the recurring pains the team wants the engine hunting for.
 // Each is revisited once a quarter for a fresh angle.
 // --------------------------------------------------------------------------
-const TOPICS: Array<{ slug: string; bucket: Bucket; topic: string; query: string }> = [
+const COACHING_TOPICS: Array<{ slug: string; bucket: Bucket; topic: string; query: string }> = [
   { slug: 'owner-bottleneck', bucket: 'coaching', topic: 'A business making good money that still needs the owner for every decision', query: 'business depends on the owner bottleneck every decision delegation systems team runs without you' },
   { slug: 'i-can-do-it-faster', bucket: 'coaching', topic: '"I can do it faster" as the reason an owner cannot delegate', query: 'delegation I can do it faster perfection letting go 80 percent done hiring VAs' },
   { slug: 'here-vs-there', bucket: 'coaching', topic: 'What got you here will not get you there', query: 'what got you here will not get you there next level growth change how you operate ceiling' },
@@ -136,10 +134,34 @@ const TOPICS: Array<{ slug: string; bucket: Bucket; topic: string; query: string
   { slug: 'team-that-holds', bucket: 'coaching', topic: 'Building a team that holds: VAs, operations, the right structure', query: 'hiring VAs team structure operations manager hire slow fire fast building a team' },
   { slug: 'systems-run-without-you', bucket: 'coaching', topic: 'Systems and automation so the business runs without the owner', query: 'systems automation tools processes AI tech run the business without you' },
   { slug: 'multiple-streams', bucket: 'coaching', topic: 'Building multiple sources of income', query: 'multiple streams of income nine companies diversify income digital products investments' },
-  { slug: 'caliber-of-room', bucket: 'room', topic: 'The caliber of the room you surround yourself with', query: 'caliber of the room surround yourself mastermind network who you spend time with level up' },
-  { slug: 'learn-from-done-it', bucket: 'room', topic: 'Learning from someone who has already done it instead of trial and error', query: 'learning from someone who has done it mentor coach trial and error shortcut' },
+  { slug: 'caliber-of-room', bucket: 'coaching', topic: 'The caliber of the room you surround yourself with', query: 'caliber of the room surround yourself mastermind network who you spend time with level up' },
+  { slug: 'learn-from-done-it', bucket: 'coaching', topic: 'Learning from someone who has already done it instead of trial and error', query: 'learning from someone who has done it mentor coach trial and error shortcut' },
   { slug: 'gogo-directness', bucket: 'coach', topic: "What it is like to be coached by Gogo: direct, no-BS, from experience", query: 'Gogo coaching style direct honest tough love accountability real talk' },
-  { slug: 'gogo-story', bucket: 'coach', topic: "Gogo's own path: from arriving with $200 to building multiple seven-figure companies, and what she would tell an owner stuck at six figures", query: 'Gogo story came to America with 200 dollars built companies seven figures journey' },
+  { slug: 'gogo-story', bucket: 'pearls', topic: "Gogo's own path: from arriving with $200 to building multiple seven-figure companies, and what she would tell an owner stuck at six figures", query: 'Gogo story came to America with 200 dollars built companies seven figures journey' },
+]
+
+// What members actually get (from gogobethke.com/thecircle + the admin's
+// approved "$1.6B" post). The only facts Circle Experience ideas may use.
+const CIRCLE_PROGRAM_FACTS = `- A 12-month private mastermind, application-only, with an NDA (what's said in the room stays in the room).
+- Personalized group coaching calls with Gogo: 2 guaranteed per month, most months 4. Every call goes deep into the members' businesses with a clear, actionable plan.
+- Direct private WhatsApp chat with Gogo and her team for day-to-day questions and real-time feedback, so members aren't waiting for the next call to get unstuck.
+- 1 hour monthly with Gogo's expert team (a team of 12 VAs: tech, systems, scaling). Implementation support, not just advice.
+- Systems, automation and tech setup: software, apps, AI tools, trackers built so the business runs without the owner.
+- Team building: finding and hiring the right VAs, structuring local and personal assistants.
+- Passive income architecture: digital products, investment structures, wealth-building strategies.
+- 12 months of CEO identity work: beliefs, habits and identity shifts.
+- Every call is recorded and added to the member's portal.
+- The caliber of the room: $1.6 BILLION+ in combined lifetime volume sitting at one table. Approved language: "At a certain point in business, you're not looking for somebody to explain how to work hard. You're asking different questions." / "$1.6 BILLION+ of combined experience creates a very different freaking conversation."
+- Members are established entrepreneurs at consistent six figures and beyond, helping each other grow.`
+
+const EXPERIENCE_ANGLES: Array<{ slug: string; angle: string; query: string }> = [
+  { slug: 'caliber', angle: 'The caliber of the room: $1.6B+ in combined experience at one table', query: 'caliber of the room mastermind surround yourself successful people different questions' },
+  { slug: 'direct-access', angle: 'Direct access to Gogo between calls (private WhatsApp)', query: 'access to a mentor between calls getting unstuck fast direct feedback' },
+  { slug: 'team-support', angle: "Implementation support from Gogo's team, not just advice", query: 'implementation support team VAs tech systems built for you not just advice' },
+  { slug: 'confidential', angle: 'A confidential room: the NDA and the conversations it makes possible', query: 'private room honest conversations trust confidentiality mastermind' },
+  { slug: 'peer-learning', angle: 'Peer learning: established owners helping each other at the same table', query: 'peers mastermind members help each other learn from each other' },
+  { slug: 'calls', angle: 'What happens on the coaching calls: deep dives into your business with a clear plan', query: 'coaching call deep dive action plan accountability' },
+  { slug: 'seat-at-table', angle: 'A seat at the table: what changes when you are in this room for 12 months', query: 'seat at the table twelve months commitment identity transformation room' },
 ]
 
 function quarterKey(d = new Date()): string {
@@ -220,7 +242,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
         maxIdeas: 6,
         brainQuery: 'Gogo coaching principles delegation team freedom money mindset CEO',
         privateNames,
-        material: `A WEEKLY CIRCLE COACHING CALL TRANSCRIPT. Find the strongest Gogo moments: lines worth quoting, perspective shifts, times she told someone they were solving the wrong problem, or explained why their structure keeps them trapped, or challenged how they think about money, delegation, hiring, investing, freedom or leadership. NOT a summary of the call. Each idea is bucket "pearls" (a line or mindset shift) or "coach" (a coaching moment that shows what being coached by her feels like). Quotes must be Gogo's exact words from this transcript. The members on the call are anonymous: describe them only as "a Circle member" or "a business owner".\n\nTRANSCRIPT:\n${String(c.transcript).slice(0, 110_000)}`,
+        material: `A WEEKLY CIRCLE COACHING CALL TRANSCRIPT. Find the strongest Gogo moments: lines worth quoting, perspective shifts, times she told someone they were solving the wrong problem, or explained why their structure keeps them trapped, or challenged how they think about money, delegation, hiring, investing, freedom or leadership. NOT a summary of the call. Each idea is bucket "pearls" (a line, question, analogy or mindset shift she said: how Gogo thinks) or "coach" (a real coaching INTERACTION: her questioning, challenging, looking at the numbers or telling a member what has to change, so the viewer feels what being coached by her is like). Quotes must be Gogo's exact words from this transcript. The members on the call are anonymous: describe them only as "a Circle member" or "a business owner".\n\nTRANSCRIPT:\n${String(c.transcript).slice(0, 110_000)}`,
         quoteSource: String(c.transcript),
       })
     }
@@ -318,10 +340,10 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
         memberId: null,
         maxIdeas: 1,
         brainQuery: t.kind === 'endorsement' ? 'Gogo reputation coaching style credibility' : 'Circle results team freedom transformation',
-        bucketHint: t.kind === 'endorsement' ? 'coach' : 'proof',
+        bucketHint: 'proof',
         privateNames: named ? [] : nameVariants(t.person_name as string),
         publicName: named ? (t.person_name as string) : null,
-        material: `A ${t.kind === 'endorsement' ? 'PUBLIC ENDORSEMENT OF GOGO from an industry leader' : 'TESTIMONIAL from a Circle member'} (${named ? `APPROVED TO BE NAMED: ${t.person_name}${t.person_title ? `, ${t.person_title}` : ''}` : 'ANONYMOUS: never name or identify them'}). Don't just say "here is a testimonial": find the marketing story inside it. The strongest sentence (quote it verbatim), the problem they came in with, what changed, the result, and the larger lesson another entrepreneur would identify with.\n\n${text}`,
+        material: `A ${t.kind === 'endorsement' ? 'PUBLIC ENDORSEMENT OF GOGO from an industry leader' : 'TESTIMONIAL from a Circle member'} (${named ? `APPROVED TO BE NAMED: ${t.person_name}${t.person_title ? `, ${t.person_title}` : ''}` : 'ANONYMOUS: never name or identify them'}). This is a "proof" idea: evidence in THEIR OWN WORDS, not a story we narrate. Pull the strongest sentence (quote it verbatim), then use the brief to say what doubt it removes, the problem they came in with, what changed and the result, and the larger lesson another entrepreneur would identify with.\n\n${text}`,
         quoteSource: text,
       })
     }
@@ -329,7 +351,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
 
   // --- Coaching topics from Gogo's Brain (fresh angle each quarter) ---
   if (!opts.memberId) {
-    for (const t of TOPICS) {
+    for (const t of COACHING_TOPICS) {
       topics.push({
         kind: 'topic',
         dedupeKey: `topic:${t.slug}:${quarterKey()}`,
@@ -339,14 +361,34 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
         brainQuery: t.query,
         bucketHint: t.bucket,
         privateNames,
-        material: `A COACHING TOPIC to find content in: "${t.topic}". Using ONLY Gogo's perspective from the Brain excerpts, give up to 2 ideas: a ${t.bucket} concept, and (only if the excerpts contain one) a "pearls" idea built on a line Gogo actually said, quoted verbatim from the excerpts.`,
+        material: t.bucket === 'coach'
+          ? `A TOPIC for "Gogo as the Coach": "${t.topic}". This pillar needs a REAL coaching interaction (Gogo questioning, challenging or redirecting someone). Only suggest an idea if the Brain excerpts describe an actual coaching moment; otherwise return zero. Plain Gogo quotes with no interaction belong in "pearls" instead.`
+          : `A TOPIC to find content in: "${t.topic}". Using ONLY Gogo's perspective from the Brain excerpts, give up to 2 ideas doing DIFFERENT jobs: a "${t.bucket}" idea, and (only if the excerpts contain one) a "pearls" idea built on a line Gogo actually said, quoted verbatim from the excerpts.`,
       })
     }
   }
 
-  // Interleave so a run mixes buckets instead of draining one source.
+  // --- The Circle Experience: what you get access to by joining ---
+  const experiences: ConceptSignal[] = []
+  if (!opts.memberId) {
+    for (const e of EXPERIENCE_ANGLES) {
+      experiences.push({
+        kind: 'experience',
+        dedupeKey: `experience:${e.slug}:${quarterKey()}`,
+        summary: `Circle Experience · ${e.angle}`,
+        memberId: null,
+        maxIdeas: 1,
+        brainQuery: e.query,
+        bucketHint: 'experience',
+        privateNames,
+        material: `A "experience" (The Circle Experience) idea about: "${e.angle}". The job: sell the actual environment and access someone gets by joining. Use ONLY these approved program facts (and the Brain excerpts for Gogo's view of why it matters). Never invent features, numbers or member details.\n\nAPPROVED PROGRAM FACTS:\n${CIRCLE_PROGRAM_FACTS}`,
+      })
+    }
+  }
+
+  // Interleave so a run mixes pillars instead of draining one source.
   const out: ConceptSignal[] = [...transcripts]
-  const lanes = [stories, proofs, topics]
+  const lanes = [stories, proofs, topics, experiences]
   for (let i = 0; lanes.some((l) => i < l.length); i++) {
     for (const lane of lanes) if (i < lane.length) out.push(lane[i])
   }
@@ -471,7 +513,8 @@ Return up to ${signal.maxIdeas} idea${signal.maxIdeas === 1 ? '' : 's'}${signal.
         pain: clean(i.pain),
         gogo_angle: clean(i.gogo_angle),
         why_circle: clean(i.why_circle),
-        story,
+        story: bucket === 'transformation' ? story : null,
+        topic: (TOPICS as readonly string[]).includes(String(i.topic ?? '').toLowerCase().trim()) ? String(i.topic).toLowerCase().trim() : '',
         format: noDashes(String(i.format ?? '').trim()) || 'Single image + caption',
         visual_type: (VISUAL_TYPES as readonly string[]).includes(vt) ? (vt as VisualType) : 'power',
         visual_note: clean(i.visual_note),

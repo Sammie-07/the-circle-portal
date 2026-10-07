@@ -171,6 +171,22 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-07
+- **Content pillars are now defined by the post's JOB; topic is a separate tag** (Circle admin's
+  framework). Pillars: Coaching ("You have this problem"), Gogo POV / Pearls ("This is how Gogo thinks
+  about it"), Member Transformation ("Someone like you changed this"), Proof / Testimonial ("Here is
+  evidence it worked"), Gogo as the Coach ("This is what it feels like to have HER coach you"), The
+  Circle Experience ("This is what you get access to by being IN this program"). Each has a job,
+  what belongs and what doesn't (`PILLARS` in `src/lib/content/buckets.ts`), fed to the strategist and
+  the caption writer. "The Room" pillar became The Circle Experience (DB: `room` → `experience`); the
+  room is now a topic. Every idea carries one topic (delegation, freedom, systems, wealth, leadership,
+  time, team, mindset, investments, multiple income streams, next-level identity, money vs freedom,
+  the room). New source: 7 Circle Experience angles built only from approved program facts (website
+  + the approved "$1.6B+ at one table" line). Endorsements are Proof; plain Gogo quotes are Pearls;
+  Gogo as the Coach needs a real coaching interaction. Content tab: Pillar + Topic filters, topic tag
+  and the pillar's one-line job on each card. The 29 existing ideas were re-sorted by hand into the
+  new pillars and tagged.
+
 ### 2026-10-05
 - **Member-story privacy, enforced on the brief (not just the caption).** The first live story briefs
   still carried identifying details (sales volume, follower counts, award titles, tax trouble). Now:

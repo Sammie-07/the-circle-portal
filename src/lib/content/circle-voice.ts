@@ -78,7 +78,7 @@ Is this specifically relevant to someone already successful? Will they recognize
 /** Phrases the guide bans outright; a caption containing one is rewritten. */
 export const BANNED_PHRASES = [
   'highest self', 'unlock your', 'full potential', 'next level is waiting', 'transform your business',
-  'not soft', 'not scripted', 'surface level', "isn't about", 'is not about', 'real gap', 'nervous system',
+  'not soft', 'not scripted', 'surface level', 'surface-level', "isn't about", 'is not about', 'real gap', 'nervous system',
   'network is your net worth', "here's the truth", 'here is the truth', 'game-changer', 'game changer',
   'step into', 'level up your life',
 ]

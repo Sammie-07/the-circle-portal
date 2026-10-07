@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/lib/toast'
-import { BUCKETS, BUCKET_LABEL, VISUAL_LABEL, type Bucket } from '@/lib/content/buckets'
+import { BUCKETS, BUCKET_LABEL, BUCKET_SAYS, PILLARS, VISUAL_LABEL, type Bucket } from '@/lib/content/buckets'
 import type { ConceptBrief } from '@/lib/content/concepts'
 
 export interface ContentSlide {
@@ -63,6 +63,7 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
   const [view, setView] = useState<'ideas' | 'legacy'>('ideas')
   const [filter, setFilter] = useState<string>('draft')
   const [bucket, setBucket] = useState<Bucket | 'all'>('all')
+  const [topic, setTopic] = useState<string>('all')
   const [refreshing, setRefreshing] = useState(false)
   const [generating, setGenerating] = useState(false)
 
@@ -83,9 +84,23 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
     return c
   }, [ideas, filter])
 
+  // Topics actually present (a topic can appear in every pillar).
+  const topicCounts = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const p of ideas) {
+      const t = p.brief?.topic
+      if (!t) continue
+      if (filter !== 'all' && p.status !== filter) continue
+      if (bucket !== 'all' && p.bucket !== bucket) continue
+      c[t] = (c[t] ?? 0) + 1
+    }
+    return c
+  }, [ideas, filter, bucket])
+
   const visible = pool
     .filter((p) => filter === 'all' || p.status === filter)
     .filter((p) => view !== 'ideas' || bucket === 'all' || p.bucket === bucket)
+    .filter((p) => view !== 'ideas' || topic === 'all' || p.brief?.topic === topic)
 
   async function refresh() {
     setRefreshing(true)
@@ -151,7 +166,7 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
         {([['ideas', `Content ideas${ideas.length ? ` · ${ideas.filter((p) => p.status === 'draft').length} new` : ''}`], ['legacy', `Old drafts${legacy.length ? ` · ${legacy.length}` : ''}`]] as const).map(([k, label]) => (
           <button
             key={k}
-            onClick={() => { setView(k); setFilter('draft'); setBucket('all') }}
+            onClick={() => { setView(k); setFilter('draft'); setBucket('all'); setTopic('all') }}
             className={`px-4 py-2.5 text-sm -mb-px border-b-2 transition-colors ${view === k ? 'border-[#C9A227] text-[var(--text)]' : 'border-transparent text-[var(--text-3)] hover:text-[var(--text)]'}`}
           >
             {label}
@@ -202,7 +217,9 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
 
       {/* Bucket chips (ideas only) */}
       {view === 'ideas' ? (
-        <div className="flex flex-wrap gap-1.5 mb-6">
+        <>
+        <div className="flex flex-wrap items-center gap-1.5 mb-2">
+          <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-3)] mr-1 w-12">Pillar</span>
           {(['all', ...BUCKETS] as const).map((b) => {
             const active = bucket === b
             const n = b === 'all' ? Object.values(bucketCounts).reduce((a, x) => a + x, 0) : bucketCounts[b] ?? 0
@@ -214,12 +231,38 @@ export default function ContentQueue({ initialPosts }: { initialPosts: ContentPo
                   active ? 'border-[#C9A227] text-[#C9A227] bg-[#C9A227]/10' : 'border-[var(--border-color)] text-[var(--text-3)] hover:text-[var(--text)]'
                 }`}
               >
-                {b === 'all' ? 'All buckets' : BUCKET_LABEL[b]}
+                {b === 'all' ? 'All pillars' : BUCKET_LABEL[b]}
                 {n ? <span className="ml-1 opacity-60">{n}</span> : null}
               </button>
             )
           })}
         </div>
+        {bucket !== 'all' ? (
+          <p className="text-xs text-[var(--text-3)] mb-2 ml-[3.75rem]">
+            <span className="text-[var(--gold-text)]">{BUCKET_SAYS[bucket]}</span> {PILLARS[bucket].job}
+          </p>
+        ) : null}
+        {Object.keys(topicCounts).length ? (
+          <div className="flex flex-wrap items-center gap-1.5 mb-6">
+            <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-3)] mr-1 w-12">Topic</span>
+            {['all', ...Object.keys(topicCounts).sort()].map((t) => {
+              const active = topic === t
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTopic(t)}
+                  className={`px-2.5 py-1 rounded-full text-xs transition-colors border ${
+                    active ? 'border-[#C9A227] text-[#C9A227] bg-[#C9A227]/10' : 'border-[var(--border-color)] text-[var(--text-3)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  {t === 'all' ? 'All topics' : t}
+                  {t !== 'all' ? <span className="ml-1 opacity-60">{topicCounts[t]}</span> : null}
+                </button>
+              )
+            })}
+          </div>
+        ) : <div className="mb-6" />}
+        </>
       ) : (
         <p className="text-[var(--text-3)] text-xs mb-6">
           Finished posts from the old generator (before concept briefs). Kept as they were.
@@ -479,7 +522,8 @@ function PostCard({
 function briefAsText(post: ContentPost): string {
   const b = post.brief!
   const lines = [
-    `BUCKET: ${post.bucket ? BUCKET_LABEL[post.bucket] : ''}`,
+    `PILLAR: ${post.bucket ? `${BUCKET_LABEL[post.bucket]} (${BUCKET_SAYS[post.bucket]})` : ''}`,
+    b.topic ? `TOPIC: ${b.topic}` : '',
     `CONCEPT: ${b.concept}`,
     b.quote ? `QUOTE: "${b.quote}"` : '',
     `WHO THIS IS FOR: ${b.who}`,
@@ -601,7 +645,8 @@ function BriefCard({
   return (
     <div className="border border-[var(--border-color)] rounded-xl bg-[var(--surface)] overflow-hidden">
       <div className="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-[var(--border-color)]">
-        <Badge tone="gold">{post.bucket ? BUCKET_LABEL[post.bucket] : 'Idea'}</Badge>
+        <span title={post.bucket ? PILLARS[post.bucket].job : ''}><Badge tone="gold">{post.bucket ? BUCKET_LABEL[post.bucket] : 'Idea'}</Badge></span>
+        {b.topic ? <Badge>#{b.topic}</Badge> : null}
         <Badge>{b.format}</Badge>
         <Badge tone={statusTone}>{statusLabel}</Badge>
         {b.named ? <Badge tone="green">Approved to name</Badge> : post.bucket === 'transformation' || post.bucket === 'pearls' || post.bucket === 'coach' ? <Badge>Anonymous</Badge> : null}
@@ -609,6 +654,7 @@ function BriefCard({
       </div>
 
       <div className="px-5 pt-4 pb-2">
+        {post.bucket ? <p className="text-[11px] text-[var(--text-3)] mb-2">Job: <span className="text-[var(--text-2)]">{BUCKET_SAYS[post.bucket]}</span></p> : null}
         <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--gold-text)] mb-1.5">Concept</p>
         <h3 className="font-serif text-[22px] leading-snug text-[var(--text)]">{b.concept}</h3>
         {b.quote && b.quote.replace(/\W+/g, '').toLowerCase() !== b.concept.replace(/\W+/g, '').toLowerCase() ? (

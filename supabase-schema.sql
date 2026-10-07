@@ -692,3 +692,9 @@ create table if not exists content_signal_log (
 );
 alter table content_signal_log enable row level security;
 create policy "admins_all_content_signal_log" on content_signal_log for all using (is_admin()) with check (is_admin());
+
+-- 2026-10-07: pillars are defined by the post's job; "room" became "experience".
+alter table content_posts drop constraint if exists content_posts_bucket_check;
+update content_posts set bucket = 'experience' where bucket = 'room';
+alter table content_posts add constraint content_posts_bucket_check
+  check (bucket in ('coaching','pearls','transformation','proof','experience','coach'));
