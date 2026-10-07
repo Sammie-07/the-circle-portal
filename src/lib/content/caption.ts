@@ -43,6 +43,7 @@ function polish(s: string): string {
     .replace(/\s+–\s+/g, ', ')
     .replace(/\.(\s*)(\p{Extended_Pictographic})/gu, '$1$2') // no period right before an emoji
     .replace(/The Circle(?!\s*⭕)/g, 'The Circle ⭕')
+    .replace(/\b(a|one|another) Circle\s*⭕\uFE0F?\s*(member|owner|entrepreneur)/gi, '$1 Circle $2') // the ⭕ belongs on "The Circle" only
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }

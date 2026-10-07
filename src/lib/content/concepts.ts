@@ -233,6 +233,16 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
       .order('created_at', { ascending: false })
       .limit(2)
     for (const c of calls ?? []) {
+      // Every speaker on the call except Gogo and her team is private, by
+      // whatever name the transcript used (nicknames, mis-transcriptions).
+      const labelCounts = new Map<string, number>()
+      for (const m of String(c.transcript).matchAll(/^(?:\[[\d:]+\]\s*)?([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}):/gm)) {
+        labelCounts.set(m[1], (labelCounts.get(m[1]) ?? 0) + 1)
+      }
+      const speakers = [...labelCounts]
+        .filter(([n, k]) => k >= 2 && !STAFF_NAMES.some((st) => n.toLowerCase().includes(st.toLowerCase())))
+        .map(([n]) => n)
+      const callPrivate = [...new Set([...privateNames, ...speakers.flatMap((n) => nameVariants(n))])]
       transcripts.push({
         kind: 'transcript',
         dedupeKey: `call:${c.id}`,
@@ -241,7 +251,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
         transcriptId: c.id as string,
         maxIdeas: 6,
         brainQuery: 'Gogo coaching principles delegation team freedom money mindset CEO',
-        privateNames,
+        privateNames: callPrivate,
         material: `A WEEKLY CIRCLE COACHING CALL TRANSCRIPT. Find the strongest Gogo moments: lines worth quoting, perspective shifts, times she told someone they were solving the wrong problem, or explained why their structure keeps them trapped, or challenged how they think about money, delegation, hiring, investing, freedom or leadership. NOT a summary of the call. Each idea is bucket "pearls" (a line, question, analogy or mindset shift she said: how Gogo thinks) or "coach" (a real coaching INTERACTION: her questioning, challenging, looking at the numbers or telling a member what has to change, so the viewer feels what being coached by her is like). Quotes must be Gogo's exact words from this transcript. The members on the call are anonymous: describe them only as "a Circle member" or "a business owner".\n\nTRANSCRIPT:\n${String(c.transcript).slice(0, 110_000)}`,
         quoteSource: String(c.transcript),
       })
@@ -381,7 +391,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
         brainQuery: e.query,
         bucketHint: 'experience',
         privateNames,
-        material: `A "experience" (The Circle Experience) idea about: "${e.angle}". The job: sell the actual environment and access someone gets by joining. Use ONLY these approved program facts (and the Brain excerpts for Gogo's view of why it matters). Never invent features, numbers or member details.\n\nAPPROVED PROGRAM FACTS:\n${CIRCLE_PROGRAM_FACTS}`,
+        material: `A Circle Experience ("experience" pillar) idea about: "${e.angle}". The job: sell the actual environment and access someone gets by joining. Use ONLY these approved program facts (and the Brain excerpts for Gogo's view of why it matters). Never invent features, numbers or member details.\n\nAPPROVED PROGRAM FACTS:\n${CIRCLE_PROGRAM_FACTS}`,
       })
     }
   }
@@ -449,13 +459,13 @@ Return up to ${signal.maxIdeas} idea${signal.maxIdeas === 1 ? '' : 's'}${signal.
   // Anonymous member stories must not carry private/identifying details in ANY
   // field (the brief is what the team designs from). Gogo's own angle is exempt (her
   // own numbers are public). Other ideas are checked on the member story only.
-  const strictPrivacy = signal.kind === 'transformation' && !signal.publicName
+  const strictPrivacy = (signal.kind === 'transformation' || signal.kind === 'transcript') && !signal.publicName
 
   function issuesFor(b: ConceptBrief): string[] {
     const out: string[] = []
     if (CONCEPT_TICS.test(b.concept)) out.push(`the concept "${b.concept}" starts with a "She satisfies..." style phrase; write a plain, specific hook`)
     const fields = strictPrivacy
-      ? [b.concept, b.who, b.pain, b.why_circle, b.visual_note, ...(b.story ? Object.values(b.story) : [])]
+      ? [b.concept, b.who, b.pain, b.why_circle, b.visual_note, ...(signal.kind === 'transcript' ? [b.quote] : []), ...(b.story ? Object.values(b.story) : [])]
       : !signal.publicName && b.story ? Object.values(b.story) : []
     for (const f of fields) {
       const m = f.match(PRIVATE_MEMBER_DETAIL)

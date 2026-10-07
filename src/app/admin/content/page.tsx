@@ -27,7 +27,8 @@ export default async function AdminContentPage() {
   // inside generateBatch). Runs AFTER the response is sent, so the page never
   // waits on the model. New posts appear on the next refresh.
   after(async () => {
-    await generateBatch({ cap: 2 }).catch(() => {})
+    // One idea per page load: a page function only has ~60s.
+    await generateBatch({ cap: 1 }).catch(() => {})
   })
 
   return (

@@ -67,7 +67,6 @@ export async function POST(
 
   let draftHtml: string
   let warning: string | null = null
-  let rawOut = '' // TEMP debug capture of the model's raw output
   try {
     const result = await editBlueprintForRevision({
       existingHtml: baseHtml,
@@ -76,7 +75,6 @@ export async function POST(
       adminNote: adminNote || undefined,
       priorNotes: mode === 'refine' ? priorNotes : [],
       mode,
-      captureRaw: (r) => { rawOut = r },
     })
     draftHtml = result.html
     const issues: string[] = []
@@ -90,11 +88,8 @@ export async function POST(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[Revision] generate-draft edit failed:', msg)
-    try { await supabase.from('blueprint_revisions').update({ debug_raw: `ERR: ${msg}\n---\n${rawOut}`.slice(0, 60000) }).eq('id', revision.id) } catch {}
     return NextResponse.json({ error: `Could not generate the updated blueprint: ${msg}` }, { status: 500 })
   }
-  // TEMP: also persist raw on success, to inspect what a good run looks like.
-  try { await supabase.from('blueprint_revisions').update({ debug_raw: `OK\n---\n${rawOut}`.slice(0, 60000) }).eq('id', revision.id) } catch {}
 
   const { error: updateError } = await supabase
     .from('members')

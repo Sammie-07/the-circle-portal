@@ -172,6 +172,16 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-10-07
+- **Content system check + fixes.** Call transcripts: every speaker label on the call (not just roster
+  names, so nicknames like "Chrissi" count) is treated as private, and call-based ideas get the full
+  private-detail check including the verbatim quote (it gets published). Content-tab page loads now
+  generate 1 idea (a page function has ~60s; member stories with retries can take longer). Captions
+  no longer write "a Circle ⭕ member" (the ⭕ belongs on "The Circle" only). Removed the TEMP
+  `debug_raw` capture from blueprint revision generate-draft (column kept, no longer written).
+  Allison's October story re-queued (its only attempt was rejected for a headline tic). Audit: 29
+  ideas, all captioned + topic-tagged, 0 banned phrases / dashes / missing CTA, 5 member stories pass
+  the privacy check. No transcripts saved yet (no call processed on Log This Week since 2026-09-29).
+  Pearls tested on the real 2026-09-28 call: 5 ideas, quotes verified, no names.
 - **Content pillars are now defined by the post's JOB; topic is a separate tag** (Circle admin's
   framework). Pillars: Coaching ("You have this problem"), Gogo POV / Pearls ("This is how Gogo thinks
   about it"), Member Transformation ("Someone like you changed this"), Proof / Testimonial ("Here is
