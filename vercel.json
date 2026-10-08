@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/cron/content",
-      "schedule": "0 16 * * *"
+      "schedule": "0 12 * * *"
     },
     {
       "path": "/api/cron/quarter-reports",

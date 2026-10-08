@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { detectForMember, reconcileAchievementPostNotifications } from '@/lib/achievements'
-import { generateBatch } from '@/lib/content/generate-batch'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -68,14 +67,11 @@ export async function GET(request: Request) {
 
   if (backfill) return NextResponse.json({ mode: 'backfill', members: list.length, recorded: awardedTotal })
 
-  // New milestones are postable — draft a small content batch from them
-  // (achievements feed the content machine as member_win signals). Capped so it
-  // can't blow the function budget; drafts land in the admin content queue.
-  let drafted = 0
+  // Achievements are no longer content on their own (the content strategist
+  // looks for the bigger story in its morning run), so no batch is drafted here.
   if (milestoneTotal > 0) {
-    drafted = await generateBatch({ force: true, cap: 4 }).catch(() => 0)
     await reconcileAchievementPostNotifications(admin).catch(() => {})
   }
 
-  return NextResponse.json({ members: list.length, aiRan, awarded: awardedTotal, milestones: milestoneTotal, drafted })
+  return NextResponse.json({ members: list.length, aiRan, awarded: awardedTotal, milestones: milestoneTotal })
 }

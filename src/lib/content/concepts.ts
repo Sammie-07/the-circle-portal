@@ -210,6 +210,95 @@ interface StoryMember {
 
 const STAFF_NAMES = ['Gogo', 'Bethke', 'Kristy', 'Waker']
 
+interface CallRow { id: string; call_date: string | null; title: string | null; transcript: string }
+
+/** A weekly call transcript → Gogo Pearls / Gogo as the Coach. */
+export function transcriptSignal(c: CallRow, privateNames: string[]): ConceptSignal {
+  // Every speaker on the call except Gogo and her team is private, by
+  // whatever name the transcript used (nicknames, mis-transcriptions).
+  const labelCounts = new Map<string, number>()
+  for (const m of String(c.transcript).matchAll(/^(?:\[[\d:]+\]\s*)?([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}):/gm)) {
+    labelCounts.set(m[1], (labelCounts.get(m[1]) ?? 0) + 1)
+  }
+  const speakers = [...labelCounts]
+    .filter(([n, k]) => k >= 2 && !STAFF_NAMES.some((st) => n.toLowerCase().includes(st.toLowerCase())))
+    .map(([n]) => n)
+  const callPrivate = [...new Set([...privateNames, ...speakers.flatMap((n) => nameVariants(n))])]
+  return {
+    kind: 'transcript',
+    dedupeKey: `call:${c.id}`,
+    summary: `Circle call${c.call_date ? ` · ${c.call_date}` : ''}${c.title ? ` · ${c.title}` : ''}`,
+    memberId: null,
+    transcriptId: c.id,
+    maxIdeas: 6,
+    brainQuery: 'Gogo coaching principles delegation team freedom money mindset CEO',
+    privateNames: callPrivate,
+    material: `A WEEKLY CIRCLE COACHING CALL TRANSCRIPT. Find the strongest Gogo moments: lines worth quoting, perspective shifts, times she told someone they were solving the wrong problem, or explained why their structure keeps them trapped, or challenged how they think about money, delegation, hiring, investing, freedom or leadership. NOT a summary of the call. Each idea is bucket "pearls" (a line, question, analogy or mindset shift she said: how Gogo thinks) or "coach" (a real coaching INTERACTION: her questioning, challenging, looking at the numbers or telling a member what has to change, so the viewer feels what being coached by her is like). Quotes must be Gogo's exact words from this transcript. The members on the call are anonymous: describe them only as "a Circle member" or "a business owner".\n\nTRANSCRIPT:\n${String(c.transcript).slice(0, 110_000)}`,
+    quoteSource: String(c.transcript),
+  }
+}
+
+/** One member's bigger-picture story for this month (anonymous unless approved). */
+export function storySignal(
+  m: Pick<StoryMember, 'id' | 'name' | 'public_story_ok' | 'blueprint_html'>,
+  responses: Array<{ period_month: string; answers: Record<string, unknown> }>,
+  notes: string[],
+  privateNames: string[],
+): ConceptSignal {
+  const named = !!m.public_story_ok
+  // Anonymous stories never see the private figures: dollar amounts, award
+  // titles and follower counts are masked, and numeric survey answers are
+  // given only as trends (up / down). The model can't leak what it never saw.
+  const mask = named ? (t: string) => t : maskPrivate
+  const blueprint = m.blueprint_html ? mask(htmlToText(m.blueprint_html).slice(0, 3500)) : ''
+  const textKeys = ['biggest_achievement', 'biggest_disappointment', 'personal_wins', 'takeaway', 'catch_all', 'has_investments']
+  const numKeys = ['total_income', 'income_sources', 'hours_per_week', 'team_size', 'vas', 'personal_assistant', 'house_assistant', 'credit_score', 'total_debt', 'investments_value', 'real_estate_properties', 'real_estate_value', 'active_llcs', 'closings']
+  const surveys = responses
+    .map((r) => {
+      const a = r.answers ?? {}
+      const keys = named ? [...numKeys, ...textKeys] : textKeys
+      const kept = Object.fromEntries(keys.filter((k) => a[k] !== undefined && a[k] !== null && a[k] !== '').map((k) => [k, typeof a[k] === 'string' ? mask(a[k] as string) : a[k]]))
+      return `${r.period_month}: ${JSON.stringify(kept)}`
+    })
+    .join('\n')
+  const trends = named || responses.length < 2 ? '' : numKeys
+    .map((k) => {
+      const first = Number(responses[0].answers?.[k])
+      const last = Number(responses[responses.length - 1].answers?.[k])
+      if (!Number.isFinite(first) || !Number.isFinite(last) || first === last) return ''
+      return `${k.replace(/_/g, ' ')}: ${last > first ? 'up' : 'down'}`
+    })
+    .filter(Boolean)
+    .join(', ')
+  return {
+    kind: 'transformation',
+    dedupeKey: `story:${m.id}:${monthKey()}`,
+    summary: `${m.name} · bigger-picture story (${monthKey()})${named ? ' · approved to name' : ' · anonymous'}`,
+    memberId: m.id,
+    maxIdeas: 1,
+    brainQuery: `Gogo principle for ${String(responses[responses.length - 1]?.answers?.biggest_disappointment ?? '').slice(0, 200) || 'scaling a business that depends on the owner'}`,
+    bucketHint: 'transformation',
+    privateNames: named ? privateNames.filter((n) => !nameVariants(m.name).includes(n)) : privateNames,
+    publicName: named ? m.name.split(/\s+/)[0] : null,
+    material: `ONE MEMBER'S ACTIVITY (${named ? `APPROVED TO BE NAMED: you may call them "${m.name.split(/\s+/)[0]}"` : 'ANONYMOUS: never name or identify them'}). Find the BIGGER TRANSFORMATION, not the activity: where were they, what was the actual problem, what are they changing, what are they building now, and why would another successful entrepreneur identify with it? Return ONE transformation idea, or none if there is no real story yet.\n\nTheir 12-month blueprint (their starting point and goals):\n${blueprint || '(none)'}\n\nMonthly progress surveys (oldest to newest):\n${surveys || '(none)'}${trends ? `\nTrends since their first survey: ${trends}` : ''}\n\nWhat they raised on recent coaching calls:\n${notes.slice(-10).map(mask).join('\n') || '(none)'}`,
+  }
+}
+
+/** The Circle Experience angles (what you get access to by joining). */
+export function experienceSignals(privateNames: string[]): ConceptSignal[] {
+  return EXPERIENCE_ANGLES.map((e) => ({
+    kind: 'experience' as const,
+    dedupeKey: `experience:${e.slug}:${quarterKey()}`,
+    summary: `Circle Experience · ${e.angle}`,
+    memberId: null,
+    maxIdeas: 1,
+    brainQuery: e.query,
+    bucketHint: 'experience' as const,
+    privateNames,
+    material: `A Circle Experience ("experience" pillar) idea about: "${e.angle}". The job: sell the actual environment and access someone gets by joining. Use ONLY these approved program facts (and the Brain excerpts for Gogo's view of why it matters). Never invent features, numbers or member details.\n\nAPPROVED PROGRAM FACTS:\n${CIRCLE_PROGRAM_FACTS}`,
+  }))
+}
+
 /** Collect everything the strategist should look at this run. */
 export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId?: string | null } = {}): Promise<ConceptSignal[]> {
   const transcripts: ConceptSignal[] = []
@@ -232,30 +321,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
       .is('pearls_scanned_at', null)
       .order('created_at', { ascending: false })
       .limit(2)
-    for (const c of calls ?? []) {
-      // Every speaker on the call except Gogo and her team is private, by
-      // whatever name the transcript used (nicknames, mis-transcriptions).
-      const labelCounts = new Map<string, number>()
-      for (const m of String(c.transcript).matchAll(/^(?:\[[\d:]+\]\s*)?([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}):/gm)) {
-        labelCounts.set(m[1], (labelCounts.get(m[1]) ?? 0) + 1)
-      }
-      const speakers = [...labelCounts]
-        .filter(([n, k]) => k >= 2 && !STAFF_NAMES.some((st) => n.toLowerCase().includes(st.toLowerCase())))
-        .map(([n]) => n)
-      const callPrivate = [...new Set([...privateNames, ...speakers.flatMap((n) => nameVariants(n))])]
-      transcripts.push({
-        kind: 'transcript',
-        dedupeKey: `call:${c.id}`,
-        summary: `Circle call${c.call_date ? ` · ${c.call_date}` : ''}${c.title ? ` · ${c.title}` : ''}`,
-        memberId: null,
-        transcriptId: c.id as string,
-        maxIdeas: 6,
-        brainQuery: 'Gogo coaching principles delegation team freedom money mindset CEO',
-        privateNames: callPrivate,
-        material: `A WEEKLY CIRCLE COACHING CALL TRANSCRIPT. Find the strongest Gogo moments: lines worth quoting, perspective shifts, times she told someone they were solving the wrong problem, or explained why their structure keeps them trapped, or challenged how they think about money, delegation, hiring, investing, freedom or leadership. NOT a summary of the call. Each idea is bucket "pearls" (a line, question, analogy or mindset shift she said: how Gogo thinks) or "coach" (a real coaching INTERACTION: her questioning, challenging, looking at the numbers or telling a member what has to change, so the viewer feels what being coached by her is like). Quotes must be Gogo's exact words from this transcript. The members on the call are anonymous: describe them only as "a Circle member" or "a business owner".\n\nTRANSCRIPT:\n${String(c.transcript).slice(0, 110_000)}`,
-        quoteSource: String(c.transcript),
-      })
-    }
+    for (const c of calls ?? []) transcripts.push(transcriptSignal(c as CallRow, privateNames))
   }
 
   // --- Member transformations: one bigger-picture story per member per month ---
@@ -293,44 +359,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
       // so it's reconsidered once more happens).
       if (responses.length < 2 && notes.length < 2) continue
 
-      const named = !!m.public_story_ok
-      // Anonymous stories never see the private figures: dollar amounts, award
-      // titles and follower counts are masked, and numeric survey answers are
-      // given only as trends (up / down). The model can't leak what it never saw.
-      const mask = named ? (t: string) => t : maskPrivate
-      const blueprint = m.blueprint_html ? mask(htmlToText(m.blueprint_html).slice(0, 3500)) : ''
-      const textKeys = ['biggest_achievement', 'biggest_disappointment', 'personal_wins', 'takeaway', 'catch_all', 'has_investments']
-      const numKeys = ['total_income', 'income_sources', 'hours_per_week', 'team_size', 'vas', 'personal_assistant', 'house_assistant', 'credit_score', 'total_debt', 'investments_value', 'real_estate_properties', 'real_estate_value', 'active_llcs', 'closings']
-      const surveys = responses
-        .map((r) => {
-          const a = r.answers ?? {}
-          const keys = named ? [...numKeys, ...textKeys] : textKeys
-          const kept = Object.fromEntries(keys.filter((k) => a[k] !== undefined && a[k] !== null && a[k] !== '').map((k) => [k, typeof a[k] === 'string' ? mask(a[k] as string) : a[k]]))
-          return `${r.period_month}: ${JSON.stringify(kept)}`
-        })
-        .join('\n')
-      const trends = named || responses.length < 2 ? '' : numKeys
-        .map((k) => {
-          const first = Number(responses[0].answers?.[k])
-          const last = Number(responses[responses.length - 1].answers?.[k])
-          if (!Number.isFinite(first) || !Number.isFinite(last) || first === last) return ''
-          return `${k.replace(/_/g, ' ')}: ${last > first ? 'up' : 'down'}`
-        })
-        .filter(Boolean)
-        .join(', ')
-
-      stories.push({
-        kind: 'transformation',
-        dedupeKey: `story:${m.id}:${monthKey()}`,
-        summary: `${m.name} · bigger-picture story (${monthKey()})${named ? ' · approved to name' : ' · anonymous'}`,
-        memberId: m.id,
-        maxIdeas: 1,
-        brainQuery: `Gogo principle for ${String(responses[responses.length - 1]?.answers?.biggest_disappointment ?? '').slice(0, 200) || 'scaling a business that depends on the owner'}`,
-        bucketHint: 'transformation',
-        privateNames: named ? privateNames.filter((n) => !nameVariants(m.name).includes(n)) : privateNames,
-        publicName: named ? m.name.split(/\s+/)[0] : null,
-        material: `ONE MEMBER'S ACTIVITY (${named ? `APPROVED TO BE NAMED: you may call them "${m.name.split(/\s+/)[0]}"` : 'ANONYMOUS: never name or identify them'}). Find the BIGGER TRANSFORMATION, not the activity: where were they, what was the actual problem, what are they changing, what are they building now, and why would another successful entrepreneur identify with it? Return ONE transformation idea, or none if there is no real story yet.\n\nTheir 12-month blueprint (their starting point and goals):\n${blueprint || '(none)'}\n\nMonthly progress surveys (oldest to newest):\n${surveys || '(none)'}${trends ? `\nTrends since their first survey: ${trends}` : ''}\n\nWhat they raised on recent coaching calls:\n${notes.slice(-10).map(mask).join('\n') || '(none)'}`,
-      })
+      stories.push(storySignal(m, responses, notes, privateNames))
     }
   }
 
@@ -381,19 +410,7 @@ export async function scanConceptSignals(admin: SupabaseClient, opts: { memberId
   // --- The Circle Experience: what you get access to by joining ---
   const experiences: ConceptSignal[] = []
   if (!opts.memberId) {
-    for (const e of EXPERIENCE_ANGLES) {
-      experiences.push({
-        kind: 'experience',
-        dedupeKey: `experience:${e.slug}:${quarterKey()}`,
-        summary: `Circle Experience · ${e.angle}`,
-        memberId: null,
-        maxIdeas: 1,
-        brainQuery: e.query,
-        bucketHint: 'experience',
-        privateNames,
-        material: `A Circle Experience ("experience" pillar) idea about: "${e.angle}". The job: sell the actual environment and access someone gets by joining. Use ONLY these approved program facts (and the Brain excerpts for Gogo's view of why it matters). Never invent features, numbers or member details.\n\nAPPROVED PROGRAM FACTS:\n${CIRCLE_PROGRAM_FACTS}`,
-      })
-    }
+    experiences.push(...experienceSignals(privateNames))
   }
 
   // Interleave so a run mixes pillars instead of draining one source.

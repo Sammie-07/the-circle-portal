@@ -4,7 +4,8 @@ import { generateBatch, fillMissingCaptions } from '@/lib/content/generate-batch
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
-// Daily run of the content strategist: scans new call transcripts for Gogo
+// Daily morning run of the content strategist (12:00 UTC = 8am Eastern while
+// daylight time is on, 7am in winter; the scheduler fires within that hour): scans new call transcripts for Gogo
 // Pearls, member stories, testimonials and coaching topics, and banks concept
 // briefs. Time-boxed so it finishes inside the function limit; the bank keeps
 // filling day over day.

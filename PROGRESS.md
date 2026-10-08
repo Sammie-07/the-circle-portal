@@ -171,6 +171,19 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-08
+- **Daily content run moved to the morning:** `/api/cron/content` now `0 12 * * *` (12:00 UTC = 8am
+  Eastern during daylight time, 7am after DST ends Nov 1; Vercel Hobby fires within the hour). The
+  achievements cron (15:00 UTC) no longer drafts a content batch, so ideas arrive once, in the morning.
+- **Signal builders extracted** (`transcriptSignal`, `storySignal`, `experienceSignals` in
+  `src/lib/content/concepts.ts`), used by `scanConceptSignals` and runnable on their own.
+- **Today's set loaded** (run locally with the live code, saved via SQL): 5 Gogo Pearls / Coach /
+  Coaching / Experience ideas from the 2026-09-29 Circle call (first half of the transcript), 7 Circle
+  Experience ideas; Allison's October story skipped by the strategist as too private. All 12 checked
+  for names, private details, banned phrases and CTA; 4 wording fixes applied by hand (approved "$1.6B+
+  combined lifetime volume" wording, unverified "14 VAs / $2.7M / 24 hours" removed, a brain quote
+  mis-attributed to a call, "damn" in a brief).
+
 ### 2026-10-07
 - **Content system check + fixes.** Call transcripts: every speaker label on the call (not just roster
   names, so nicknames like "Chrissi" count) is treated as private, and call-based ideas get the full
