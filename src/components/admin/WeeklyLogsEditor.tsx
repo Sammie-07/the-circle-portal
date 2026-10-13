@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { saveLogs, deleteLog } from '@/lib/logs-client'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/lib/toast'
 
@@ -18,32 +18,27 @@ interface WeeklyLog {
 // saves immediately (upsert keyed on member_id + week_of), so attendance and
 // homework can be corrected after the fact without re-entering the whole week.
 export default function WeeklyLogsEditor({ memberId, logs: initialLogs }: { memberId: string; logs: WeeklyLog[] }) {
-  const supabase = createClient()
   const router = useRouter()
   const [logs, setLogs] = useState<WeeklyLog[]>(initialLogs)
   const [savingId, setSavingId] = useState<string | null>(null)
 
   async function persist(row: WeeklyLog) {
     setSavingId(row.id)
-    const { error } = await supabase
-      .from('weekly_logs')
-      .upsert(
-        {
-          member_id: memberId,
-          week_of: row.week_of,
-          showed_up: row.showed_up,
-          homework_done: row.homework_done,
-          questions_asked: row.questions_asked ?? 0,
-          notes: row.notes || null,
-        },
-        { onConflict: 'member_id,week_of' }
-      )
-    setSavingId(null)
-    if (error) {
-      toast(error.message ?? 'Could not save', 'error')
-    } else {
+    try {
+      await saveLogs([{
+        member_id: memberId,
+        week_of: row.week_of,
+        showed_up: row.showed_up,
+        homework_done: row.homework_done,
+        questions_asked: row.questions_asked ?? 0,
+        notes: row.notes || null,
+      }])
       toast('Attendance updated')
       router.refresh()
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not save', 'error')
+    } finally {
+      setSavingId(null)
     }
   }
 
@@ -64,12 +59,14 @@ export default function WeeklyLogsEditor({ memberId, logs: initialLogs }: { memb
     const label = new Date(row.week_of).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     if (!confirm(`Delete the attendance record for ${label}? This can't be undone.`)) return
     setSavingId(row.id)
-    const { error } = await supabase.from('weekly_logs').delete().eq('id', row.id)
-    setSavingId(null)
-    if (error) {
-      toast(error.message ?? 'Could not delete', 'error')
+    try {
+      await deleteLog(row.id)
+    } catch (err) {
+      setSavingId(null)
+      toast(err instanceof Error ? err.message : 'Could not delete', 'error')
       return
     }
+    setSavingId(null)
     setLogs((prev) => prev.filter((l) => l.id !== row.id))
     toast('Record deleted')
     router.refresh()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { saveLogs } from '@/lib/logs-client'
 import { useRouter } from 'next/navigation'
 import DateField from '@/components/shared/DateField'
 import { toast } from '@/lib/toast'
@@ -41,7 +41,6 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const supabase = createClient()
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,24 +48,21 @@ export default function WeeklyLogForm({ memberId }: { memberId: string }) {
     if (showedUp === null) return
     setLoading(true)
 
-    const { error } = await supabase
-      .from('weekly_logs')
-      .upsert({
+    try {
+      await saveLogs([{
         member_id: memberId,
         week_of: weekOf,
         showed_up: showedUp,
         homework_done: false,
         questions_asked: questions,
         notes: notes || null,
-      }, { onConflict: 'member_id,week_of' })
-
-    if (!error) {
+      }])
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       router.refresh()
       toast('Week logged')
-    } else {
-      toast(error.message ?? 'Could not save', 'error')
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not save', 'error')
     }
     setLoading(false)
   }

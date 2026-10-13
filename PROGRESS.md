@@ -171,6 +171,17 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-13
+- **Fix: Log This Week stuck on "Saving…" forever.** The Oct 13 call imported fine (transcript saved,
+  Pearls scanned, homework suggested) but Save never reached the database: zero weekly_logs writes in
+  the API logs. Attendance was written straight from the browser with the Supabase client, which can
+  hang indefinitely when a long-open tab's auth session gets stuck. Now all attendance reads/writes go
+  through a new server route `/api/logs` (GET week, POST upsert, DELETE; cookie auth, same is_admin
+  RLS) via `src/lib/logs-client.ts`, with a 30s limit and clear errors (including an expired-session
+  check, so a sign-in redirect is never mistaken for a save). Applies to Log This Week (BulkLogForm)
+  and the member page (WeeklyLogForm, WeeklyLogsEditor). Log This Week also keeps unsaved entries in
+  the browser per week, so a refresh or failed save no longer loses an imported call.
+
 ### 2026-10-08
 - **Daily content run moved to the morning:** `/api/cron/content` now `0 12 * * *` (12:00 UTC = 8am
   Eastern during daylight time, 7am after DST ends Nov 1; Vercel Hobby fires within the hour). The

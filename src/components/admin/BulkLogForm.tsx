@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { saveLogs, loadWeekLogs } from '@/lib/logs-client'
 import DateField from '@/components/shared/DateField'
 import { toast } from '@/lib/toast'
 
@@ -25,9 +25,29 @@ interface BulkLogFormProps {
   existingLogs: Record<string, LogEntry>
 }
 
-export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: BulkLogFormProps) {
-  const supabase = createClient()
+// Unsaved entries are kept in this browser per week, so a refresh (or a
+// failed save) never loses an imported call or typed notes.
+const DRAFT_KEY = (week: string) => `circle:bulklog-draft:${week}`
 
+function readDraft(week: string): Record<string, LogEntry> | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY(week))
+    return raw ? (JSON.parse(raw) as Record<string, LogEntry>) : null
+  } catch {
+    return null
+  }
+}
+
+function writeDraft(week: string, logs: Record<string, LogEntry> | null) {
+  try {
+    if (logs) localStorage.setItem(DRAFT_KEY(week), JSON.stringify(logs))
+    else localStorage.removeItem(DRAFT_KEY(week))
+  } catch {
+    /* storage unavailable: nothing to keep */
+  }
+}
+
+export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: BulkLogFormProps) {
   const [weekOf, setWeekOf] = useState(defaultWeekOf)
   const [logs, setLogs] = useState<Record<string, LogEntry>>(() => {
     const init: Record<string, LogEntry> = {}
@@ -41,6 +61,30 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
     }
     return init
   })
+  // True once the admin changes anything that isn't saved yet.
+  const [dirty, setDirty] = useState(false)
+  const [restored, setRestored] = useState(false)
+
+  // On first load, bring back any unsaved entries for this week.
+  useEffect(() => {
+    const draft = readDraft(defaultWeekOf)
+    if (!draft) return
+    // Restoring a saved draft from browser storage on mount (intentional).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLogs(prev => {
+      const next = { ...prev }
+      for (const m of members) if (draft[m.id]) next[m.id] = draft[m.id]
+      return next
+    })
+    setDirty(true)
+    setRestored(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Keep the draft in sync while there are unsaved changes.
+  useEffect(() => {
+    if (dirty) writeDraft(weekOf, logs)
+  }, [dirty, weekOf, logs])
 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -94,6 +138,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
         .filter(id => members.some(m => m.id === id))
       setImported(new Set(appliedIds))
       setSaved(false)
+      setDirty(true)
       const hw = data.suggestedHomework ?? 0
       toast(`Imported "${data.title}": ${data.attended} present${hw ? `, ${hw} suggested task${hw === 1 ? '' : 's'} added to member backends` : ''}. Review the highlighted rows and save.`)
     } catch {
@@ -111,15 +156,19 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
     if (firstRun.current) { firstRun.current = false; return }
     let cancelled = false
     ;(async () => {
-      const { data } = await supabase
-        .from('weekly_logs')
-        .select('member_id, showed_up, homework_done, questions_asked, notes')
-        .eq('week_of', weekOf)
-        .in('member_id', members.map(m => m.id))
+      // Unsaved entries for that week win over what's in the database.
+      const draft = readDraft(weekOf)
+      let data: Awaited<ReturnType<typeof loadWeekLogs>>['logs'] = []
+      try {
+        data = (await loadWeekLogs(weekOf)).logs
+      } catch (err) {
+        if (!cancelled) toast(err instanceof Error ? err.message : 'Could not load that week', 'error')
+      }
       if (cancelled) return
       const next: Record<string, LogEntry> = {}
       for (const m of members) next[m.id] = { showed_up: false, homework_done: false, questions_asked: 0, notes: '' }
       for (const row of data ?? []) {
+        if (!next[row.member_id]) continue
         next[row.member_id] = {
           showed_up: row.showed_up,
           homework_done: row.homework_done,
@@ -127,8 +176,11 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
           notes: row.notes ?? '',
         }
       }
+      if (draft) for (const m of members) if (draft[m.id]) next[m.id] = draft[m.id]
       setLogs(next)
       setSaved(false)
+      setDirty(!!draft)
+      setRestored(!!draft)
     })()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,6 +193,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
     }))
     clearImported(memberId)
     setSaved(false)
+    setDirty(true)
   }
 
   function setQuestions(memberId: string, value: number) {
@@ -150,6 +203,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
     }))
     clearImported(memberId)
     setSaved(false)
+    setDirty(true)
   }
 
   function setNotes(memberId: string, value: string) {
@@ -159,6 +213,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
     }))
     clearImported(memberId)
     setSaved(false)
+    setDirty(true)
   }
 
   // Mark all present or all absent
@@ -171,34 +226,34 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
       return next
     })
     setSaved(false)
+    setDirty(true)
   }
 
   async function handleSave() {
     setSaving(true)
     setError('')
-
-    const upserts = members.map(m => ({
-      member_id: m.id,
-      week_of: weekOf,
-      showed_up: logs[m.id].showed_up,
-      homework_done: logs[m.id].homework_done,
-      questions_asked: logs[m.id].questions_asked,
-      notes: logs[m.id].notes || null,
-    }))
-
-    const { error: err } = await supabase
-      .from('weekly_logs')
-      .upsert(upserts, { onConflict: 'member_id,week_of' })
-
-    if (err) {
-      setError(err.message)
-      toast(err.message ?? 'Could not save', 'error')
-    } else {
+    try {
+      await saveLogs(members.map(m => ({
+        member_id: m.id,
+        week_of: weekOf,
+        showed_up: logs[m.id].showed_up,
+        homework_done: logs[m.id].homework_done,
+        questions_asked: logs[m.id].questions_asked,
+        notes: logs[m.id].notes || null,
+      })))
       setSaved(true)
+      setDirty(false)
+      setRestored(false)
+      writeDraft(weekOf, null)
       setImported(new Set())
       toast(`Logged ${members.length} member${members.length === 1 ? '' : 's'} for the week`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not save'
+      setError(msg)
+      toast(msg, 'error')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   const attendanceCount = Object.values(logs).filter(l => l.showed_up).length
@@ -212,7 +267,7 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
           <label className="block text-xs text-[#555] uppercase tracking-wider mb-1.5">Week of (Tuesday)</label>
           <DateField
             value={weekOf}
-            onChange={v => { setWeekOf(v); setSaved(false) }}
+            onChange={v => { setDirty(false); setRestored(false); setWeekOf(v); setSaved(false) }}
             clearable={false}
             className="w-44 bg-[#0E0E0E] border border-[#1A1A1A] text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A227]"
           />
@@ -398,6 +453,10 @@ export default function BulkLogForm({ members, defaultWeekOf, existingLogs }: Bu
           })}
         </div>
       )}
+
+      {restored && !saved ? (
+        <p className="text-[#C9A227] text-xs mb-3">Restored your unsaved entries for this week. Review them and click Save All Logs.</p>
+      ) : null}
 
       {/* Save button */}
       <div className="flex items-center gap-4">
