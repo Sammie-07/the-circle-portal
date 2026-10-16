@@ -234,11 +234,14 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
       if (s >= t) out.push({ key: `survey_streak_${t}`, emoji: '🔗', tier: 'milestone', title: `${t}-month check-in streak`, body: `${t} monthly check-ins in a row without missing one. That discipline is the leading indicator of everything else.` })
     }
   }
-  // Real-life wins from the latest survey vs the prior one (income, credit, debt, growth)
-  if (completedSurveys.length >= 1) {
+  // Real-life wins from the latest survey vs the prior one (income, credit, debt, growth).
+  // Needs a previous survey: a member's FIRST survey is their starting point, not
+  // progress (it used to award e.g. "credit score crossed 800" for a score they
+  // already had when they joined).
+  if (completedSurveys.length >= 2) {
     const cur = completedSurveys[completedSurveys.length - 1]
-    const prev = completedSurveys.length >= 2 ? completedSurveys[completedSurveys.length - 2] : null
-    for (const h of highlightsBetween(cur.answers, prev?.answers ?? null)) {
+    const prev = completedSurveys[completedSurveys.length - 2]
+    for (const h of highlightsBetween(cur.answers, prev.answers)) {
       if (h.tone !== 'win') continue
       out.push({
         key: `survey_win_${cur.period_month}_${h.key}`,
@@ -270,6 +273,12 @@ export function computeRuleAchievements(data: MemberData): AchievementCandidate[
 }
 
 // ── AI catch-all ──────────────────────────────────────────────────────────────
+// OFF (2026-10-16). It ran daily on the member's self-reported survey answers,
+// so it celebrated where members already were (e.g. investments they had before
+// joining), plans not yet done, and the same thing again under new wording each
+// day. Achievements now come only from tracked actions (the rules above).
+export const AI_ACHIEVEMENTS_ENABLED = false
+
 // Feeds a compact activity summary to Claude and asks for up to 2 ADDITIONAL
 // celebration-worthy achievements the rules don't already cover. Guard-railed:
 // must be backed by the data, no duplicate keys/titles, warm and in Gogo's voice.
@@ -533,7 +542,7 @@ export async function detectForMember(
   if (!isAchievementTester(data.email) && !(await achievementsLive(admin))) return []
 
   let aiCandidates: AchievementCandidate[] = []
-  if (opts.includeAi) {
+  if (opts.includeAi && AI_ACHIEVEMENTS_ENABLED) {
     // Only bother the model once the member has some real activity to judge.
     const hasActivity = data.homework.some((h) => h.completed) || data.logs.length > 0 || data.surveys.some((s) => s.status === 'complete')
     if (hasActivity) {

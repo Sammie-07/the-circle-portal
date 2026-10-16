@@ -171,6 +171,16 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-16
+- **Achievements: only for tracked actions.** The admin flagged Rachel Bucci getting achievements she
+  didn't work for. Two causes: (1) survey "wins" fired on a member's FIRST survey (no prior to compare,
+  so "credit score crossed 800" for a score she already had); now a win needs a previous survey.
+  (2) The daily AI catch-all read self-reported survey answers and awarded up to 2 new achievements a
+  day, deduped only by exact key/title, so it celebrated pre-existing status, plans, and the same thing
+  reworded on consecutive days (45 AI awards across members). It is now switched off
+  (`AI_ACHIEVEMENTS_ENABLED = false` in `src/lib/achievements.ts`); rules (homework, attendance,
+  blueprint, surveys, real month-over-month changes, tenure) remain.
+
 ### 2026-10-13
 - **Fix: Log This Week stuck on "Saving…" forever.** The Oct 13 call imported fine (transcript saved,
   Pearls scanned, homework suggested) but Save never reached the database: zero weekly_logs writes in
