@@ -171,6 +171,16 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-19
+- **Fix: monthly check-in "stuck at question 7" on phones (Tammy).** The survey pop-up scrolled its
+  questions inside a nested area of a fixed full-screen overlay; on phones (especially with the
+  keyboard open) touches scrolled the page behind instead, so members couldn't get past the field they
+  were on. Now the whole overlay is the single scroll container, the page behind is locked while the
+  survey is open, only the progress strip and the Submit bar stay pinned (the intro scrolls away),
+  focused fields scroll into view above the keyboard, and Enter / "Next" jumps to the next question.
+  Draft answers were never lost (autosave), so members resume where they left off. Tested at phone
+  size: Enter walks the fields, the form scrolls to the end and Submit stays visible.
+
 ### 2026-10-16
 - **Achievements: only for tracked actions.** The admin flagged Rachel Bucci getting achievements she
   didn't work for. Two causes: (1) survey "wins" fired on a member's FIRST survey (no prior to compare,

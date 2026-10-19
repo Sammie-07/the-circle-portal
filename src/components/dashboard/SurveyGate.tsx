@@ -102,6 +102,27 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
     [scheduleSave]
   )
 
+  // While the gate is open, lock the page behind it. On phones the page behind
+  // used to take the scroll (especially with the keyboard up), so members got
+  // stuck partway down the form.
+  const open = !!payload?.due && !submitted
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open])
+
+  // Enter / "Next" on the keyboard jumps to the next question.
+  const focusNext = useCallback((key: string) => {
+    const list = payload?.questions ?? []
+    const i = list.findIndex((q) => q.key === key)
+    const next = list[i + 1]
+    if (!next) return
+    const el = document.querySelector<HTMLElement>(`[data-survey-q="${next.key}"]`)
+    el?.focus()
+  }, [payload])
+
   const questions = payload?.questions ?? []
   const isAnswered = (q: SurveyQuestion) => {
     const v = answers[q.key]
@@ -193,11 +214,12 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         inset: 0,
         zIndex: 1000,
         background: 'rgba(8,8,8,0.92)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        padding: '24px 16px',
+        // ONE scroll container (the whole overlay). A scroll area nested inside
+        // a fixed overlay broke on phones once the keyboard opened.
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch',
+        padding: '16px 12px',
       }}
     >
       <div
@@ -209,10 +231,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           borderRadius: 14,
           maxWidth: 640,
           width: '100%',
-          maxHeight: 'calc(100vh - 48px)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          margin: '0 auto',
         }}
       >
         {preview && onClose ? (
@@ -237,8 +256,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             ×
           </button>
         ) : null}
-        {/* Header — fixed, so the progress bar stays visible while scrolling */}
-        <div style={{ flexShrink: 0, padding: '28px 28px 16px', borderBottom: '1px solid var(--border-color, #1A1A1A)' }}>
+        {/* Intro (scrolls away; the progress strip below stays pinned) */}
+        <div style={{ padding: '24px 22px 4px' }}>
           <div style={{ color: GOLD, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             {payload.monthLabel} · Progress Check{preview ? ' · Preview' : ''}
           </div>
@@ -249,7 +268,10 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
             A few quick numbers so we can track your growth. This takes about 3 minutes and
             needs to be completed to continue. Your answers save as you go.
           </p>
-          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+        </div>
+        {/* Progress strip: stays pinned while the form scrolls */}
+        <div style={{ position: 'sticky', top: -16, zIndex: 2, background: 'var(--surface, #141414)', padding: '12px 22px', borderBottom: '1px solid var(--border-color, #1A1A1A)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ flex: 1, height: 6, background: 'var(--border-color, #1A1A1A)', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${total ? (answered / total) * 100 : 0}%`, height: '100%', background: GOLD, transition: 'width 0.2s' }} />
             </div>
@@ -259,8 +281,8 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
           </div>
         </div>
 
-        {/* Questions — the only scrolling region */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 28px' }}>
+        {/* Questions (the overlay scrolls; header and footer stay pinned) */}
+        <div style={{ padding: '20px 22px' }}>
           {questions.map((q, i) => (
             <div key={q.key}>
               {q.section ? (
@@ -274,7 +296,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
                   {q.label}
                   {q.optional ? <span style={{ color: 'var(--text-3, #666)', fontWeight: 400 }}> (optional)</span> : null}
                 </label>
-                <QuestionInput q={q} value={answers[q.key] ?? null} onChange={(v) => update(q.key, v)} />
+                <QuestionInput q={q} value={answers[q.key] ?? null} onChange={(v) => update(q.key, v)} onNext={() => focusNext(q.key)} />
                 {q.hint ? (
                   <p style={{ color: 'var(--text-2, #888)', fontSize: 12, margin: '6px 0 0' }}>{q.hint}</p>
                 ) : null}
@@ -293,7 +315,7 @@ export default function SurveyGate({ preview = false, onClose }: { preview?: boo
         </div>
 
         {/* Footer — fixed, so submit stays in view */}
-        <div style={{ flexShrink: 0, padding: '16px 28px 28px', borderTop: '1px solid var(--border-color, #1A1A1A)' }}>
+        <div style={{ position: 'sticky', bottom: -16, zIndex: 2, background: 'var(--surface, #141414)', borderRadius: '0 0 14px 14px', padding: '14px 22px 22px', borderTop: '1px solid var(--border-color, #1A1A1A)' }}>
           {error ? (
             <p style={{ color: '#ff8080', fontSize: 13, margin: '0 0 12px' }}>{error}</p>
           ) : null}
@@ -328,11 +350,23 @@ function QuestionInput({
   q,
   value,
   onChange,
+  onNext,
 }: {
   q: SurveyQuestion
   value: string | number | boolean | null
   onChange: (v: string | number | boolean | null) => void
+  onNext: () => void
 }) {
+  // Keep the field visible above the phone keyboard, and let Enter / "Next"
+  // move on to the following question.
+  const fieldProps = {
+    'data-survey-q': q.key,
+    enterKeyHint: 'next' as const,
+    onFocus: (e: React.FocusEvent<HTMLElement>) => {
+      const el = e.currentTarget
+      setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250)
+    },
+  }
   const baseInput: React.CSSProperties = {
     width: '100%',
     padding: '10px 12px',
@@ -357,6 +391,7 @@ function QuestionInput({
             <button
               key={o.label}
               type="button"
+              data-survey-q={o.val ? q.key : undefined}
               onClick={() => onChange(o.val)}
               style={{
                 flex: 1,
@@ -381,6 +416,7 @@ function QuestionInput({
   if (q.type === 'longtext') {
     return (
       <textarea
+        {...fieldProps}
         value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
@@ -393,9 +429,11 @@ function QuestionInput({
   if (q.type === 'text') {
     return (
       <input
+        {...fieldProps}
         type="text"
         value={typeof value === 'string' ? value : ''}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onNext() } }}
         style={baseInput}
       />
     )
@@ -409,6 +447,8 @@ function QuestionInput({
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-2, #888)', fontSize: 14 }}>$</span>
       ) : null}
       <input
+        {...fieldProps}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onNext() } }}
         type="number"
         inputMode={q.type === 'number' ? 'decimal' : 'numeric'}
         min={0}
