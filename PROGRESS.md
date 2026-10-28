@@ -171,6 +171,15 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-28
+- **Admin bell: "What did they do?" on every achievement.** The admin asked to see why a member got a
+  badge. Each celebration notification now expands to show what the achievement means, exactly what the
+  member did to earn it (the homework titles and dates, the calls they were present for, the survey
+  number before → after), the message the member saw, and a link to their page. Worked out from the
+  member's records AS OF the moment it was awarded (`src/lib/achievement-explain.ts`, `GET
+  /api/admin/achievements/[id]`), so it works for past awards too. Flags awards from the old AI step,
+  first-check-in "wins" (pre-Oct 16 fix) and launch backfills.
+
 ### 2026-10-19
 - **Fix: monthly check-in "stuck at question 7" on phones (Tammy).** The survey pop-up scrolled its
   questions inside a nested area of a fixed full-screen overlay; on phones (especially with the

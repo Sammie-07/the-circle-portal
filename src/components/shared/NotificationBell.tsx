@@ -19,6 +19,17 @@ interface Notif {
   posted?: boolean
 }
 
+interface Explanation {
+  memberId: string
+  memberName: string
+  title: string
+  awardedAt: string
+  memberMessage: string
+  meaning: string
+  evidence: string[]
+  note: string | null
+}
+
 function timeAgo(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (s < 60) return 'just now'
@@ -35,6 +46,9 @@ export default function NotificationBell() {
   const [items, setItems] = useState<Notif[]>([])
   const [unread, setUnread] = useState(0)
   const [busyId, setBusyId] = useState<string | null>(null)
+  // "What did they do?" panels: which notification is expanded + loaded details.
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [details, setDetails] = useState<Record<string, Explanation | { error: string } | 'loading'>>({})
   const ref = useRef<HTMLDivElement>(null)
 
   const load = useCallback(() => {
@@ -73,6 +87,22 @@ export default function NotificationBell() {
         body: JSON.stringify({ all: true }),
       }).catch(() => {})
     }
+  }
+
+  // Open/close the explanation for one achievement (loaded once, then cached).
+  function toggleDetails(n: Notif) {
+    if (!n.achievement_id) return
+    if (expanded === n.id) { setExpanded(null); return }
+    setExpanded(n.id)
+    const achId = n.achievement_id
+    if (details[achId]) return
+    setDetails((d) => ({ ...d, [achId]: 'loading' }))
+    fetch(`/api/admin/achievements/${achId}`)
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}))
+        setDetails((d) => ({ ...d, [achId]: r.ok ? (data as Explanation) : { error: (data as { error?: string }).error ?? 'Could not load the details' } }))
+      })
+      .catch(() => setDetails((d) => ({ ...d, [achId]: { error: 'Network error, try again' } })))
   }
 
   // Admin opts a small (non-milestone) celebration into a content post.
@@ -114,7 +144,7 @@ export default function NotificationBell() {
 
       {open && (
         <div
-          className="absolute right-0 mt-2 w-[360px] max-h-[440px] overflow-auto rounded-[16px] border shadow-2xl z-50"
+          className="absolute right-0 mt-2 w-[min(400px,calc(100vw-24px))] max-h-[min(560px,80vh)] overflow-auto rounded-[16px] border shadow-2xl z-50"
           style={{ background: 'var(--surface)', borderColor: 'var(--border-color)' }}
         >
           <div className="px-4 py-3 border-b border-[var(--border-color)] sticky top-0" style={{ background: 'var(--surface)' }}>
@@ -139,6 +169,15 @@ export default function NotificationBell() {
                         {n.type === 'revision_submitted' && n.member_id && (
                           <Link href={`/admin/member/${n.member_id}`} onClick={() => setOpen(false)} className="text-[11px] text-[var(--gold-text)] hover:text-[var(--gold)]">Review & approve →</Link>
                         )}
+                        {n.type === 'celebration' && n.achievement_id && (
+                          <button
+                            onClick={() => toggleDetails(n)}
+                            className="text-[11px] text-[var(--gold-text)] hover:text-[var(--gold)]"
+                            aria-expanded={expanded === n.id}
+                          >
+                            {expanded === n.id ? 'Hide details ▴' : 'What did they do? ▾'}
+                          </button>
+                        )}
                         {n.type === 'celebration' && n.canMakePost && (
                           <button
                             onClick={() => makePost(n)}
@@ -153,6 +192,9 @@ export default function NotificationBell() {
                           <Link href="/admin/content" onClick={() => setOpen(false)} className="text-[11px] text-[var(--text-4)] hover:text-[var(--gold)]">Posted →</Link>
                         )}
                       </div>
+                      {n.type === 'celebration' && n.achievement_id && expanded === n.id && (
+                        <AchievementDetails d={details[n.achievement_id]} onOpenMember={() => setOpen(false)} />
+                      )}
                     </div>
                     {!n.read_at && <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-none" style={{ background: 'var(--gold)' }} />}
                   </div>
@@ -162,6 +204,29 @@ export default function NotificationBell() {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function AchievementDetails({ d, onOpenMember }: { d: Explanation | { error: string } | 'loading' | undefined; onOpenMember: () => void }) {
+  if (!d || d === 'loading') return <p className="text-[12px] text-[var(--text-3)] mt-2">Loading…</p>
+  if ('error' in d) return <p className="text-[12px] text-[#ff8080] mt-2">{d.error}</p>
+  return (
+    <div className="mt-2.5 rounded-[10px] border border-[var(--border-color)] p-3 text-[12px] leading-relaxed" style={{ background: 'var(--bg)' }}>
+      <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-4)] mb-1">What it means</p>
+      <p className="text-[var(--text-2)]">{d.meaning}</p>
+      <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-4)] mt-3 mb-1">What they did</p>
+      <ul className="space-y-1 text-[var(--text)]">
+        {d.evidence.map((e, i) => (
+          <li key={i} className="flex gap-1.5"><span className="text-[var(--gold-text)]">•</span><span>{e}</span></li>
+        ))}
+      </ul>
+      {d.note ? <p className="mt-2.5 text-[#ffb35c]">{d.note}</p> : null}
+      <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-4)] mt-3 mb-1">What they were told</p>
+      <p className="text-[var(--text-3)] italic">“{d.memberMessage}”</p>
+      <Link href={`/admin/member/${d.memberId}`} onClick={onOpenMember} className="inline-block mt-3 text-[var(--gold-text)] hover:text-[var(--gold)]">
+        Open {d.memberName.split(' ')[0]}&apos;s page →
+      </Link>
     </div>
   )
 }
