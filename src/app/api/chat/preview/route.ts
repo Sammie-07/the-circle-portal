@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, buildCanonicalFacts } from '@/lib/brain-search'
 import { getTeamAgentCount } from '@/lib/settings'
-import { GOGO_SYSTEM_PROMPT, makeDashCleaner, parseAttachmentFile, buildAttachmentContent } from '@/lib/gogo-chat'
+import { GOGO_SYSTEM_PROMPT, makeDashCleaner, parseAttachmentFile, buildAttachmentContent, buildCachedChatRequest } from '@/lib/gogo-chat'
 
 export const maxDuration = 120
 
@@ -51,15 +51,6 @@ export async function POST(request: Request) {
 
   const canonicalFacts = buildCanonicalFacts(await getTeamAgentCount())
 
-  const systemWithContext = `${GOGO_SYSTEM_PROMPT}
-
-${canonicalFacts}
-
-${brainContext
-  ? `GOGO'S BRAIN — RELEVANT KNOWLEDGE:\n\n${brainContext}`
-  : 'No relevant context was found in Gogo\'s knowledge base for this query.'
-}`
-
   const claudeMessages: { role: 'user' | 'assistant'; content: ReturnType<typeof buildAttachmentContent> }[] = [
     ...history.map(m => ({
       role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
@@ -69,14 +60,18 @@ ${brainContext
     { role: 'user', content: buildAttachmentContent(turnContent, attachmentName, attachmentFile, attachmentText) },
   ]
 
+  const { system, messages: apiMessages } = buildCachedChatRequest(
+    `${GOGO_SYSTEM_PROMPT}\n\n${canonicalFacts}`, brainContext, claudeMessages,
+  )
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
         const claudeStream = getAnthropic().messages.stream({
           model: CLAUDE_MODEL,
           max_tokens: 3000,
-          system: systemWithContext,
-          messages: claudeMessages,
+          system,
+          messages: apiMessages,
         })
 
         const dashes = makeDashCleaner()

@@ -171,6 +171,21 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-10-30
+- **Prompt caching on the chats and the blueprint generator (cost).** Claude now re-reads repeated text
+  from its prompt cache at ~10% of the input price instead of paying full price each time.
+  - **Member chat + staff preview chat:** the Brain excerpts moved from the system prompt onto the
+    newest user message, so the system prompt and earlier turns stay identical between messages and
+    are cached (`buildCachedChatRequest` in `src/lib/gogo-chat.ts`). History caching stops once a
+    conversation passes the 20-message window (the oldest message drops off each turn, so the prefix
+    would never match). On `claude-opus-4-5` the cache needs ~4,096 tokens, so it kicks in after a few
+    exchanges, not on the first message.
+  - **Blueprint generation:** the member context (with the full clarity-call transcript) is now the
+    first block of all 3 calls, identical each time, so calls 2 and 3 read it from cache. Each call's
+    log line now prints `cache read:` tokens.
+  - Other AI calls (content, captions, reports, homework, digest, achievements, Fathom logs) are one
+    call per job or have prompts under the cache minimum, so caching would only add the 25% write fee.
+
 ### 2026-10-28
 - **Admin bell: "What did they do?" on every achievement.** The admin asked to see why a member got a
   badge. Each celebration notification now expands to show what the achievement means, exactly what the

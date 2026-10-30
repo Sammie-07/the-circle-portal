@@ -1,3 +1,4 @@
+import type Anthropic from '@anthropic-ai/sdk'
 import { CIRCLE_FACTS } from '@/lib/circle-facts'
 
 export const GOGO_SYSTEM_PROMPT = `You ARE Gogo Bethke. Not an AI assistant reporting what Gogo teaches. Not a bot summarizing her content. You are her. Speak in first person at all times.
@@ -134,4 +135,44 @@ export function buildAttachmentContent(
     ? { type: 'image', source: { type: 'base64', media_type: file.mediaType as ImageType, data: file.data } }
     : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: file.data }, title: label }
   return [fileBlock, { type: 'text', text: `${withExtract}\n\n[The member attached: ${label}]` }]
+}
+
+/**
+ * Shapes a chat request for prompt caching. The system prompt and the earlier turns
+ * must stay byte-identical between messages to be read from cache, so the Brain
+ * excerpts (which change with every question) ride on the newest user message
+ * instead of the system prompt. A breakpoint on the previous reply lets the next
+ * message read this conversation's history from cache.
+ */
+export function buildCachedChatRequest(
+  systemText: string,
+  brainContext: string,
+  messages: { role: 'user' | 'assistant'; content: string | Block[] }[],
+  { cacheHistory = true }: { cacheHistory?: boolean } = {},
+): { system: Anthropic.TextBlockParam[]; messages: Anthropic.MessageParam[] } {
+  const brainBlock = brainContext
+    ? `GOGO'S BRAIN — RELEVANT KNOWLEDGE:\n\n${brainContext}`
+    : 'No relevant context was found in Gogo\'s knowledge base for this query.'
+  const toBlocks = (c: string | Block[]): Anthropic.ContentBlockParam[] =>
+    typeof c === 'string' ? [{ type: 'text', text: c }] : (c as Anthropic.ContentBlockParam[])
+
+  const out = messages.map(m => ({ role: m.role, content: m.content }) as Anthropic.MessageParam)
+  const last = out.length - 1
+  if (last >= 0 && out[last].role === 'user') {
+    out[last] = { role: 'user', content: [{ type: 'text', text: brainBlock }, ...toBlocks(messages[last].content)] }
+    const prev = last - 1
+    if (cacheHistory && prev >= 0) {
+      const blocks = toBlocks(messages[prev].content)
+      const tail = blocks[blocks.length - 1]
+      if (tail?.type === 'text') {
+        blocks[blocks.length - 1] = { ...tail, cache_control: { type: 'ephemeral' } }
+        out[prev] = { role: out[prev].role, content: blocks } as Anthropic.MessageParam
+      }
+    }
+  }
+
+  return {
+    system: [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }],
+    messages: out,
+  }
 }

@@ -278,8 +278,6 @@ footer / footer-quote / footer-circle / footer-meta`
   // ── CALL 1 of 3: nav + cover + sections 1–3 ──────────────────────────────
   const prompt1 = `You are writing PART 1 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle."
 
-${memberCtx}
-
 ---
 GOGO'S BRAIN — MINDSET & CEO SHIFT:
 ${brainMindset}
@@ -312,8 +310,6 @@ RULES:Every word from transcript or Brain. Gogo's voice, direct, warm, personal.
   // ── CALL 2 of 3: section 4 only — 12-month quarterly blueprint ───────────
   const prompt2 = `You are writing PART 2 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle." This call is dedicated entirely to Section 04 — the 12-Month Blueprint.
 
-${memberCtx}
-
 ---
 GOGO'S BRAIN — QUARTERLY FRAMEWORK & PLANNING:
 ${brainQuarters}
@@ -341,8 +337,6 @@ RULES:All action items must come directly from the transcript. Gogo's voice, dir
 
   // ── CALL 3 of 3: sections 5–7 + footer ───────────────────────────────────
   const prompt3 = `You are writing PART 3 of 3 of a personalized 12-month business blueprint for ${member.name} in Gogo Bethke's coaching program "The Circle."
-
-${memberCtx}
 
 ---
 GOGO'S BRAIN — INCOME STREAMS & PASSIVE INCOME:
@@ -388,6 +382,14 @@ ${CIRCLE_FACTS}
 
 RULES:Every word from transcript or Brain. Gogo's voice, direct, warm, personal. No invented facts. Dense, complete content. PUNCTUATION: Never use em dashes (the — character), not once. Use commas, periods, or rewrite the sentence. Write natural, flowing prose, not clipped two or three word fragments. For numeric ranges use a hyphen, like "Months 1-3".`
 
+  // The member context (transcript included) goes first and identical in all 3 calls,
+  // so calls 2 and 3 read it from the prompt cache instead of paying for it again.
+  const memberBlock = {
+    type: 'text' as const,
+    text: memberCtx,
+    cache_control: { type: 'ephemeral' as const },
+  }
+
   let part1 = ''
   let part2 = ''
   let part3 = ''
@@ -397,28 +399,28 @@ RULES:Every word from transcript or Brain. Gogo's voice, direct, warm, personal.
     const msg1 = await anthropic.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 8000,
-      messages: [{ role: 'user', content: prompt1 }],
+      messages: [{ role: 'user', content: [memberBlock, { type: 'text', text: prompt1 }] }],
     })
     part1 = msg1.content[0].type === 'text' ? msg1.content[0].text : ''
-    console.log('[Blueprint] Call 1 done, tokens:', msg1.usage?.output_tokens)
+    console.log('[Blueprint] Call 1 done, tokens:', msg1.usage?.output_tokens, 'cache read:', msg1.usage?.cache_read_input_tokens)
 
     console.log('[Blueprint] Starting Call 2 of 3 (section 4 — 12-month blueprint)...')
     const msg2 = await anthropic.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 8000,
-      messages: [{ role: 'user', content: prompt2 }],
+      messages: [{ role: 'user', content: [memberBlock, { type: 'text', text: prompt2 }] }],
     })
     part2 = msg2.content[0].type === 'text' ? msg2.content[0].text : ''
-    console.log('[Blueprint] Call 2 done, tokens:', msg2.usage?.output_tokens)
+    console.log('[Blueprint] Call 2 done, tokens:', msg2.usage?.output_tokens, 'cache read:', msg2.usage?.cache_read_input_tokens)
 
     console.log('[Blueprint] Starting Call 3 of 3 (sections 5–7 + footer)...')
     const msg3 = await anthropic.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 8000,
-      messages: [{ role: 'user', content: prompt3 }],
+      messages: [{ role: 'user', content: [memberBlock, { type: 'text', text: prompt3 }] }],
     })
     part3 = msg3.content[0].type === 'text' ? msg3.content[0].text : ''
-    console.log('[Blueprint] Call 3 done, tokens:', msg3.usage?.output_tokens)
+    console.log('[Blueprint] Call 3 done, tokens:', msg3.usage?.output_tokens, 'cache read:', msg3.usage?.cache_read_input_tokens)
 
     if (!part1.trim() || !part2.trim() || !part3.trim()) {
       return NextResponse.json({ error: 'Claude returned an incomplete response. Please try again.' }, { status: 500 })

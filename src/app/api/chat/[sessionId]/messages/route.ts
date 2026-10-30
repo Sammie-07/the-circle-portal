@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext, buildCanonicalFacts } from '@/lib/brain-search'
 import { getTeamAgentCount } from '@/lib/settings'
-import { GOGO_SYSTEM_PROMPT as SYSTEM_PROMPT, makeDashCleaner, parseAttachmentFile, buildAttachmentContent } from '@/lib/gogo-chat'
+import { GOGO_SYSTEM_PROMPT as SYSTEM_PROMPT, makeDashCleaner, parseAttachmentFile, buildAttachmentContent, buildCachedChatRequest } from '@/lib/gogo-chat'
 
 export const maxDuration = 120
 
@@ -104,15 +104,6 @@ export async function POST(
 
   const canonicalFacts = buildCanonicalFacts(await getTeamAgentCount())
 
-  const systemWithContext = `${SYSTEM_PROMPT}
-
-${canonicalFacts}
-
-${brainContext
-  ? `GOGO'S BRAIN — RELEVANT KNOWLEDGE:\n\n${brainContext}`
-  : 'No relevant context was found in Gogo\'s knowledge base for this query.'
-}`
-
   const claudeMessages: { role: 'user' | 'assistant'; content: ReturnType<typeof buildAttachmentContent> }[] =
     conversationHistory.map(m => ({
       role: m.role as 'user' | 'assistant',
@@ -134,6 +125,13 @@ ${brainContext
     }
   }
 
+  // Once the 20-message window starts sliding, the oldest message drops off each turn
+  // and a cached history prefix would never match again, so only the system prompt is cached.
+  const { system, messages: apiMessages } = buildCachedChatRequest(
+    `${SYSTEM_PROMPT}\n\n${canonicalFacts}`, brainContext, claudeMessages,
+    { cacheHistory: conversationHistory.length < 20 },
+  )
+
   let fullResponse = ''
 
   const stream = new ReadableStream({
@@ -142,8 +140,8 @@ ${brainContext
         const claudeStream = getAnthropic().messages.stream({
           model: CLAUDE_MODEL,
           max_tokens: 3000,
-          system: systemWithContext,
-          messages: claudeMessages,
+          system,
+          messages: apiMessages,
         })
 
         // Hard-strip em dashes at the stream level, no exceptions (markdown
