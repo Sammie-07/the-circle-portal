@@ -31,6 +31,14 @@ function monthLong(iso: string): string {
   return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 
+// The day the member submitted the check-in, in Eastern time (the team's clock).
+function filledOn(iso: string | null | undefined, withYear = true): string | null {
+  if (!iso) return null
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', ...(withYear ? { year: 'numeric' } : {}), timeZone: 'America/New_York',
+  })
+}
+
 function toNum(v: unknown): number | null {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
   if (typeof v === 'string') {
@@ -97,10 +105,10 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
   // Columns = optional intake baseline + each completed month (oldest → newest).
   const columns = useMemo(() => {
     if (!selected) return []
-    const cols: Array<{ label: string; answers: SurveyAnswers; isBaseline: boolean }> = []
-    if (selected.baseline) cols.push({ label: 'Intake', answers: selected.baseline, isBaseline: true })
+    const cols: Array<{ label: string; answers: SurveyAnswers; isBaseline: boolean; filled: string | null }> = []
+    if (selected.baseline) cols.push({ label: 'Intake', answers: selected.baseline, isBaseline: true, filled: null })
     for (const r of selected.responses) {
-      cols.push({ label: monthShort(r.periodMonth), answers: r.answers, isBaseline: false })
+      cols.push({ label: monthShort(r.periodMonth), answers: r.answers, isBaseline: false, filled: filledOn(r.completedAt) })
     }
     return cols
   }, [selected])
@@ -126,7 +134,7 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
 
   // Reflection columns = each completed month, oldest → newest (no intake, which
   // never captured written answers).
-  const reflectionCols = selected ? selected.responses.map((r) => ({ periodMonth: r.periodMonth, answers: r.answers })) : []
+  const reflectionCols = selected ? selected.responses.map((r) => ({ periodMonth: r.periodMonth, answers: r.answers, filled: filledOn(r.completedAt) })) : []
   const hasReflections = reflectionCols.some((c) => reflectionQs.some((q) => {
     const v = c.answers[q.key]
     return typeof v === 'string' && v.trim() !== ''
@@ -158,6 +166,11 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
                     ? 'No check-ins yet'
                     : `${m.responses.length} month${m.responses.length === 1 ? '' : 's'} tracked`}
                 </div>
+                {m.responses.length > 0 && filledOn(m.responses[m.responses.length - 1].completedAt) && (
+                  <div className="text-[var(--text-4)] text-[11px] mt-0.5">
+                    Last filled {filledOn(m.responses[m.responses.length - 1].completedAt)}
+                  </div>
+                )}
               </button>
             )
           })}
@@ -194,7 +207,16 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
                 <p className="text-[var(--text-3)] text-sm mt-1">
                   {selected.responses.length} monthly check-in{selected.responses.length === 1 ? '' : 's'} tracked
                   {latestResponse ? ` · latest ${monthLong(latestResponse.periodMonth)}` : ''}
+                  {latestResponse && filledOn(latestResponse.completedAt) ? `, filled ${filledOn(latestResponse.completedAt)}` : ''}
                 </p>
+                {selected.responses.length > 0 && (
+                  <p className="text-[var(--text-3)] text-xs mt-1.5">
+                    Filled on:{' '}
+                    {selected.responses
+                      .map((r) => `${monthShort(r.periodMonth)} → ${filledOn(r.completedAt) ?? 'date not recorded'}`)
+                      .join(' · ')}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -310,6 +332,7 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
                             ) : (
                               c.label
                             )}
+                            {c.filled && <div className="text-[10px] font-normal text-[var(--text-3)] mt-0.5">Filled {c.filled}</div>}
                           </th>
                         )
                       })}
@@ -378,6 +401,7 @@ export default function SurveyProgress({ members }: { members: Member[] }) {
                                   <span className="rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider" style={{ color: '#090909', background: GOLD }}>Latest</span>
                                 </span>
                               ) : monthShort(c.periodMonth)}
+                              {c.filled && <div className="text-[10px] font-normal text-[var(--text-3)] mt-0.5">Filled {c.filled}</div>}
                             </th>
                           )
                         })}
