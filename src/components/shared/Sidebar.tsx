@@ -9,7 +9,7 @@ import { useTheme } from './ThemeProvider'
 import {
   Users, SquareCheck, TrendingUp, Sparkles, FileText, Layers, CalendarCheck,
   DollarSign, Video, MessageCircle, CircleUser, Settings, LayoutDashboard,
-  Compass, Folder, StickyNote, User, type LucideIcon,
+  Compass, Folder, StickyNote, User, Target, type LucideIcon,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -24,6 +24,7 @@ const adminNav: NavItem[] = [
   { href: '/admin/homework', label: 'Homework', icon: SquareCheck },
   { href: '/admin/progress', label: 'Progress', icon: TrendingUp },
   { href: '/admin/content', label: 'Content', icon: Sparkles },
+  { href: '/admin/leads', label: 'Leads', icon: Target },
   { href: '/admin/reports', label: 'Reports', icon: FileText },
   { href: '/admin/bulk-reports', label: 'Bulk Reports', icon: Layers },
   { href: '/admin/log', label: 'Log This Week', icon: CalendarCheck },

@@ -698,3 +698,30 @@ alter table content_posts drop constraint if exists content_posts_bucket_check;
 update content_posts set bucket = 'experience' where bucket = 'room';
 alter table content_posts add constraint content_posts_bucket_check
   check (bucket in ('coaching','pearls','transformation','proof','experience','coach'));
+
+-- 2026-11-03: public Blueprint Test leads (/blueprint-test). Written by the
+-- service role from the public API; staff read/update them on /admin/leads.
+create table if not exists blueprint_tests (
+  id uuid primary key default gen_random_uuid(),
+  token text not null unique,
+  created_at timestamptz not null default now(),
+  name text not null,
+  email text not null,
+  phone text,
+  answers jsonb not null default '{}'::jsonb,
+  scores jsonb not null default '{}'::jsonb,
+  bottleneck text,
+  route text not null,
+  second_route text,
+  flags text[] not null default '{}',
+  result jsonb,
+  result_status text not null default 'pending' check (result_status in ('pending','ready','error')),
+  source jsonb not null default '{}'::jsonb,
+  status text not null default 'new' check (status in ('new','contacted','booked','joined','not_fit')),
+  notes text
+);
+create index if not exists blueprint_tests_created_idx on blueprint_tests (created_at desc);
+create index if not exists blueprint_tests_email_idx on blueprint_tests (lower(email));
+alter table blueprint_tests enable row level security;
+create policy "Admins manage blueprint tests" on blueprint_tests
+  for all using (is_admin()) with check (is_admin());

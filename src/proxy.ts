@@ -33,7 +33,11 @@ export async function proxy(request: NextRequest) {
   //  - /api/ghl/                  : GHL webhook (shared-secret gated)
   //  - /api/cron/                 : Vercel cron (Bearer-secret gated)
   //  - /api/checkin/              : token-gated check-in submit
+  //  - /blueprint-test, /api/blueprint-test : public Blueprint Test + token results
   if (
+    pathname === '/blueprint-test' ||
+    pathname.startsWith('/blueprint-test/') ||
+    pathname.startsWith('/api/blueprint-test') ||
     pathname.startsWith('/b/') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/checkin/') ||

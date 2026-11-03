@@ -171,6 +171,33 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-11-03
+- **Blueprint Test: public lead engine for marketing The Circle (`/blueprint-test`).** A free test that
+  scores a visitor on the four freedoms (time, location, financial, CEO mindset), finds their bottleneck,
+  sends them to the right part of the business, and gives them "half the answers" in Gogo's voice.
+  - **Questions** (`src/lib/blueprint-test/questions.ts`): 5 steps. Every question from The Circle's GHL
+    intake form is included (#teamgogo, GGTC member, BBM, household income, 12-month revenue, hours,
+    team structure, support team + help at home, investment property, credit score, taxes, bankruptcy,
+    pain points, investment readiness, decision makers), plus 12 four-freedom statements (1-5 scale) and
+    a 12-month vision question. Then name, email, optional phone and contact consent. A half-finished
+    test survives a refresh (localStorage).
+  - **Scoring + routing** (`score.ts`, rules not AI): each freedom 0-100; lowest = bottleneck.
+    Not in business yet → Not ready (free content); six figures (revenue or household) and not "No" to
+    investing → **The Circle**; six-figure agent not ready to invest and not on #teamgogo → **Partner
+    with Gogo**; otherwise → **GoGet'Em Community**. Licensed agents not on #teamgogo also get Partner as
+    a second fit. Staff flags: taxes, bankruptcy, credit < 620, decision makers not on board, questions
+    about the investment, 80+ hours, already #teamgogo/GGTC.
+  - **Results** (`results.ts`): Claude writes headline, read-back, one insight per freedom, the
+    bottleneck, 3 first moves, "the other half" (what the full blueprint maps) and a closing line, from
+    the person's answers + Brain excerpts, Circle facts, no em dashes. Runs in `after()` (~35s); the
+    private results page `/blueprint-test/r/[token]` shows scores instantly and polls. Labeled
+    AI-assisted. Retry button if the write-up fails.
+  - **The Circle CTA** points to `app_settings.blueprint_clarity_url` (clarity-call booking link) once
+    set; until then gogobethke.com/thecircle.
+  - **Admin → Leads** (`/admin/leads`): every test with route, revenue, scores, bottleneck, flags,
+    all answers, status (New / Contacted / Call booked / Joined / Not a fit), notes, UTM source.
+  - New table `blueprint_tests` (RLS: staff only). Public paths added to `src/proxy.ts`.
+
 ### 2026-10-30
 - **Prompt caching on the chats and the blueprint generator (cost).** Claude now re-reads repeated text
   from its prompt cache at ~10% of the input price instead of paying full price each time.
