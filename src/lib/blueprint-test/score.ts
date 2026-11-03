@@ -14,7 +14,7 @@ export const DESTINATIONS: Record<Route, Destination> = {
   circle: {
     label: 'The Circle',
     url: 'https://gogobethke.com/thecircle',
-    cta: 'Book your clarity call',
+    cta: 'Apply for your clarity call',
     blurb: 'My small, handpicked, application-only mastermind for six-figure entrepreneurs building time, location and financial freedom.',
   },
   partner: {
