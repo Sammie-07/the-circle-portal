@@ -176,6 +176,7 @@ Every code change is recorded here, newest first.
   "Last filled <date>", the member header shows "latest <month>, filled <date>" plus a "Filled on" line
   for every month, and each month column in the All metrics and Reflections tables shows "Filled <date>"
   under the month. Dates come from `survey_responses.completed_at`, shown in Eastern time.
+  Month labels are written in full ("October 2026", not "Oct 26").
 - **Blueprint Test: public lead engine for marketing The Circle (`/blueprint-test`).** A free test that
   scores a visitor on the four freedoms (time, location, financial, CEO mindset), finds their bottleneck,
   sends them to the right part of the business, and gives them "half the answers" in Gogo's voice.

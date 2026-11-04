@@ -25,7 +25,7 @@ const RED = '#ff8080'
 const KPI_KEYS = ['total_income', 'credit_score', 'total_debt', 'closings'] as const
 
 function monthShort(iso: string): string {
-  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 function monthLong(iso: string): string {
   return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
