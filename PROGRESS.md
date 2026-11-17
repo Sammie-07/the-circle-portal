@@ -171,6 +171,15 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-11-17
+- **CEO Call Form → problem statement for Gogo.** GHL survey "The CEO Call Form" (ChfGby8l8lRNGPiQZkcp)
+  posts to `POST /api/ghl/ceo-call` (same `GHL_WEBHOOK_SECRET` as the application webhook, header
+  `x-webhook-secret` or `?key=`). `src/lib/problem-statement.ts` pulls the 18 form answers wherever GHL puts
+  them (by label, by field key with/without `contact.`, under `customData`/`contact`), saves the raw payload,
+  replies 200, then writes a one-paragraph (110-170 words) problem statement from the answers + Brain
+  excerpts (third person, first name or they/them, no em dashes, diagnosis not a plan). Admin → CEO Calls
+  shows each statement, the answers, and "Rewrite statement". New table `problem_statements` (RLS staff).
+
 ### 2026-11-03
 - **Progress tab shows when each monthly check-in was filled.** `SurveyProgress.tsx`: member list shows
   "Last filled <date>", the member header shows "latest <month>, filled <date>" plus a "Filled on" line

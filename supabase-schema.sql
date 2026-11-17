@@ -725,3 +725,24 @@ create index if not exists blueprint_tests_email_idx on blueprint_tests (lower(e
 alter table blueprint_tests enable row level security;
 create policy "Admins manage blueprint tests" on blueprint_tests
   for all using (is_admin()) with check (is_admin());
+
+-- 2026-11-17: CEO Call Form submissions + Gogo's one-paragraph problem statement.
+create table if not exists problem_statements (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  contact_id text,
+  name text,
+  email text,
+  phone text,
+  form_name text,
+  answers jsonb not null default '{}'::jsonb,
+  raw jsonb not null default '{}'::jsonb,
+  statement text,
+  status text not null default 'pending' check (status in ('pending','ready','error')),
+  error text,
+  emailed_at timestamptz
+);
+create index if not exists problem_statements_created_idx on problem_statements (created_at desc);
+alter table problem_statements enable row level security;
+create policy "Admins manage problem statements" on problem_statements
+  for all using (is_admin()) with check (is_admin());
