@@ -16,7 +16,7 @@ export default async function AdminCeoCallsPage() {
 
   const { data: rows } = await createAdminClient()
     .from('problem_statements')
-    .select('id, created_at, name, email, phone, answers, statement, status, error')
+    .select('id, created_at, name, email, phone, answers, statement, status, error, ghl_sent_at, ghl_error')
     .order('created_at', { ascending: false })
     .limit(300)
 

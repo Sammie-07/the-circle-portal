@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAnthropic, CLAUDE_MODEL } from '@/lib/ai'
 import { searchBrain, buildBrainContext } from '@/lib/brain-search'
+import { getSetting } from '@/lib/settings'
 
 // The CEO Call Form (GHL survey ChfGby8l8lRNGPiQZkcp): each submission is run
 // through Gogo's Brain into a one-paragraph problem statement she reads before
@@ -114,13 +115,34 @@ export async function writeStatement(name: string | null, answers: Record<string
 
 /** Writes and stores the statement for one submission (runs after the webhook replies). */
 export async function generateStatement(admin: SupabaseClient, id: string): Promise<void> {
-  const { data: row } = await admin.from('problem_statements').select('name, answers').eq('id', id).maybeSingle()
+  const { data: row } = await admin.from('problem_statements').select('contact_id, name, email, phone, answers').eq('id', id).maybeSingle()
   if (!row) return
+  let statement: string
   try {
-    const statement = await writeStatement(row.name as string | null, row.answers as Record<string, string>)
+    statement = await writeStatement(row.name as string | null, row.answers as Record<string, string>)
     await admin.from('problem_statements').update({ statement, status: 'ready', error: null }).eq('id', id)
   } catch (e) {
     console.error('Problem statement failed:', e)
     await admin.from('problem_statements').update({ status: 'error', error: String(e).slice(0, 500) }).eq('id', id)
+    return
+  }
+  await sendToGhl(admin, id, { contact_id: row.contact_id, name: row.name, email: row.email, phone: row.phone, problem_statement: statement })
+}
+
+/**
+ * Posts the finished statement to the GHL inbound-webhook workflow
+ * (app_settings.ceo_call_return_webhook), which saves it to the contact's
+ * custom field. A rewrite sends the new version, replacing the old one.
+ */
+async function sendToGhl(admin: SupabaseClient, id: string, payload: Record<string, unknown>): Promise<void> {
+  const url = await getSetting('ceo_call_return_webhook')
+  if (!url) return
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    await admin.from('problem_statements')
+      .update(res.ok ? { ghl_sent_at: new Date().toISOString(), ghl_error: null } : { ghl_error: `GHL replied ${res.status}` })
+      .eq('id', id)
+  } catch (e) {
+    await admin.from('problem_statements').update({ ghl_error: String(e).slice(0, 300) }).eq('id', id)
   }
 }

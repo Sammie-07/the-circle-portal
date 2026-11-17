@@ -179,6 +179,9 @@ Every code change is recorded here, newest first.
   replies 200, then writes a one-paragraph (110-170 words) problem statement from the answers + Brain
   excerpts (third person, first name or they/them, no em dashes, diagnosis not a plan). Admin → CEO Calls
   shows each statement, the answers, and "Rewrite statement". New table `problem_statements` (RLS staff).
+  - When a statement is ready (or rewritten) it is POSTed to the GHL inbound-webhook workflow in
+    `app_settings.ceo_call_return_webhook` as `{contact_id, name, email, phone, problem_statement}`, which
+    maps it into a contact custom field. `ghl_sent_at` / `ghl_error` shown on the CEO Calls page.
 
 ### 2026-11-03
 - **Progress tab shows when each monthly check-in was filled.** `SurveyProgress.tsx`: member list shows

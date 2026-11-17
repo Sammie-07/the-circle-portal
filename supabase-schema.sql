@@ -746,3 +746,7 @@ create index if not exists problem_statements_created_idx on problem_statements 
 alter table problem_statements enable row level security;
 create policy "Admins manage problem statements" on problem_statements
   for all using (is_admin()) with check (is_admin());
+alter table problem_statements
+  add column if not exists ghl_sent_at timestamptz,
+  add column if not exists ghl_error text;
+-- app_settings.ceo_call_return_webhook = the GHL inbound-webhook URL that receives finished statements.

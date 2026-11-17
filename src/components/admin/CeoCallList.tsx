@@ -13,6 +13,8 @@ export interface CeoCall {
   statement: string | null
   status: 'pending' | 'ready' | 'error'
   error: string | null
+  ghl_sent_at: string | null
+  ghl_error: string | null
 }
 
 const when = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' })
@@ -48,6 +50,11 @@ export default function CeoCallList({ calls }: { calls: CeoCall[] }) {
           {c.status === 'ready' && c.statement && <p className="text-[var(--text)] text-[15px] leading-relaxed">{c.statement}</p>}
           {c.status === 'pending' && <p className="text-[var(--text-3)] text-sm">Writing the problem statement… refresh in a minute.</p>}
           {c.status === 'error' && <p className="text-[#ff8080] text-sm">Could not write the statement{c.error ? `: ${c.error}` : ''}.</p>}
+          {c.status === 'ready' && (
+            <p className="text-[11px] mt-2" style={{ color: c.ghl_error ? '#ff8080' : 'var(--text-4)' }}>
+              {c.ghl_sent_at ? 'Sent to GHL ✓' : c.ghl_error ? `Not sent to GHL: ${c.ghl_error}` : 'Not sent to GHL yet'}
+            </p>
+          )}
 
           <div className="flex flex-wrap gap-4 mt-4 text-[12px]">
             <button onClick={() => setOpen(open === c.id ? null : c.id)} className="text-[var(--gold-text)] hover:text-[var(--gold)]">
