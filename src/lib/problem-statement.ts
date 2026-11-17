@@ -71,7 +71,8 @@ export function extractContact(body: Body) {
   const first = asText(body.first_name ?? c.first_name ?? c.firstName)
   const last = asText(body.last_name ?? c.last_name ?? c.lastName)
   return {
-    contactId: asText(body.contact_id ?? c.id ?? body.contactId),
+    // GHL's Custom Webhook action sends the contact id as plain `id`.
+    contactId: asText(body.contact_id ?? c.id ?? body.contactId ?? body.id),
     name: asText(body.full_name ?? body.name ?? c.name ?? c.full_name) ?? ([first, last].filter(Boolean).join(' ') || null),
     email: asText(body.email ?? c.email)?.toLowerCase() ?? null,
     phone: asText(body.phone ?? c.phone),
