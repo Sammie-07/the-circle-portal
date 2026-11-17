@@ -1,19 +1,22 @@
 import { NextResponse, after } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getSetting } from '@/lib/settings'
 import { extractAnswers, extractContact, generateStatement } from '@/lib/problem-statement'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
-// Webhook from the GHL "CEO Call Form" workflow. Secured by the same shared
-// secret as /api/ghl/application (x-webhook-secret header or ?key=). Saves the
+// Webhook from the GHL "CEO Call Form" workflow. Secured by a shared secret
+// (x-webhook-secret header or ?key=). Saves the
 // submission, replies 200 right away so GHL doesn't retry, then writes Gogo's
 // problem statement in the background.
 export async function POST(request: Request) {
-  const expected = process.env.GHL_WEBHOOK_SECRET
+  // Either the shared GHL secret, or this form's own key (app_settings.ceo_call_webhook_key),
+  // which lets the GHL action carry it in the URL instead of a header.
   const url = new URL(request.url)
   const provided = request.headers.get('x-webhook-secret') ?? url.searchParams.get('key')
-  if (!expected || provided !== expected) {
+  const accepted = [process.env.GHL_WEBHOOK_SECRET, await getSetting('ceo_call_webhook_key')].filter(Boolean)
+  if (!provided || !accepted.includes(provided)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

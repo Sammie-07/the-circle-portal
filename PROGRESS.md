@@ -182,6 +182,8 @@ Every code change is recorded here, newest first.
   - When a statement is ready (or rewritten) it is POSTed to the GHL inbound-webhook workflow in
     `app_settings.ceo_call_return_webhook` as `{contact_id, name, email, phone, problem_statement}`, which
     maps it into a contact custom field. `ghl_sent_at` / `ghl_error` shown on the CEO Calls page.
+  - Auth also accepts this form's own key, `app_settings.ceo_call_webhook_key`, as `?key=` in the URL
+    (GHL's custom webhook action had no header set, so it got 401).
 
 ### 2026-11-03
 - **Progress tab shows when each monthly check-in was filled.** `SurveyProgress.tsx`: member list shows
