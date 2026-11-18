@@ -87,6 +87,7 @@ RULES:
 - ONE paragraph, 110-170 words. Third person, using their first name. Written for Gogo's eyes only, not to the person. Do not mention Gogo by name (she is the reader); state the diagnosis directly.
 - Never guess gender from a name: refer to them by first name or they/them.
 - Use only what the form says and what the Brain excerpts say. Never invent numbers, history or results. If an answer is missing or vague, do not guess; you may note that it was left blank if it matters.
+- If almost nothing was filled in, write one or two sentences saying the form came in without answers and what Gogo will need to ask for on the call. Do not pad it to length.
 - No headings, no bullet points, no em dashes (— or --), no exclamation points, no flattery, no advice list. This is a diagnosis, not a plan.
 - Output the paragraph only.`
 

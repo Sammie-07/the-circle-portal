@@ -60,7 +60,7 @@ export default function CeoCallList({ calls }: { calls: CeoCall[] }) {
             <button onClick={() => setOpen(open === c.id ? null : c.id)} className="text-[var(--gold-text)] hover:text-[var(--gold)]">
               {open === c.id ? 'Hide their answers ▴' : 'See their answers ▾'}
             </button>
-            {c.status !== 'pending' && Object.keys(c.answers ?? {}).length > 0 && (
+            {c.status !== 'pending' && (
               <button onClick={() => regenerate(c.id)} disabled={busy === c.id} className="text-[var(--text-3)] hover:text-[var(--text)] disabled:opacity-50">
                 {busy === c.id ? 'Rewriting…' : '↻ Rewrite statement'}
               </button>

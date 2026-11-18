@@ -39,9 +39,10 @@ export async function POST(request: Request) {
       form_name: 'The CEO Call Form',
       answers,
       raw: body,
-      // Nothing usable arrived: keep the raw payload so the field mapping can be fixed.
-      status: Object.keys(answers).length ? 'pending' : 'error',
-      error: Object.keys(answers).length ? null : 'No form answers found in the webhook payload',
+      // Always run the full process, even when no answers came through (tests,
+      // or a GHL action that only sends contact fields): the statement then
+      // says the form came in empty, and the raw payload is kept for debugging.
+      status: 'pending',
     })
     .select('id, status')
     .single()
@@ -50,6 +51,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not save' }, { status: 500 })
   }
 
-  if (row.status === 'pending') after(() => generateStatement(admin, row.id as string))
+  after(() => generateStatement(admin, row.id as string))
   return NextResponse.json({ ok: true, id: row.id })
 }

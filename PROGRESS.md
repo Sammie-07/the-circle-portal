@@ -184,6 +184,9 @@ Every code change is recorded here, newest first.
     maps it into a contact custom field. `ghl_sent_at` / `ghl_error` shown on the CEO Calls page.
   - Auth also accepts this form's own key, `app_settings.ceo_call_webhook_key`, as `?key=` in the URL
     (GHL's custom webhook action had no header set, so it got 401).
+  - Every submission runs the full process, even with no answers (tests, or a GHL Custom Webhook that only
+    sends id/name/email/phone): the statement then says the form came in empty. GHL's plain `id` is read
+    as the contact id.
 
 ### 2026-11-03
 - **Progress tab shows when each monthly check-in was filled.** `SurveyProgress.tsx`: member list shows
