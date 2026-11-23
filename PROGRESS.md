@@ -171,6 +171,18 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-11-23
+- **My Notes: no more blank notes (Chrissi's report).** Her 7 "blank" notes were never saved: created and
+  never updated (same created/updated time), 5 of them within 4 minutes on Nov 17, one minute before she
+  asked the chat why she couldn't paste her notes. On phones the editor sits below the list, so a new note
+  opened off-screen, and saving only happened on blur. `MyNotes.tsx` rewritten: autosave while typing
+  (1.2s), save on leaving the page (`pagehide`/hidden, `keepalive`) plus a leave warning while unsaved,
+  every keystroke kept in localStorage until the server confirms (restored and re-saved on next visit),
+  clear error + "Try again" (expired session detected), phones scroll to the editor and focus it,
+  "New note" reuses an empty note instead of stacking blanks, and the old bug where a slow save
+  overwrote the next note's title is gone. Her 4 notes with content were intact; nothing was lost
+  server-side, so nothing could be restored.
+
 ### 2026-11-17
 - **CEO Call Form → problem statement for Gogo.** GHL survey "The CEO Call Form" (ChfGby8l8lRNGPiQZkcp)
   posts to `POST /api/ghl/ceo-call` (same `GHL_WEBHOOK_SECRET` as the application webhook, header
