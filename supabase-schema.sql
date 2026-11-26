@@ -750,3 +750,17 @@ alter table problem_statements
   add column if not exists ghl_sent_at timestamptz,
   add column if not exists ghl_error text;
 -- app_settings.ceo_call_return_webhook = the GHL inbound-webhook URL that receives finished statements.
+
+-- 2026-11-26: 12-Month CEO Roadmap (generated after the CEO Call, previewed, then emailed).
+alter table problem_statements
+  add column if not exists roadmap_status text not null default 'none'
+    check (roadmap_status in ('none','generating','ready','error')),
+  add column if not exists roadmap_error text,
+  add column if not exists roadmap_html text,
+  add column if not exists roadmap_token text unique,
+  add column if not exists roadmap_transcript text,
+  add column if not exists roadmap_fathom_link text,
+  add column if not exists roadmap_generated_at timestamptz,
+  add column if not exists roadmap_started_at timestamptz,
+  add column if not exists roadmap_email text,
+  add column if not exists roadmap_sent_at timestamptz;

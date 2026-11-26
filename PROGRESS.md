@@ -171,6 +171,22 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 
 Every code change is recorded here, newest first.
 
+### 2026-11-26
+- **12-Month CEO Roadmap (Admin → CEO Calls).** The deliverable for people who had a CEO Call with Gogo, a
+  separate product from The Circle (never called a blueprint). Each CEO Call card has a roadmap panel:
+  Fathom share link (or pasted transcript) → "Generate roadmap" → background run (~90s) → "Preview
+  roadmap" → email prefilled from their CEO Call Form, editable → "Send to <name>"; plus "Regenerate with
+  changes" (feedback box). `src/lib/ceo-roadmap.ts`: Brain context (6 searches) + one shared outline call
+  (core problem, 12 month themes, whether social media is part of the problem) + 7 parallel HTML calls with
+  a cached shared context: cover + Where You Are Today + The Real Problem; Months 1-12 (each with goal,
+  Weeks 1-4 actions, "Done means", "Where The Circle comes in"); a Posting Schedule section only when
+  social/content/lead gen is part of the problem; "Why You Can't Do This Alone" with an Apply for The Circle
+  button (`app_settings.blueprint_clarity_url`) + footer. Every fix leads back to The Circle; Circle facts,
+  no em dashes, no income promises, no investment advice, no gender from names. Reuses the blueprint CSS +
+  roadmap CSS (mobile responsive). Public page `/roadmap/[token]` (PDF/HTML toolbar, now shared with
+  `/b/[token]` via `src/lib/share-toolbar.ts`). Routes: `POST /api/admin/ceo-calls/[id]/roadmap`,
+  `POST /api/admin/ceo-calls/[id]/roadmap/send`. New `problem_statements.roadmap_*` columns.
+
 ### 2026-11-23
 - **My Notes: no more blank notes (Chrissi's report).** Her 7 "blank" notes were never saved: created and
   never updated (same created/updated time), 5 of them within 4 minutes on Nov 17, one minute before she

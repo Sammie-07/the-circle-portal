@@ -16,7 +16,7 @@ export default async function AdminCeoCallsPage() {
 
   const { data: rows } = await createAdminClient()
     .from('problem_statements')
-    .select('id, created_at, name, email, phone, answers, statement, status, error, ghl_sent_at, ghl_error')
+    .select('id, created_at, name, email, phone, answers, statement, status, error, ghl_sent_at, ghl_error, roadmap_status, roadmap_error, roadmap_token, roadmap_fathom_link, roadmap_transcript, roadmap_generated_at, roadmap_started_at, roadmap_email, roadmap_sent_at')
     .order('created_at', { ascending: false })
     .limit(300)
 
@@ -26,10 +26,11 @@ export default async function AdminCeoCallsPage() {
         <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
         <h1 className="text-[var(--text)] font-serif text-[38px]">CEO Calls</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
-          Every CEO Call Form, run through Gogo&apos;s Brain into a one-paragraph problem statement to read before the call.
+          Every CEO Call Form, run through Gogo&apos;s Brain into a one-paragraph problem statement to read before the call, and after the call, their 12-Month CEO Roadmap.
         </p>
       </div>
-      <CeoCallList calls={(rows ?? []) as CeoCall[]} />
+      {/* The transcript itself stays on the server; the page only needs to know one exists. */}
+      <CeoCallList calls={(rows ?? []).map(({ roadmap_transcript, ...r }) => ({ ...r, roadmap_has_transcript: !!roadmap_transcript })) as CeoCall[]} />
     </div>
   )
 }

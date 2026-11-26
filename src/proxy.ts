@@ -34,10 +34,12 @@ export async function proxy(request: NextRequest) {
   //  - /api/cron/                 : Vercel cron (Bearer-secret gated)
   //  - /api/checkin/              : token-gated check-in submit
   //  - /blueprint-test, /api/blueprint-test : public Blueprint Test + token results
+  //  - /roadmap/                  : token-gated 12-Month CEO Roadmap
   if (
     pathname === '/blueprint-test' ||
     pathname.startsWith('/blueprint-test/') ||
     pathname.startsWith('/api/blueprint-test') ||
+    pathname.startsWith('/roadmap/') ||
     pathname.startsWith('/b/') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/checkin/') ||
