@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
 import { PRINT_BAR, downloadToolbar } from '@/lib/share-toolbar'
 
-// Public, token-gated: the person's 12-Month CEO Roadmap (same toolbar and
+// Public, token-gated: the person's 12-Month CEO Business Plan (same toolbar and
 // print mode as Circle blueprints at /b/[token]).
 export async function GET(request: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
@@ -18,7 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     return new NextResponse(
       `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Not Found</title>
       <style>body{background:#090909;color:#555;font-family:Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}</style>
-      </head><body><p>Roadmap not found.</p></body></html>`,
+      </head><body><p>Business plan not found.</p></body></html>`,
       { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
     )
   }

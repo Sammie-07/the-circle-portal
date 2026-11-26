@@ -26,7 +26,7 @@ export default async function AdminCeoCallsPage() {
         <p className="text-[var(--gold-text)] text-[10px] tracking-[0.28em] uppercase mb-2">Admin</p>
         <h1 className="text-[var(--text)] font-serif text-[38px]">CEO Calls</h1>
         <p className="text-[var(--text-3)] text-sm mt-1">
-          Every CEO Call Form, run through Gogo&apos;s Brain into a one-paragraph problem statement to read before the call, and after the call, their 12-Month CEO Roadmap.
+          Every CEO Call Form, run through Gogo&apos;s Brain into a one-paragraph problem statement to read before the call, and after the call, their 12-Month CEO Business Plan.
         </p>
       </div>
       {/* The transcript itself stays on the server; the page only needs to know one exists. */}

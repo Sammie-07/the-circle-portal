@@ -172,7 +172,7 @@ script unsets `ANTHROPIC_API_KEY` so AI fails loud locally instead of spending t
 Every code change is recorded here, newest first.
 
 ### 2026-11-26
-- **12-Month CEO Roadmap (Admin → CEO Calls).** The deliverable for people who had a CEO Call with Gogo, a
+- **12-Month CEO Business Plan (Admin → CEO Calls; renamed from "CEO Roadmap" 2026-11-26, public link now /plan/<token>; code/DB still use roadmap_* names).** The deliverable for people who had a CEO Call with Gogo, a
   separate product from The Circle (never called a blueprint). Each CEO Call card has a roadmap panel:
   Fathom share link (or pasted transcript) → "Generate roadmap" → background run (~90s) → "Preview
   roadmap" → email prefilled from their CEO Call Form, editable → "Send to <name>"; plus "Regenerate with

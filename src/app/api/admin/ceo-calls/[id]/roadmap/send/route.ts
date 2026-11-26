@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, brandedEmail } from '@/lib/email'
 
-// Staff: email the person the link to their 12-Month CEO Roadmap (after the
+// Staff: email the person the link to their 12-Month CEO Business Plan (after the
 // team has previewed it). The address defaults to the one from their CEO Call
 // Form and can be changed before sending.
 const STAFF = ['owner', 'admin', 'manager', 'support', 'tech']
@@ -27,14 +27,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!row?.roadmap_html || !row.roadmap_token) return NextResponse.json({ error: 'Generate the roadmap first.' }, { status: 400 })
 
   const first = String(row.name ?? '').trim().split(/\s+/)[0] || 'there'
-  const res = await sendEmail(email, 'Your 12-Month CEO Roadmap from Gogo', brandedEmail({
+  const res = await sendEmail(email, 'Your 12-Month CEO Business Plan from Gogo', brandedEmail({
     eyebrow: 'Your CEO Call with Gogo',
-    heading: `${first}, your 12-Month CEO Roadmap is ready`,
+    heading: `${first}, your 12-Month CEO Business Plan is ready`,
     body: [
       'Here is everything we talked about on our CEO Call, turned into a month-by-month plan: where you are today, the real problem holding you back, and exactly what to do over the next 12 months.',
       'Open it on any device, and save it as a PDF from the top of the page.',
     ],
-    cta: { text: 'Open your roadmap', url: `${APP_URL}/roadmap/${row.roadmap_token}` },
+    cta: { text: 'Open your roadmap', url: `${APP_URL}/plan/${row.roadmap_token}` },
     footer: 'Gogo Bethke · CEO Call · gogobethke.com',
   }))
   if (!res.ok) return NextResponse.json({ error: `Email failed to send (${res.status}).` }, { status: 502 })

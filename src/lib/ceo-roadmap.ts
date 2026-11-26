@@ -6,7 +6,7 @@ import { CIRCLE_FACTS } from '@/lib/circle-facts'
 import { getSetting } from '@/lib/settings'
 import { CEO_CALL_FIELDS } from '@/lib/problem-statement'
 
-// The 12-Month CEO Roadmap: the deliverable for people who had a CEO Call with
+// The 12-Month CEO Business Plan: the deliverable for people who had a CEO Call with
 // Gogo (a separate product from The Circle, same universe). Built from the
 // call transcript, their CEO Call Form answers, the problem statement and
 // Gogo's Brain. Month by month with week-by-week actions, a posting schedule
@@ -62,7 +62,7 @@ const ROADMAP_CSS = `<style>
 </style>`
 
 const ROADMAP_CLASSES = `${BLUEPRINT_CSS_CLASSES}
-Roadmap-only classes:
+Business-plan-only classes:
 month-card / month-header / month-label / month-title / month-focus / month-body / month-goal
 week-wrap > table.week-table (thead: 4 th Week 1-4; tbody: one tr with 4 td, each holding a ul of li bullets)
 month-metric / circle-tie (with div.ct-label + p)
@@ -72,7 +72,7 @@ cta-box (p + a.cta-btn)`
 const RULES = `${CIRCLE_FACTS}
 - The Circle is a 12-month commitment.
 
-ABOUT THIS DOCUMENT: This is a "12-Month CEO Roadmap" from a CEO Call with Gogo Bethke. It is NOT a Circle blueprint and the reader is NOT a Circle member. Never call it a blueprint. Never say "welcome to The Circle" or treat them as a member.
+ABOUT THIS DOCUMENT: This is a "12-Month CEO Business Plan" from a CEO Call with Gogo Bethke. It is NOT a Circle blueprint and the reader is NOT a Circle member. Never call it a blueprint or a roadmap; it is their business plan. Never say "welcome to The Circle" or treat them as a member.
 
 THE STRATEGY (never state this out loud): give them a real, specific plan, but only part of the solution. Every fix comes back to the same truth: to actually execute it they need what only The Circle gives, Gogo's coaching, accountability every week, and the systems Gogo helps members build. Do this naturally and specifically (tie it to the exact problem), never as a generic "join The Circle" line, never desperate, never pushy.
 
@@ -143,7 +143,7 @@ function shell(body: string, name: string): string {
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>${esc(name)} · 12-Month CEO Roadmap · Gogo Bethke</title>
+<title>${esc(name)} · 12-Month CEO Business Plan · Gogo Bethke</title>
 ${BLUEPRINT_CSS}
 ${ROADMAP_CSS}
 </head>
@@ -172,7 +172,7 @@ export async function buildRoadmap(row: Row, feedback?: string): Promise<string>
   ])
 
   const context = `PERSON: ${name} (first name: ${first})
-ROADMAP DATE: ${today}
+PLAN DATE: ${today}
 
 THEIR CEO CALL FORM:
 ${form}
@@ -205,7 +205,7 @@ ${RULES}
 ${feedback ? `\nREVISION REQUEST FROM GOGO'S TEAM (apply it everywhere it is relevant):\n${feedback}\n` : ''}`
 
   // 1. A shared outline keeps the parallel sections consistent with each other.
-  const outlineRaw = await ask(`Plan ${first}'s 12-Month CEO Roadmap. Decide the core problem, the order of the 12 months (what must come first so the rest works), and whether social media / content / marketing / lead generation is part of their problem (from the call or form).
+  const outlineRaw = await ask(`Plan ${first}'s 12-Month CEO Business Plan. Decide the core problem, the order of the 12 months (what must come first so the rest works), and whether social media / content / marketing / lead generation is part of their problem (from the call or form).
 OUTPUT ONLY minified JSON: {"motto":"one short line Gogo would say to them, from the call","core_problem":"1-2 sentences","needs_social":true|false,"months_intro":"2 sentences introducing the month-by-month plan","months":[{"n":1,"title":"evocative month title","focus":"what this month is for, one line"}, ...12 items]}`, context, 3000)
   const a = outlineRaw.indexOf('{'), b = outlineRaw.lastIndexOf('}')
   let outline: Outline
@@ -213,7 +213,7 @@ OUTPUT ONLY minified JSON: {"motto":"one short line Gogo would say to them, from
     outline = JSON.parse(outlineRaw.slice(a, b + 1)) as Outline
     if (!Array.isArray(outline.months) || outline.months.length < 12) throw new Error('short')
   } catch {
-    throw new Error('Could not plan the roadmap (the outline came back malformed). Try again.')
+    throw new Error('Could not plan the business plan (the outline came back malformed). Try again.')
   }
 
   const plan = `THE AGREED PLAN (follow it exactly, it keeps all parts consistent):
@@ -248,7 +248,7 @@ Use id="mN" on each card with its own month number. Each bullet is ONE short, co
   const partOpen = `${plan}
 
 Write exactly these elements:
-1. <section id="cover"> — exactly <div class="circle-logo-lg"><span></span></div> (no text inside it), brand-name "Gogo Bethke · CEO Call", h1 "Your 12-Month" + <em>CEO Roadmap</em>, cover-sub "Prepared by Gogo Bethke after our CEO Call", cover-tagline with this motto: "${outline.motto}", cover-meta "${esc(name)} · ${today}"
+1. <section id="cover"> — exactly <div class="circle-logo-lg"><span></span></div> (no text inside it), brand-name "Gogo Bethke · CEO Call", h1 "Your 12-Month" + <em>CEO Business Plan</em>, cover-sub "Prepared by Gogo Bethke after our CEO Call", cover-tagline with this motto: "${outline.motto}", cover-meta "${esc(name)} · ${today}"
 2. <section id="s1" class="page-section"><div class="inner"> — eyebrow "Section 01", h2 "Where You Are Today", section-intro, stat-row with 4 stat-cells (their real numbers), callout with my sharp read, assess-grid (left .g "What You Have Going For You" 4-6 items with ✓, right .r "What Is Costing You" 4-6 items with →)
 3. <section id="s2" class="page-section alt"><div class="inner"> — eyebrow "Section 02", h2 "The Real Problem", section-intro naming the core problem plainly, body-text paragraphs on why it keeps happening and what it is costing them, blockquote from Gogo's Brain with cite, rl-grid (red-side "What Got You Here" 5-6 items / green-side "What Gets You There" 5-6 items), callout red: why fixing this alone has not worked, and what changes when you have a coach and a room holding you to it (The Circle).
 Close every div and section.`
@@ -265,8 +265,8 @@ Close every div and section.`
   const partClose = `${plan}
 
 Write exactly these elements:
-1. <section id="s5" class="page-section alt"><div class="inner"> — eyebrow "Section ${outline.needs_social ? '05' : '04'}", h2 "Why You Can't Do This Alone", section-intro: this roadmap is the what; the how, the accountability and the systems are what we build together. Then rules-list with 5-6 rule-items (rule-n 01.., rule-headline in caps, rule-explain) naming the exact places people like them stall on a plan like this, each answered by what The Circle gives (my coaching, weekly accountability, the systems I help members build, a small handpicked room of people building the same freedom). Then blockquote from Gogo's Brain with cite. Then cta-box: p "If you are ready to stop doing this alone, apply for The Circle and let's build the other half together." + <a class="cta-btn" href="__CIRCLE_URL__">Apply for The Circle</a>
-2. <footer> — footer-circle (div with span), footer-quote with my warm closing line to ${first} from our call, footer-meta "12-Month CEO Roadmap · Gogo Bethke · gogobethke.com", second footer-meta "Confidential · Prepared for ${esc(name)} · ${today}"
+1. <section id="s5" class="page-section alt"><div class="inner"> — eyebrow "Section ${outline.needs_social ? '05' : '04'}", h2 "Why You Can't Do This Alone", section-intro: this plan is the what; the how, the accountability and the systems are what we build together. Then rules-list with 5-6 rule-items (rule-n 01.., rule-headline in caps, rule-explain) naming the exact places people like them stall on a plan like this, each answered by what The Circle gives (my coaching, weekly accountability, the systems I help members build, a small handpicked room of people building the same freedom). Then blockquote from Gogo's Brain with cite. Then cta-box: p "If you are ready to stop doing this alone, apply for The Circle and let's build the other half together." + <a class="cta-btn" href="__CIRCLE_URL__">Apply for The Circle</a>
+2. <footer> — footer-circle (div with span), footer-quote with my warm closing line to ${first} from our call, footer-meta "12-Month CEO Business Plan · Gogo Bethke · gogobethke.com", second footer-meta "Confidential · Prepared for ${esc(name)} · ${today}"
 Close every div and section.`
 
   const tasks: Promise<string>[] = [
@@ -288,7 +288,7 @@ Close every div and section.`
     ...(outline.needs_social ? [{ id: 's4', label: 'Posting' }] : []),
     { id: 's5', label: 'Next Step' },
   ]
-  const nav = `<nav><div class="nav-brand"><span class="nav-circle"></span>CEO Roadmap</div><div class="nav-links">${sections.map((s) => `<a href="#${s.id}">${s.label}</a>`).join('')}</div></nav>`
+  const nav = `<nav><div class="nav-brand"><span class="nav-circle"></span>CEO Business Plan</div><div class="nav-links">${sections.map((s) => `<a href="#${s.id}">${s.label}</a>`).join('')}</div></nav>`
   const months = `<section id="s3" class="page-section alt"><div class="inner">
 <span class="eyebrow">Section 03</span>
 <h2>Your 12 Months, Step by Step</h2>
@@ -305,7 +305,7 @@ ${labelWeeks(m4)}
   return shell(body, name)
 }
 
-/** Generates (or regenerates) one roadmap in the background and stores it. */
+/** Generates (or regenerates) one business plan in the background and stores it. */
 export async function generateRoadmap(admin: SupabaseClient, id: string, feedback?: string): Promise<void> {
   const { data: row } = await admin
     .from('problem_statements')

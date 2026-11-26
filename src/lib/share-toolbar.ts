@@ -1,5 +1,5 @@
 // Toolbar + print bar injected into shared HTML documents (Circle blueprints at
-// /b/[token], CEO roadmaps at /roadmap/[token]): PDF and HTML download buttons
+// /b/[token], CEO business plans at /plan/[token]): PDF and HTML download buttons
 // in the nav, and a "Save as PDF" bar in ?print=1 mode. Hidden when printing.
 
 // Injected when ?print=1 — a sticky bar with a Print button, hidden from printed output

@@ -138,7 +138,7 @@ function RoadmapPanel({ c, onChange }: { c: CeoCall; onChange: () => void }) {
   }
 
   async function send() {
-    if (!confirm(`Email the 12-Month CEO Roadmap to ${email}?`)) return
+    if (!confirm(`Email the 12-Month CEO Business Plan to ${email}?`)) return
     setWorking('send')
     setMsg(null)
     const res = await fetch(`/api/admin/ceo-calls/${c.id}/roadmap/send`, {
@@ -159,14 +159,14 @@ function RoadmapPanel({ c, onChange }: { c: CeoCall; onChange: () => void }) {
   return (
     <div className="mt-4 rounded-[12px] border border-[var(--border-color)] p-4" style={{ background: 'var(--bg)' }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--gold-text)]">12-Month CEO Roadmap</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--gold-text)]">12-Month CEO Business Plan</p>
         {c.roadmap_generated_at && ready && <span className="text-[11px] text-[var(--text-4)]">Generated {stamp(c.roadmap_generated_at)}{c.roadmap_sent_at ? ` · Sent ${stamp(c.roadmap_sent_at)}` : ''}</span>}
       </div>
 
       {generatingNow && (
         <div className="flex items-center gap-3 py-2">
           <div className="w-4 h-4 rounded-full border-2 border-[var(--gold)] border-t-transparent animate-spin flex-none" />
-          <p className="text-[13px] text-[var(--text-2)]">Writing the roadmap from the call… this takes 2-4 minutes. You can leave this page.</p>
+          <p className="text-[13px] text-[var(--text-2)]">Writing the business plan from the call… this takes 2-4 minutes. You can leave this page.</p>
         </div>
       )}
 
@@ -178,7 +178,7 @@ function RoadmapPanel({ c, onChange }: { c: CeoCall; onChange: () => void }) {
 
       {!generatingNow && !ready && (
         <div className="space-y-2.5">
-          <p className="text-[13px] text-[var(--text-3)]">After the CEO Call, add the call&apos;s Fathom link and generate their roadmap.</p>
+          <p className="text-[13px] text-[var(--text-3)]">After the CEO Call, add the call&apos;s Fathom link and generate their business plan.</p>
           <input value={fathom} onChange={(e) => setFathom(e.target.value)} placeholder="https://fathom.video/share/..." className={input} />
           <button onClick={() => setShowPaste(!showPaste)} className="text-[12px] text-[var(--text-3)] hover:text-[var(--text)]">
             {showPaste ? 'Hide transcript box' : 'No Fathom link? Paste the transcript instead'}
@@ -187,7 +187,7 @@ function RoadmapPanel({ c, onChange }: { c: CeoCall; onChange: () => void }) {
           <div>
             <button onClick={() => generate(false)} disabled={working !== '' || (!fathom.trim() && !paste.trim() && !c.roadmap_has_transcript)}
               className="text-[12px] rounded-full px-4 py-1.5 border disabled:opacity-40" style={goldBtn}>
-              {working === 'generate' ? 'Starting…' : c.roadmap_has_transcript && !fathom.trim() && !paste.trim() ? 'Generate again from the saved transcript' : 'Generate roadmap'}
+              {working === 'generate' ? 'Starting…' : c.roadmap_has_transcript && !fathom.trim() && !paste.trim() ? 'Generate again from the saved transcript' : 'Generate business plan'}
             </button>
           </div>
         </div>
@@ -196,7 +196,7 @@ function RoadmapPanel({ c, onChange }: { c: CeoCall; onChange: () => void }) {
       {ready && !generatingNow && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-3">
-            <a href={`/roadmap/${c.roadmap_token}`} target="_blank" className="text-[12px] rounded-full px-4 py-1.5 border" style={goldBtn}>Preview roadmap ↗</a>
+            <a href={`/plan/${c.roadmap_token}`} target="_blank" className="text-[12px] rounded-full px-4 py-1.5 border" style={goldBtn}>Preview business plan ↗</a>
             <button onClick={() => setShowRefine(!showRefine)} className="text-[12px] text-[var(--text-3)] hover:text-[var(--text)]">
               {showRefine ? 'Cancel changes' : '↻ Regenerate with changes'}
             </button>

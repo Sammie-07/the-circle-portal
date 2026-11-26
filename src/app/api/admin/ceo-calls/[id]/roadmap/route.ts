@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchFathomTranscript } from '@/lib/fathom'
 import { generateRoadmap } from '@/lib/ceo-roadmap'
 
-// Staff: generate (or regenerate with changes) a 12-Month CEO Roadmap from the
+// Staff: generate (or regenerate with changes) a 12-Month CEO Business Plan from the
 // CEO Call transcript (Fathom share link or pasted). Runs in the background;
 // the CEO Calls page polls until it is ready.
 export const maxDuration = 300
