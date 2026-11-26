@@ -183,7 +183,8 @@ Every code change is recorded here, newest first.
   social/content/lead gen is part of the problem; "Why You Can't Do This Alone" with an Apply for The Circle
   button (`app_settings.blueprint_clarity_url`) + footer. Every fix leads back to The Circle; Circle facts,
   no em dashes, no income promises, no investment advice, no gender from names. Reuses the blueprint CSS +
-  roadmap CSS (mobile responsive). Public page `/roadmap/[token]` (PDF/HTML toolbar, now shared with
+  roadmap CSS (mobile responsive). Weeks are a real table (Week 1-4 columns, short bullet actions, max ~14
+  words each, per the Circle admin); under 900px the weeks stack, each under its own gold "Week N" header. Public page `/roadmap/[token]` (PDF/HTML toolbar, now shared with
   `/b/[token]` via `src/lib/share-toolbar.ts`). Routes: `POST /api/admin/ceo-calls/[id]/roadmap`,
   `POST /api/admin/ceo-calls/[id]/roadmap/send`. New `problem_statements.roadmap_*` columns.
 

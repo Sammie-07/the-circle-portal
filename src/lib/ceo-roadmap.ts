@@ -22,11 +22,15 @@ const ROADMAP_CSS = `<style>
   .month-body{padding:28px 30px;}
   .month-goal{font-family:'Helvetica Neue',sans-serif;font-size:15px;color:#bbb;line-height:1.75;margin-bottom:22px;}
   .month-goal strong{color:var(--gold);}
-  .week-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:22px;}
-  .week-cell{background:var(--card);padding:18px 18px 14px;}
-  .week-label{font-family:'Helvetica Neue',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border2);}
-  .week-item{font-family:'Helvetica Neue',sans-serif;font-size:13px;color:#bbb;line-height:1.6;padding:5px 0;display:flex;gap:8px;}
-  .week-item::before{content:'→';color:var(--gold);flex-shrink:0;}
+  .week-wrap{margin-bottom:22px;border:1px solid var(--border);}
+  .week-table{width:100%;border-collapse:collapse;table-layout:fixed;font-family:'Helvetica Neue',sans-serif;}
+  .week-table th{background:var(--gold);color:var(--bg);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:left;padding:11px 16px;}
+  .week-table th+th{border-left:1px solid rgba(0,0,0,0.25);}
+  .week-table td{background:var(--card);vertical-align:top;padding:14px 16px 10px;}
+  .week-table td+td{border-left:1px solid var(--border);}
+  .week-table ul{list-style:none;margin:0;padding:0;}
+  .week-table li{font-size:13px;color:#ccc;line-height:1.5;padding:0 0 9px 16px;position:relative;}
+  .week-table li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--gold);}
   .month-metric{font-family:'Helvetica Neue',sans-serif;font-size:13px;color:var(--muted);border-top:1px solid var(--border2);padding-top:14px;margin-bottom:16px;}
   .month-metric strong{color:var(--text);}
   .circle-tie{border-left:3px solid var(--red);background:rgba(204,31,31,0.05);padding:16px 22px;}
@@ -40,22 +44,27 @@ const ROADMAP_CSS = `<style>
   .cta-box{text-align:center;border:1px solid var(--border);background:var(--card);padding:44px 32px;margin-top:40px;}
   .cta-box p{font-family:'Helvetica Neue',sans-serif;font-size:15px;color:#bbb;line-height:1.7;max-width:620px;margin:0 auto 26px;}
   .cta-btn{display:inline-block;background:var(--gold);color:var(--bg);font-family:'Helvetica Neue',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:16px 38px;}
+  /* Narrow screens: one week under the other, each with its own gold header. */
+  @media (max-width:900px){
+    .week-table thead{display:none;}
+    .week-table,.week-table tbody,.week-table tr,.week-table td{display:block;width:100%;}
+    .week-table td+td{border-left:none;border-top:1px solid var(--border);}
+    .week-table td::before{content:attr(data-week);display:block;margin:-14px -16px 12px;padding:9px 16px;background:var(--gold);color:var(--bg);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+  }
   @media (max-width:760px){
     nav{padding:0 18px;}.nav-links{display:none;}
     .page-section{padding:56px 18px;}#cover{padding:80px 18px;}footer{padding:60px 18px;}
     .stat-row{grid-template-columns:1fr 1fr;}.stat-cell+.stat-cell{border-left:none;}
     .assess-grid,.rl-grid{grid-template-columns:1fr;}
-    .week-grid{grid-template-columns:1fr 1fr;}
     .month-header{flex-direction:column;align-items:flex-start;gap:10px;padding:20px;}.month-body{padding:20px;}
   }
-  @media (max-width:480px){.week-grid{grid-template-columns:1fr;}}
   @media print{.month-card{break-inside:avoid;}}
 </style>`
 
 const ROADMAP_CLASSES = `${BLUEPRINT_CSS_CLASSES}
 Roadmap-only classes:
 month-card / month-header / month-label / month-title / month-focus / month-body / month-goal
-week-grid (exactly 4 week-cell children) / week-cell / week-label / week-item
+week-wrap > table.week-table (thead: 4 th Week 1-4; tbody: one tr with 4 td, each holding a ul of li bullets)
 month-metric / circle-tie (with div.ct-label + p)
 sched-wrap > table.sched-table (thead th, tbody td)
 cta-box (p + a.cta-btn)`
@@ -92,6 +101,14 @@ type Row = {
 
 const firstName = (name: string | null) => (name ?? '').trim().split(/\s+/)[0] || 'there'
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+// Labels every week cell so narrow screens can stack them under a "Week N" header.
+function labelWeeks(html: string): string {
+  return html.replace(/<table class="week-table">[\s\S]*?<\/table>/g, (table) => {
+    let n = 0
+    return table.replace(/<td(\s[^>]*)?>/g, () => `<td data-week="Week ${++n}">`)
+  })
+}
 
 async function brain(query: string, n = 5): Promise<string> {
   const chunks = await searchBrain(query, n).catch(() => [])
@@ -214,13 +231,19 @@ Write the month cards for Months ${from}-${to} ONLY (${to - from + 1} cards, no 
 <div class="month-card" id="m${from}">
   <div class="month-header"><div class="month-label">Month N</div><div><div class="month-title">title from the plan</div><div class="month-focus">focus</div></div></div>
   <div class="month-body">
-    <p class="month-goal"><strong>This month:</strong> what we are fixing and why it comes now, tied to their real situation.</p>
-    <div class="week-grid"> four week-cell: <div class="week-cell"><div class="week-label">Week 1</div><div class="week-item">specific action</div>... 3-4 week-items</div> for Weeks 1-4</div>
-    <p class="month-metric"><strong>Done means:</strong> the measurable sign this month worked.</p>
-    <div class="circle-tie"><div class="ct-label">Where The Circle comes in</div><p>why doing this month alone stalls, and exactly what coaching, accountability or system inside The Circle makes it stick, specific to this month's work.</p></div>
+    <p class="month-goal"><strong>This month:</strong> ONE sentence (max 30 words): what we are fixing and why it comes now.</p>
+    <div class="week-wrap"><table class="week-table">
+      <thead><tr><th>Week 1</th><th>Week 2</th><th>Week 3</th><th>Week 4</th></tr></thead>
+      <tbody><tr>
+        <td><ul><li>short action</li><li>short action</li><li>short action</li></ul></td>
+        ... one td per week, 3-5 li bullets each
+      </tr></tbody>
+    </table></div>
+    <p class="month-metric"><strong>Done means:</strong> one short measurable sign this month worked.</p>
+    <div class="circle-tie"><div class="ct-label">Where The Circle comes in</div><p>2 sentences max: why doing this month alone stalls, and the specific coaching, accountability or system inside The Circle that makes it stick.</p></div>
   </div>
 </div>
-Use id="mN" on each card with its own month number. Week items must be concrete actions they can do that week (who, what, how many), from their call and Gogo's Brain, not vague advice.${outline.needs_social ? ' Where a month involves content, point to the posting schedule in Section 04 instead of repeating it.' : ''}`
+Use id="mN" on each card with its own month number. Each bullet is ONE short, concrete action (max 14 words, starts with a verb, who/what/how many), from their call and Gogo's Brain. Bullets, not sentences or paragraphs; no explanations inside the table.${outline.needs_social ? ' Where a month involves content, point to the posting schedule in Section 04 instead of repeating it.' : ''}`
 
   const partOpen = `${plan}
 
@@ -270,10 +293,10 @@ Close every div and section.`
 <span class="eyebrow">Section 03</span>
 <h2>Your 12 Months, Step by Step</h2>
 <p class="section-intro">${esc(outline.months_intro.replace(/\s*—\s*/g, ', '))}</p>
-${m1}
-${m2}
-${m3}
-${m4}
+${labelWeeks(m1)}
+${labelWeeks(m2)}
+${labelWeeks(m3)}
+${labelWeeks(m4)}
 </div></section>`
 
   // The round mark is a plain red ring (this is not The Circle's branding).
